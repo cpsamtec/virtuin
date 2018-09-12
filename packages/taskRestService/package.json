@@ -9,6 +9,7 @@
   "scripts": {
     "start": "DEBUG=\"vrs:*\" node build/index.js",
     "test": "jest",
+    "prepare": "gulp build && npm run build:flow",
     "build:flow": "flow-copy-source -v -i '**/__tests__/**' src build"
   },
   "files": [
@@ -36,6 +37,7 @@
     "morgan": "1.9.0"
   },
   "devDependencies": {
+    "flow-bin": "^0.80.0",
     "flow-copy-source": "^2.0.2",
     "flow-typed": "^2.0.0",
     "gulp-flowtype": "1.0.0",

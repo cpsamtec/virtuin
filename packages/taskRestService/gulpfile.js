@@ -22,5 +22,5 @@ gulp.task('flow', () => {
 gulp.task('watch', ['flow', 'scripts'], () => {
   gulp.watch('src/**/*.js', ['flow', 'scripts']);
 });
-
 gulp.task('default', ['watch']);
+gulp.task('build', ['flow', 'scripts']);

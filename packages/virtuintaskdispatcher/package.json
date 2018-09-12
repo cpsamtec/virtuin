@@ -78,7 +78,7 @@
     "eslint-plugin-jsx-a11y": "^6.1.1",
     "eslint-plugin-promise": "^4.0.0",
     "eslint-plugin-react": "^7.3.0",
-    "flow-bin": "^0.79.1",
+    "flow-bin": "^0.80.0",
     "flow-copy-source": "^2.0.2",
     "flow-remove-types": "^1.2.3",
     "flow-typed": "^2.3.0",
