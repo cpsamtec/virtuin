@@ -1,5 +1,5 @@
 {
-  "name": "virtuin-rest-service",
+  "name": "virtuin-task-rest-service",
   "version": "1.0.9",
   "main": "build/index.js",
   "license": "MIT",

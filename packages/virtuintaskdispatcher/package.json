@@ -53,7 +53,7 @@
     "fs-extra": "^7.0.0",
     "js-yaml": "^3.12.0",
     "uuid": "^3.3.2",
-    "virtuin-rest-service": "^1.0.5"
+    "virtuin-task-rest-service": "^1.0.5"
   },
   "devDependencies": {
     "babel-cli": "^6.24.1",
