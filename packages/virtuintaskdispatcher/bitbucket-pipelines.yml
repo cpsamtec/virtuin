@@ -1,0 +1,41 @@
+image: node:8.9.2
+
+pipelines:
+  default:
+    - step:
+        name: Build and test
+        caches:
+          - node
+        script:
+          - echo -ne "//registry.npmjs.org/:_authToken=$NPM_TOKEN\nscope=@samtec-ash\n" > ~/.npmrc
+          - yarn install
+          - yarn test
+    - step:
+        name: Deploy to test
+        deployment: test
+        caches:
+          - node
+        script:
+          - echo -ne "//registry.npmjs.org/:_authToken=$NPM_TOKEN\nscope=@samtec-ash\n" > ~/.npmrc
+          - yarn install
+          - yarn test
+    - step:
+        name: Deploy to staging
+        deployment: staging
+        trigger: manual
+        caches:
+          - node
+        script:
+          - echo -ne "//registry.npmjs.org/:_authToken=$NPM_TOKEN\nscope=@samtec-ash\n" > ~/.npmrc
+          - yarn install
+          - yarn prepublish
+    - step:
+        name: Deploy to production
+        deployment: production
+        trigger: manual
+        caches:
+          - node
+        script:
+          - echo -ne "//registry.npmjs.org/:_authToken=$NPM_TOKEN\nscope=@samtec-ash\n" > ~/.npmrc
+          - yarn install
+          - yarn publish --new-version $(node -pe "require('./package.json').version")

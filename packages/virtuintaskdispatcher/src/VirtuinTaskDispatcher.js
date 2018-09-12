@@ -1,0 +1,1020 @@
+// @flow
+import type { ProduceRouterDelegate } from 'virtuin-rest-service';
+import RestServer from 'virtuin-rest-service';
+import type { Task, RootInterface, CollectionEnvs } from './types';
+
+const os = require('os');
+const fs = require('fs');
+const path = require('path');
+const { EventEmitter } = require('events');
+const { spawn } = require('child_process');
+const dotenv = require('dotenv');
+const fse = require('fs-extra');
+const uuidv4 = require('uuid/v4');
+const yaml = require('js-yaml');
+const vagrant = require('./vagrant');
+const { diff } = require('deep-diff');
+
+// const RestServer = require('virtuin-rest-service');
+
+
+type TaskState = 'IDLE' | 'START_REQUEST' | 'RUNNING' | 'KILLED' | 'STOP_REQUEST' | 'FINISHED';
+
+type DockerCredentials = {
+  username: string,
+  password: string,
+  server: ?string
+}
+
+export type TaskIdentifier = { groupIndex: number, taskIndex: number };
+export type TaskStatus = {
+  name: string,
+  description: string,
+  progress: number,
+  identifier: TaskIdentifier,
+  state: TaskState,
+  taskUUID: ?string,
+  error: ?string,
+  viewURL: ?string,
+  startDate: ?string,
+  messages: Array<string>
+
+};
+export type GroupMode = 'sequential' | 'individual'
+export type DispatchStatus = Array<{
+  name: string, description: string,
+  mode: GroupMode,
+  autoStart: boolean,
+  tasksStatus: Array<TaskStatus>
+}>
+
+export type DispatchDelegate = {
+
+}
+
+class VirtuinTaskDispatcher extends EventEmitter {
+  daemonAddress: string;
+
+  daemonArgs: Array<string>;
+
+  stackBasePath: string;
+
+  vagrantDirectory: ?string;
+
+  collectionEnvPath: string;
+
+  collectionPath: string;
+
+  ymlPath: string;
+
+  collectionEnvs: ?Object;
+
+  brokerAddress: string;
+
+  stationName: string;
+
+  dispatchStatus: DispatchStatus;
+
+  verbosity: number;
+
+  envs: CollectionEnvs & {COMPOSE_CONVERT_WINDOW_PATHS: number,
+    COMPOSE_FORCE_WINDOWS_HOST: number} & Object;
+
+  dockerCredentials: ?DockerCredentials;
+
+  collectionDef: RootInterface;
+
+  restServer: (RestServer);
+
+  constructor(
+    stationName: string,
+    collectionEnvPath: string,
+    collectionEnvs: CollectionEnvs,
+    collectionDef: RootInterface,
+    stackBasePath: ?string = null,
+    verbosity: number = 0,
+    restServerDelegate: ?ProduceRouterDelegate = null
+  ) {
+    super();
+
+    this.dockerCredentials = null;
+    this.stackBasePath = stackBasePath || os.tmpdir();
+    this.vagrantDirectory = collectionEnvs.VIRT_VAGRANT_DIRECTORY;
+    this.collectionEnvPath = collectionEnvPath;
+    this.collectionEnvs = collectionEnvs;
+    this.brokerAddress = collectionEnvs.VIRT_BROKER_ADDRESS || 'localhost';
+    this.stationName = stationName;
+    this.verbosity = verbosity;
+
+    this.collectionDef = collectionDef;
+
+    // these have to be initialized after previous
+    this.daemonAddress = collectionEnvs.VIRT_DOCKER_HOST || 'tcp://0.0.0.0:2375';
+    this.collectionPath = path.join(this.composePath(), 'collection.json');
+    this.ymlPath = path.join(this.composePath(), 'docker-compose.yml');
+    this.daemonArgs = ['-H', this.daemonAddress, '-f', this.ymlPath];
+
+    this.initializeDispatchStatus();
+    this.envs = {
+      VIRT_BROKER_ADDRESS: this.brokerAddress,
+      VIRT_STATION_NAME: this.stationName,
+      COMPOSE_CONVERT_WINDOW_PATHS: 1,
+      COMPOSE_FORCE_WINDOWS_HOST: 0,
+      DOCKER_HOST: this.daemonAddress,
+      VIRT_COLLECTION_ENV_PATH: collectionEnvPath,
+      ...collectionEnvs
+    };
+    if (collectionEnvs && collectionEnvs.VIRT_DOCKER_USER && collectionEnvs.VIRT_DOCKER_PASSWORD) {
+      this.dockerCredentials = {
+        username: collectionEnvs.VIRT_DOCKER_USER,
+        password: collectionEnvs.VIRT_DOCKER_PASSWORD,
+        server: collectionEnvs.VIRT_DOCKER_HOST,
+      };
+    }
+    this.restServer = new RestServer();
+    RestServer.setProducerDelegate({dispatch, dispatchWithResponse} = this);
+    this.restServer.begin();
+  }
+
+  initializeDispatchStatus = (): void => {
+    const groups = this.collectionDef.taskGroups;
+    this.dispatchStatus = Array(groups.length).fill().map((ignore, i) => ({
+      name: groups[i].name,
+      description: groups[i].description || '',
+      mode: groups[i].mode || 'individual',
+      autoStart: groups[i].autoStart,
+      tasksStatus: Array(groups[i].tasks.length).fill().map((ignore2, j) => {
+        const task = groups[i].tasks[j];
+        return {
+          name: task.name,
+          description: task.description || '',
+          progress: 0,
+          identifier: { groupIndex: i, taskIndex: j },
+          state: 'IDLE',
+          taskUUID: null,
+          error: null,
+          viewURL: task.viewURL,
+          startDate: null,
+          messages: []
+        };
+      })
+    }));
+  }
+
+  //ProduceRouterDelegate
+  /**
+   * dispatch
+   * Handles simple messages from the rest end point
+  */
+  dispatch = (o): void => {
+    console.log(`called dispatch: received ${o.type} for ${o.taskUUID}`);
+  },
+  /**
+   * dispatchWithResponse
+   * Handles messages where a response is expected
+  */
+  dispatchWithResponse = async (o): Promise<any> => {
+    console.log(`called dispatchWithResponse: received ${o.type} for ${o.taskUUID}`);
+    return `received ${o.message}`
+  }
+  //End ProduceRouterDelegate
+
+  end = (): void => {
+    if (this.restServer) {
+      this.restServer.end();
+    }
+    RestServer.setProducerDelegate(null);
+  }
+
+  static collectionObjectFromPath(collectionDefPath: string): ?RootInterface {
+    const collectionDefData = fs.readFileSync(collectionDefPath);
+    if (collectionDefPath.endsWith('.json')) {
+      const collectionObject: RootInterface = JSON.parse(collectionDefData.toString());
+      return collectionObject;
+    }
+    const collectionObject: RootInterface = (yaml.safeLoad(collectionDefData.toString()): any);
+    return collectionObject;
+  }
+
+  static collectionEnvFromPath(collectionEnvPath: string): ?CollectionEnvs {
+    let envData = '';
+    try {
+      // fse.statSync(collectionEnvPath);
+      envData = fse.readFileSync(path.join(collectionEnvPath, 'collection.env'), 'utf8');
+    } catch (error) {
+      console.error('Could not access the Collections collection.env file.');
+      return null;
+    }
+    const buf = Buffer.from(envData, 'utf8');
+    const collectionEnvs: CollectionEnvs = (dotenv.parse(buf): any); // will return an object
+    return collectionEnvs;
+  }
+
+  composeName = () => `virt${this.collectionDef.collectionName}`.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+  composePath = () => path.join(this.stackBasePath, this.composeName());
+
+  /**
+    * Login to Docker to enable pulling images.
+    * Defaults to Docker hub if server not specified.
+    * @async
+    * @param  {string}  username Docker registry username
+    * @param  {string}  password Docker registry password
+    * @param  {?string}  server  Docker registry server
+    * @return {Promise<void>}
+    * @throws
+    */
+  login = async (): Promise<void> => {
+    if (this.dockerCredentials) {
+      const cmd = 'docker';
+      const args = [
+        '-H', this.daemonAddress,
+        'login', '-u', this.dockerCredentials.username, '-p', this.dockerCredentials.password
+      ];
+      if (typeof this.dockerCredentials.server === 'string') {
+        args.push(this.dockerCredentials.server);
+      }
+      const options = {
+        cwd: this.composePath(),
+        env: { ...process.env, ...this.envs },
+        shell: false
+      };
+      const code = await this.spawnAsync(cmd, args, options,
+        this.composeSTDOutHandler, this.composeSTDErrHandler);
+      if (code) {
+        throw new Error(`Failed logging into Docker ${code || 'unknown'}`);
+      }
+    }
+  }
+
+  /**
+   * Nuclear option. Kill and remove all Docker containers
+   * @return {Promise<void>}
+   */
+  nuke = async (): Promise<void> => {
+    // Force kill and prune all containers
+    if (this.verbosity) { console.log('Task dispatcher nuking all containers.'); }
+    await this.removeContainers();
+    await this.pruneContainers();
+  }
+
+  /**
+   * Brings up Vagrant VM from collection definition.
+   * Additionally stops any existing VM's so they do not intefere.
+   * @async
+   * @param  {RootInterface}  collectionDef Collection definition.
+   * @return {Promise<void>}
+   * @throws
+   */
+  upVM = async (fullReload: boolean = false): Promise<void> => {
+    try {
+      this.emit('collection-log', 'Ensuring VM Ready');
+      if (this.vagrantDirectory) {
+        const cb: ((string) => void) = (status) => {
+          this.emit('collection-log', status);
+        };
+        await vagrant.ensureOnlyMachineRunningAtDirectory(this.vagrantDirectory, fullReload, cb);
+      } else {
+        this.emit('collection-log', 'No VM specified');
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  getTempDirPath = async (): string => {
+    const tmpPath = path.join(os.tmpdir(), 'virtuin');
+    if (!(await fse.exists(dir))) {
+      await fse.mkdir(dir);
+    }
+  }
+
+  /**
+   * Starts docker-compose based on yml file.
+   * Additionally stops any existing task/ctrl stacks.
+   * @async
+   * @param  {RootInterface}  collectionDef Collection definition.
+   * @return {Promise<void>}
+   * @throws
+   */
+  up = async (fullReload: boolean = false, fullRebuild: boolean = false): Promise<void> => {
+    try {
+      this.emit('collection-log', 'Starting up task environment.');
+      let objStr = '';
+      switch (this.collectionDef.dockerCompose.type || 'RAW') {
+        case 'RAW':
+          objStr = yaml.safeDump(this.collectionDef.dockerCompose.source);
+          break;
+        case 'URL':
+          throw new Error('Docker stack type URL not yet supported.');
+        default:
+          throw new Error(`Docker stack type ${this.collectionDef.dockerCompose.type || ''} not yet supported or invalid.`);
+      }
+
+      // Check if previous collection exists and if so has same tag
+      // If tag doesnt match, then need to perform full reload
+      let changes = []; // assume all needs to be cleaned up if no prev collection exists
+      const tmpPath = await this.getTempDirPath();
+      const prevCollection = path.join(tmpPath, 'prevCollection.json');
+      const prevCollectionExists = await fse.pathExists(prevCollection);
+      if (prevCollectionExists) {
+        const prevCollectionDef = await fse.readJson(prevCollection);
+        changes = diff(prevCollectionDef, this.collectionDef);
+      }
+      if (changes) {
+        await fse.writeJson(this.collectionDef);
+      }
+      this.emit('collection-log', changes == null
+        ? 'Using existing task collection environment.'
+        : 'Creating new task collection environment.');
+
+      // Write compose.yml into stack folder
+      await fse.outputFile(this.ymlPath, objStr);
+
+      // Remove all docker containers not in this definition
+      const removeAll = fullReload || changes;
+      await this.removeContainers(removeAll ? undefined : this.composeName());
+
+      // Create environment file
+      const envPath = path.join(this.composePath(), '.env');
+      let envStr = '';
+      const keys = Object.keys(this.envs);
+      for (const k of keys) {
+        envStr += `${k}=${this.envs[k]}\n`;
+      }
+      await fse.writeFile(envPath, envStr);
+
+      // Perform pull if reload or tags dont match
+      if (removeAll) {
+        await this.pull();
+      }
+      // Perform up
+      const cmd = 'docker-compose';
+      let args = [
+        ...this.daemonArgs, 'up',
+        '--remove-orphans', '-d'
+      ];
+      if (fullRebuild) {
+        args = [...args, '--build'];
+      }
+      const options = {
+        cwd: this.composePath(),
+        env: { ...process.env, ...this.envs },
+        shell: false
+      };
+      const code = await this.spawnAsync(cmd, args, options,
+        this.composeSTDOutHandler,
+        this.composeSTDErrHandler);
+      if (code) {
+        throw new Error(`Failed starting up task environment: ${code || 'unknown'}`);
+      }
+      // Write collection into stack folder on successful up
+      // We check collection change to determine bring-up.
+      // On failure, we need to ensure we retry complete bring-up.
+      await fse.outputFile(this.collectionPath, JSON.stringify(this.collectionDef));
+      this.emit('collection-log', 'Successfully started task environment.');
+      return;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * Stops docker-compose based on yml file.
+   * Optionally remove containers.
+   * @async
+   * @return {Promise<void>}
+   * @throws
+   */
+  down = async (rm: boolean = false): Promise<void> => {
+    try {
+      this.emit('collection-log', 'Stopping task environment.');
+      // Perform docker-compose down or stop
+      const cmd = 'docker-compose';
+      const args = [...this.daemonArgs, rm ? 'down' : 'stop'];
+      const options = {
+        cwd: this.composePath(),
+        env: { ...process.env, ...this.envs },
+        shell: false
+      };
+      const code = await this.spawnAsync(cmd, args, options,
+        this.composeSTDOutHandler,
+        this.composeSTDErrHandler);
+      if (code) {
+        throw new Error(`Failed stopping task environment: ${code || 'unknown'}`);
+      }
+      this.emit('collection-log', 'Successfully stopped task environment.');
+      return;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * Stops vagrant virtual machine based on yml file.
+   * Optionally remove containers.
+   * @async
+   * @return {Promise<void>}
+   * @throws
+   */
+  downVM = async (): Promise<void> => {
+    try {
+      this.emit('collection-log', 'Bringing Vagrant VM Down');
+      if (this.vagrantDirectory) {
+        const s = await vagrant.vagrantStopVMInDirectory(this.vagrantDirectory);
+        if (s) {
+          this.emit('collection-log', 'Vagrant VM successfully brought down');
+        } else {
+          this.emit('collection-log', 'Unable to bring Vagrant VM down');
+        }
+      } else {
+        this.emit('collection-log', 'No Vagrant VM in specified collection');
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * INTERNAL
+   * Pull tagged images defined in compose definition.
+   * @private
+   * @return {Promise<void>}
+   * @throws
+   */
+  pull = async (): Promise<void> => {
+    this.emit('collection-log', 'Pulling collection service\'s images.');
+    if (this.dockerCredentials) {
+      await this.login();
+    }
+    const cmd = 'docker-compose';
+    const args = [...this.daemonArgs, 'pull'];
+    const options = {
+      cwd: this.composePath(),
+      env: { ...process.env, ...this.envs },
+      shell: false
+    };
+    try {
+      const code = await this.spawnAsync(cmd, args, options,
+        this.composeSTDOutHandler,
+        this.composeSTDErrHandler);
+      if (code !== 0) {
+        throw new Error(`Failed pulling service's images: ${code || 'unknown'}`);
+      }
+    } catch (error) {
+      console.log(`Caught error ${error}`);
+    }
+    this.emit('collection-log', 'Successfully pulled collection service\'s images.');
+  }
+
+  sendTaskInputDataFile = async (taskIdent: TaskIdentifier): Promise<{success: boolean,
+    error: ?Error}> => {
+    if (!this.validTaskIdentifier(taskIdent)) {
+      return { success: false, error: Error(`task identifier is not valid group ${taskIdent.groupIndex}, task ${taskIdent.taskIndex}`) };
+    }
+    const task: Task = this.taskFromIdentifier(taskIdent);
+    // Perform up
+    this.emit('task-log', 'Task send data requested.');
+
+    try {
+      const runConfigs = task.dockerInfo || {};
+      const runServiceName = runConfigs.serviceName;
+      // Create task JSON file and copy to container
+      const taskInputPath = path.join(this.composePath(), 'input');
+      const taskSrcPath = path.join(taskInputPath, 'task.json');
+      const taskDstPath = '/virtuin_task.json';
+      // eslint-disable-line camelcase
+      const { virt_stations, ...sharedData } = task.data;
+      // eslint-disable-line camelcase
+      const taskData = ({ data: { ...sharedData, ...virt_stations[this.stationName] }, taskUUID: '000000' });
+      const taskStr = JSON.stringify(taskData);
+      await fse.outputFile(taskSrcPath, taskStr);
+      const containerId = await this.getServiceContainerId(runServiceName);
+      await this.copyContainer(containerId, taskSrcPath, taskDstPath);
+      return { success: false, error: null };
+    } catch (error) {
+      return { success: false, error };
+    }
+  }
+
+  /**
+   * Start a task
+   * @param  {Object}  taskConfig Task definition object
+   * @return {Promise<{ success: boolean, error: Error}>}
+   */
+  startTask = async (taskIdent: TaskIdentifier, rebuildService: boolean = false): Promise<{ success: boolean, error: ?Error}> => {
+    // Perform up
+    if (!this.validTaskIdentifier(taskIdent)) {
+      return { success: false, error: Error(`task identifier is not valid group ${taskIdent.groupIndex}, task ${taskIdent.taskIndex}`) };
+    }
+    const task: Task = this.taskFromIdentifier(taskIdent);
+    const groupStatus: [Object<TaskStatus>] = this.dispatchStatus[taskIdent.groupIndex];
+    const currStatus: TaskStatus = groupStatus.tasksStatus[taskIdent.taskIndex];
+    const cmd = 'docker-compose';
+    if (rebuildService && task.dockerInfo
+      && task.dockerInfo.serviceName) {
+      this.emit('task-log', `rebuilding service ${task.dockerInfo.serviceName}.`);
+      const args = [
+        ...this.daemonArgs, 'up', '-d', '--build', `${task.dockerInfo.serviceName}`
+      ];
+      const options = {
+        cwd: this.composePath(),
+        env: { ...process.env, ...this.envs },
+        shell: false
+      };
+      try {
+        const code = await this.spawnAsync(cmd, args, options,
+          this.composeSTDOutHandler,
+          this.composeSTDErrHandler);
+        if (code) {
+          throw new Error(`Failed rebuilding service ${task.dockerInfo.serviceName}
+            error: ${code || 'unknown'}`);
+        }
+      } catch (e) {
+        // This may only be due to the fact that has not changed so ignore
+        console.error(`start task failed to rebuild the service ${task.dockerInfo.serviceName}`);
+      }
+    }
+    this.emit('task-log', 'Task start dispatch requested.');
+
+    // Return if task is already running
+    for (const taskStatus of groupStatus) {
+      if (['IDLE', 'KILLED', 'FINISHED'].find(s => s === taskStatus.state) === undefined) {
+        return { success: false, error: new Error('Task ${taskStatus.name} already running in the group ${}') };
+      }
+    }
+
+    // Update status
+    this.updateStatus(taskIdent, {
+      taskName: task.name,
+      taskUUID: this.generateUUID(),
+      groupName: task.groupName,
+      state: 'START_REQUEST',
+      error: null
+    });
+
+    try {
+      const runConfigs = task.dockerInfo || {};
+      const runServiceName = runConfigs.serviceName;
+      const runCmd = runConfigs.command;
+      let runArgs = Array.isArray(runConfigs.args) ? runConfigs.args : [runConfigs.args];
+
+      // Create task JSON file and copy to container
+
+      const taskInputPath = path.join(this.composePath(), 'input');
+      const taskSrcPath = path.join(taskInputPath, 'task.json');
+      const taskDstPath = '/virtuin_task.json';
+      // eslint-disable-line camelcase
+      const { virt_stations, ...sharedData } = task.data;
+      const taskData = ({
+        // eslint-disable-line camelcase
+        data: { ...sharedData, ...virt_stations[this.stationName] },
+        taskUUID: this.status.taskUUID
+      });
+      const taskStr = JSON.stringify(taskData);
+      await fse.outputFile(taskSrcPath, taskStr);
+      const containerId = await this.getServiceContainerId(runServiceName);
+      await this.copyContainer(containerId, taskSrcPath, taskDstPath);
+      runArgs = runArgs.concat(['--filepath', taskDstPath]);
+
+      // Perform docker-compose exec
+      // eslint-disable-line no-unused-vars
+      let port = 0; let
+        ignore = '';
+      if (this.restServer) {
+        ([ignore, port] = await this.restServer.getAddressAndPort());
+      }
+      const envVar = (port > 0) ? ['-e', `VIRT_REST_API_PORT=${port}`] : [];
+      const args = [
+        ...this.daemonArgs,
+        'exec',
+        '-T',
+        ...envVar,
+        runServiceName,
+        runCmd,
+        ...runArgs
+      ];
+      this.emit('task-log', `${cmd} ${args.join(' ')}`);
+      const options = {
+        cwd: this.composePath(),
+        env: { ...process.env, ...this.envs },
+        shell: false
+      };
+
+      const activeTask = spawn(cmd, args, options);
+
+      this.updateStatus({
+        state: 'RUNNING',
+        error: null,
+        serviceName: runServiceName
+      });
+      activeTask.on('exit', (code: number, signal: ?number) => { this.taskFinishHandler(taskIdent, activeTask, code, signal); });
+      activeTask.stdout.on('data', (buffer: Buffer) => { this.taskSTDOutHandler(taskIdent, buffer); });
+      activeTask.stderr.on('data', (buffer: Buffer) => { this.taskSTDErrHandler(taskIdent, buffer); });
+      this.emit('task-log', 'Successfully dispatched task start.');
+
+      return { success: true, error: null };
+    } catch (err) {
+      this.updateStatus({
+        state: 'KILLED',
+        error: `Failed spawning task: ${err.message}`
+      });
+      return { success: false, error: new Error(err.message) };
+    }
+  }
+
+  taskFromIdentifier = (taskIdent: TaskIdentifier): ?Task => {
+    const tasks = this.collectionDef.taskGroups[taskIdent.groupIndex].tasks || [];
+    if (taskIdent.taskIndex < 0 && taskIdent.taskIndex >= tasks.length) {
+      return null;
+    }
+    return tasks[taskIdent.taskIndex];
+  }
+
+  statusFromIdentifier = (taskIdent: TaskIdentifier): TaskStatus => {
+    const currStatus = this.dispatchStatus[taskIdent.groupIndex].tasksStatus[taskIdent.taskIndex];
+    return currStatus;
+  }
+
+  validTaskIdentifier = (taskIdent: TaskIdentifier): boolean => {
+    const tasks = this.collectionDef.taskGroups[taskIdent.groupIndex].tasks || [];
+    if (taskIdent.taskIndex < 0 && taskIdent.taskIndex >= tasks.length) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Stop a running task
+   * @param  {?string} taskUUID Unique id of task (optional). null stops current task.
+   * @return {Promise<{ success: boolean, error: Error}>}
+   */
+  stopTask = async (taskIdent: TaskIdentifier): Promise<{ success: boolean, error: ?Error }> => {
+    if (!validTaskIdentifier(taskIdent)) {
+      return { success: false, error: Error(`task identifier is not valid group ${taskIdent.groupIndex}, task ${taskIdent.taskIndex}`) };
+    }
+    this.emit('task-log', 'Task stop dispatch requested.');
+    // Return success if no task running
+    let currStatus = this.statusFromIdentifier(taskIdent);
+    if (['IDLE', 'KILLED', 'FINISHED'].find(s => s === currStatus.state) !== undefined) {
+      return true;
+    }
+    // Return failure if task not in valid state (i.e. KILLED, STARTING, STOPPING)
+    if (currStatus.state !== 'RUNNING') {
+      return { success: false, error: new Error(`Cant stop task in state ${currStatus.state}`) };
+    }
+
+    currStatus = {
+      ...currStatus,
+      state: 'STOP_REQUEST',
+      error: null
+    };
+    this.updateStatus(taskIdent, currStatus);
+    try {
+      activeTask.kill('SIGTERM'); // Ask nicely
+      setTimeout(async () => {
+        // If same task and still not exited then let'em have it
+        const c = this.statusFromIdentifier(taskIdent);
+        const t = this.taskFromIdentifier(taskIdent);
+        if (t && t.taskUUID && t.taskUUID === currStatus.taskUUID && c.state === 'STOP_REQUEST') {
+          activeTask.kill('SIGKILL');
+          if (t.dockerInfo && t.dockerInfo.serviceName) {
+            await this.restartService(t.dockerInfo.serviceName);
+          }
+        }
+      }, 1500);
+      this.emit('task-log', 'Successfully dispatched task stop.');
+    } catch (err) {
+      currStatus = {
+        ...currStatus,
+        state: 'KILLED',
+        error: `Failed stopping task: ${err.message}`
+      };
+      this.updateStatus(taskIdent, currStatus);
+      return { success: false, error: err };
+    }
+    currStatus = {
+      ...currStatus,
+      state: 'KILLED',
+      error: null
+    };
+    this.updateStatus(taskIdent, currStatus);
+    this.emit('task-log', 'Successfully dispatched task stop.');
+    return { success: true, error: null };
+  }
+
+  /**
+   * Clears status of finished task.
+   * @return {{  success: boolean, error: Error }}
+   */
+  clearTask = (taskIdent: taskIdentifier): { success: boolean, error: ?Error} => {
+    this.emit('task-log', 'Task clear dispatch requested.');
+    // If existing task not finished then cant clear
+    const currStatus = this.statusFromIdentifier(taskIdent);
+    if (['IDLE', 'KILLED', 'FINISHED'].find(s => s === currStatus.state) === undefined) {
+      return { success: false, error: new Error(`Cant clear in state ${this.status.state}`) };
+    }
+    this.updateStatus({
+      ...currStatus,
+      state: 'IDLE',
+      error: null,
+    });
+    this.emit('task-log', 'Successfully dispatched task clear.');
+    return { success: true, error: null };
+  }
+
+  /**
+   * INTERNAL
+   * Used to update task status
+   * @private
+   * @param  {TaskStatus} status New task status
+   * @param  {boolean} merge     If should merge or replace
+   * @return {void}
+   */
+  updateStatus = (taskIdentifier: taskIdentifier, newTaskStatus: TaskStatus) => {
+    this.dispatchStatus = this.dispatchStatus.map((groupItem, i) => {
+      if (i !== taskIdentifier.groupIndex) {
+        return groupItem;
+      }
+      return {
+        ...groupItem,
+        tasksStatus: groupItem.tasksStatus.map((taskStatus, j) => {
+          if (j !== taskIdentifier.taskIndex) {
+            return taskStatus;
+          }
+          return {
+            ...newTaskStatus,
+          };
+        })
+      };
+    });
+    this.emit('task-status', err, this.getStatus());
+  }
+
+  /**
+   * Returns copy of task status
+   * @return {TaskStatus} Task status
+   */
+  getStatus = () => ({
+    ...this.status
+  });
+
+  /**
+   * INTERNAL
+   * Generates UUID for new task
+   * @private
+   * @return {[type]}           [description]
+   */
+  generateUUID = (): string => (
+    uuidv4()
+  );
+
+
+  /**
+   * INTERNAL
+   * Restart a service (docker-compose restart)
+   * @private
+   * @param  {string}  serviceName Service name
+   * @return {Promise<void>}
+   * @throws
+   */
+  restartService = async (serviceName: string): Promise<void> => {
+    const timeout = (this.forceStopDelay / 1000).toPrecision(1);
+    const cmd = 'docker-compose';
+    const args = [...this.daemonArgs, 'restart', '-t', timeout, serviceName];
+    const options = {
+      cwd: this.composePath(),
+      env: { ...process.env, ...this.envs },
+      shell: false
+    };
+    const code = await this.spawnAsync(cmd, args, options,
+      this.taskSTDOutHandler,
+      this.taskSTDErrHandler);
+    if (code) {
+      throw new Error(`Failed restarting service ${serviceName}: ${code || 'unknown'}.`);
+    }
+  }
+
+  /**
+   * INTERNAL
+   * Get id for given service name
+   * @private
+   * @param  {string}  serviceName Name of service
+   * @return {Promise<string>} Container id
+   * @throws
+   */
+  getServiceContainerId = async (serviceName: string) => {
+    const cmd = 'docker-compose';
+    const args = ['-H', this.daemonAddress, 'ps', '-q', serviceName];
+    const options = {
+      cwd: this.composePath(),
+      env: { ...process.env, ...this.envs },
+      shell: false
+    };
+    let containerId = '';
+    const code = await this.spawnAsync(cmd, args, options, (data) => {
+      containerId += data.toString();
+    });
+    if (code) {
+      throw new Error(`Failed getting ID of service ${serviceName}: ${code || 'unknown'}.`);
+    }
+    containerId = containerId.trim();
+    return containerId;
+  }
+
+  /**
+   * INTERNAL
+   * Convenience function to spawn process as promise
+   * @private
+   * @param  {string}  cmd     Command to execute
+   * @param  {Array<string>}  args    Process arguments
+   * @param  {Object}  options Process options
+   * @param  {?(data: Buffer)=>void}  stdout  stdout callback
+   * @param  {?(data: Buffer)=>void}  stderr  stdout callback
+   * @return {Promise<number>} Exit code
+   */
+  spawnAsync = async (
+    cmd: string,
+    args: Array<string> = [],
+    options: Object = { env: { ...process.env, ...this.envs }, shell: false },
+    stdout: ?(data: Buffer)=>void = null,
+    stderr: ?(data: Buffer)=>void = null): Promise<?number> => {
+    const proc = spawn(cmd, args, options);
+    proc.on('error', err => {
+      console.log(`spawn error: ${err.message}`);
+    });
+    if (stdout) {
+      proc.stdout.on('data', stdout);
+    }
+    if (stderr) {
+      proc.stderr.on('data', stderr);
+    }
+    const p = new Promise((resolve) => {
+      try {
+        proc.on('exit', (code: ?number) => {
+          resolve(code);
+        });
+      } catch (error) {
+        resolve(-2);
+      }
+    });
+    return p;
+  }
+
+  /**
+   * INTERNAL
+   * Callback for compose-based processes std output
+   * @private
+   * @param  {Buffer} buffer Std output
+   * @return {void}
+   */
+  composeSTDOutHandler = (buffer: Buffer): void => {
+    const bufStr = buffer.toString();
+    this.emit('collection-stdout', bufStr);
+  }
+
+  /**
+   * INTERNAL
+   * Callback for compose-based processes std error
+   * @private
+   * @param  {Buffer} buffer Std output
+   * @return {void}
+   */
+  composeSTDErrHandler = (buffer: Buffer): void => {
+    const bufStr = buffer.toString();
+    this.emit('collection-stderr', bufStr);
+  }
+
+  /**
+   * INTERNAL
+   * Callback for active task process std output
+   * @private
+   * @param  {Buffer} buffer Std output
+   * @return {void}
+   */
+  taskSTDOutHandler = (buffer: Buffer): void => {
+    const bufStr = buffer.toString();
+    this.emit('task-stdout', bufStr);
+  }
+
+  /**
+   * INTERNAL
+   * Callback for active task process std error
+   * @private
+   * @param  {Buffer} buffer Std output
+   * @return {void}
+   */
+  taskSTDErrHandler = (buffer: Buffer): void => {
+    const bufStr = buffer.toString();
+    this.emit('task-stderr', bufStr);
+  }
+
+  /**
+   * INTERNAL
+   * Callback for active task exit
+   * @private
+   * @param  {number}  code   Exit code
+   * @param  {?number} signal Signal received
+   * @return {Promise<void>}
+   */
+  taskFinishHandler = async (taskIdent: TaskIdentifier, activeTask: Object, code: number, signal: ?number): Promise<void> => {
+    if (!validTaskIdentifier(taskIdent)) {
+      return;
+    }
+    const currStatus = this.statusFromIdentifier(taskIdent);
+    const task = this.taskFromIdentifier(taskIdent);
+    const stopRequest = currStatus.state === 'STOP_REQUEST';
+    activeTask.removeAllListeners('exit');
+    if (activeTask.stdout != null) {
+      activeTask.stdout.removeAllListeners('data');
+    }
+    if (activeTask.stderr != null) {
+      activeTask.stderr.removeAllListeners('data');
+    }
+    const errMsg = (code === 0)
+      ? null
+      : `Task prematurely exited (code:${code || ''}, signal:${signal || ''}).\n`;
+    this.updateStatus(taskIdent, {
+      ...currStatus,
+      state: stopRequest ? 'KILLED' : 'FINISHED',
+      error: errMsg
+    });
+
+    // On failure or stop request, restart service
+    if (stopRequest || code !== 0) {
+      try {
+        if (task.dockerInfo && task.dockerInfo.serviceName) {
+          await this.restartService(task.dockerInfo.serviceName);
+        }
+      } catch (err) {
+        this.emit('error', new Error(`${err.message}`));
+      }
+    }
+  };
+
+  /**
+   * INTERNAL
+   * Copies file/folders to a container
+   * @private
+   * @param  {string}  containerId Container Id
+   * @param  {string}  srcPath Host source path
+   * @param  {string}  dstPath Container destination path
+   * @return {Promise<void>}
+   * @throws
+   */
+  copyContainer = async (containerId: string, srcPath: string, dstPath: string): Promise<void> => {
+    const cmd = 'docker';
+    const args = ['-H', this.daemonAddress, 'cp', srcPath, `${containerId}:${dstPath}`];
+    const code = await this.spawnAsync(cmd, args);
+    if (code) {
+      throw new Error(`Failed copying file to container: ${code || 'unknown'}`);
+    }
+  }
+
+  /**
+   * INTERNAL
+   * Removes all stopped containers
+   * @private
+   * @return {Promise<void>}
+   * @throws
+   */
+  pruneContainers = async (): Promise<void> => {
+    const cmd = 'docker';
+    const args = ['-H', this.daemonAddress, 'container', 'prune', '--force'];
+    const code = await this.spawnAsync(cmd, args);
+    if (code) {
+      throw new Error(`Failed pruning stopped containers: ${code || 'unknown'}`);
+    }
+  }
+
+  /**
+   * INTERNAL
+   * Stops and removes containers that dont match exlusion prefix.
+   * Useful for stopping all image containers not defined in compose
+   * @private
+   * @param  {string}  exclusionPrefix Filter out by name prefix
+   * @return {Promise<void>}
+   * @throws
+   */
+  removeContainers = async (exclusionPrefix: ?string = undefined): Promise<void> => {
+    // Get container ids for exclusion
+    let excludeContainerIds = [];
+    if (exclusionPrefix) {
+      let erst = '';
+      await this.spawnAsync('docker', ['-H', this.daemonAddress, 'ps', '-a', '--filter', `name=${exclusionPrefix}`, '-q'], {},
+        (data) => { erst += data.toString(); });
+      excludeContainerIds = erst.split('\n').filter(x => x);
+    }
+    // Get all container ids
+    let prst = '';
+    await this.spawnAsync('docker', ['-H', this.daemonAddress, 'ps', '-a', '--filter', 'name=virt', '-q'], {},
+      (data) => { prst += data.toString(); });
+    // Get container ids for removal and remove
+    const removeContainerIds = prst.split('\n').filter(x => x && !excludeContainerIds.some(id => id === x));
+    this.emit('collection-log', `Reusing previous service containers: ${excludeContainerIds.join(' ')}`);
+    this.emit('collection-log', `Removing following containers: ${removeContainerIds.join(' ')}`);
+    await this.spawnAsync('docker', ['-H', this.daemonAddress, 'rm', '--force', ...removeContainerIds], {},
+      (data) => { prst += data.toString(); });
+  }
+}
+exports.VirtuinTaskDispatcher = VirtuinTaskDispatcher;
