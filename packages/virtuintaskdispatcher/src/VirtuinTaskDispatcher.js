@@ -1,6 +1,6 @@
 // @flow
-import type { ProduceRouterDelegate } from 'virtuin-rest-service';
-import RestServer from 'virtuin-rest-service';
+import type { ProduceRouterDelegate } from 'virtuin-task-rest-service';
+import RestServer from 'virtuin-task-rest-service';
 import type { Task, RootInterface, CollectionEnvs } from './types';
 
 const os = require('os');
@@ -168,7 +168,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
   */
   dispatch = (o): void => {
     console.log(`called dispatch: received ${o.type} for ${o.taskUUID}`);
-  },
+  }
   /**
    * dispatchWithResponse
    * Handles messages where a response is expected

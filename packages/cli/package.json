@@ -12,7 +12,7 @@
     "build": "./node_modules/.bin/babel ./src --out-dir ./distribution --source-maps",
     "flow:build": "flow-remove-types ./src/ -d ./distribution --all --pretty",
     "build:flow": "flow-copy-source -v -i '**/__tests__/**' src distribution",
-    "prepublish": "yarn run build && yarn run api",
+    "prepublish": "npm run build",
     "start": "./distribution/cli.js",
     "precommit": "lint-staged",
     "lint": "eslint --cache --format=node_modules/eslint-formatter-pretty .",
