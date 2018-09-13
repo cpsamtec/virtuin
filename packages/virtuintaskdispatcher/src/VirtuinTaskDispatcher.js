@@ -74,9 +74,6 @@ export type DispatchStatus = {|
   |}>
 |}
 
-export type DispatchDelegate = {
-
-}
 
 class VirtuinTaskDispatcher extends EventEmitter {
   daemonAddress: string;
