@@ -42,12 +42,13 @@ export type StationCollectionEnvPaths = {
 };
 
 
+export type GroupMode = 'sequential' | 'individual'
 export type TaskGroup = {
   description: string,
   name: string,
-  runType: 'manual' | 'automatic',
   tasks: Task[],
-  type: 'GENERIC' | 'TEST',
+  autoStart: boolean,
+  mode: GroupMode
 };
 
 export type Task = {
