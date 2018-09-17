@@ -29,6 +29,12 @@ type DockerCredentials = {
   server: ?string
 }
 
+type CurrentTaskHandle = {
+  taskIdent: TaskIdentifier,
+  activeTask: Object,
+  cbHandles: {[string]: {uuid: string}} //, Promise<any>})
+}
+
 export type TaskIdentifier = { groupIndex: number, taskIndex: number };
 export type TaskStatus = {
   name: string,
@@ -109,6 +115,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
 
   restServer: (RestServer);
 
+  currTaskHandles: Array<CurrentTaskHandle>;
+
   constructor(
     stationName: string,
     collectionEnvPath: string,
@@ -116,7 +124,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
     collectionDef: RootInterface,
     stackBasePath: ?string = null,
     verbosity: number = 0,
-    restServerDelegate: ?ProduceRouterDelegate = null
   ) {
     super();
 
@@ -130,6 +137,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
     this.verbosity = verbosity;
 
     this.collectionDef = collectionDef;
+    this.currTaskHandles = [];
 
     // these have to be initialized after previous
     this.daemonAddress = collectionEnvs.VIRT_DOCKER_HOST || 'tcp://0.0.0.0:2375';
@@ -677,6 +685,11 @@ class VirtuinTaskDispatcher extends EventEmitter {
       };
 
       const activeTask = spawn(cmd, args, options);
+      const currIndex = this.currTaskHandles.indexOf(obj => obj.taskIdent.groupIndex === taskIdent.groupIndex && obj.taskIdent.taskIndex === taskIdent.taskIndex);
+      if(currIndex >= 0) { //Should never get here
+
+      }
+      this.currTaskHandles = [...this.currTaskHandles, {taskIdent , activeTask, cbHandles: {}}];
 
       this.updateTaskStatus(taskIdent, {
         ...currStatus,
@@ -749,18 +762,29 @@ class VirtuinTaskDispatcher extends EventEmitter {
     };
     this.updateTaskStatus(taskIdent, currStatus);
     try {
-      activeTask.kill('SIGTERM'); // Ask nicely
-      setTimeout(async () => {
-        // If same task and still not exited then let'em have it
-        const c = this.statusFromIdentifier(taskIdent);
-        const t = this.taskFromIdentifier(taskIdent);
-        if (currStatus.taskUUID && c.state === 'STOP_REQUEST') {
-          activeTask.kill('SIGKILL');
-          if (t && t.dockerInfo && t.dockerInfo.serviceName) {
-            await this.restartService(t.dockerInfo.serviceName);
+      const currIndex = this.currTaskHandles.indexOf(obj => obj.taskIdent.groupIndex === taskIdent.groupIndex && obj.taskIdent.taskIndex === taskIdent.taskIndex);
+      if(currIndex >= 0) { //Should never get here
+        const activeTask = this.currTaskHandles[currIndex].activeTask;
+        activeTask.kill('SIGTERM'); // Ask nicely
+        setTimeout(async () => {
+          // If same task and still not exited then let'em have it
+          const c = this.statusFromIdentifier(taskIdent);
+          const t = this.taskFromIdentifier(taskIdent);
+          if (currStatus.taskUUID && c.state === 'STOP_REQUEST') {
+            activeTask.kill('SIGKILL');
+            if (t && t.dockerInfo && t.dockerInfo.serviceName) {
+              await this.restartService(t.dockerInfo.serviceName);
+            }
+            const c = this.currTaskHandles.indexOf(obj => obj.taskIdent.groupIndex === taskIdent.groupIndex && obj.taskIdent.taskIndex === taskIdent.taskIndex);
+            if(c >= 0) { //Should never get here
+              this.currTaskHandles = [
+                ...this.currTaskHandles.slice(0, c),
+                ...this.currTaskHandles.slice(c + 1)
+              ];
+            }
           }
-        }
-      }, 1500);
+        }, 1500);
+      }
       this.updateDispatchPrimaryStatus({statusMessage: 'Successfully dispatched task stop.'});
     } catch (err) {
       currStatus = {
@@ -1015,6 +1039,13 @@ class VirtuinTaskDispatcher extends EventEmitter {
       state: stopRequest ? 'KILLED' : 'FINISHED',
       error: errMsg
     });
+    const c = this.currTaskHandles.indexOf(obj => obj.taskIdent.groupIndex === taskIdent.groupIndex && obj.taskIdent.taskIndex === taskIdent.taskIndex);
+    if(c >= 0) { //Should never get here
+      this.currTaskHandles = [
+        ...this.currTaskHandles.slice(0, c),
+        ...this.currTaskHandles.slice(c + 1)
+      ];
+    }
 
     // On failure or stop request, restart service
     if (stopRequest || code !== 0) {
