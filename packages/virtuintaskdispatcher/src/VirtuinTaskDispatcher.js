@@ -366,8 +366,9 @@ class VirtuinTaskDispatcher extends EventEmitter {
    * @return {Promise<void>}
    * @throws
    */
-  up = async (fullReload: boolean = false, fullRebuild: boolean = false): Promise<void> => {
+  up = async (fullReload: boolean = false): Promise<void> => {
     try {
+      const fullRebuild = this.collectionDef.build === 'development';
       this.updateDispatchPrimaryStatus({logMessage: 'Starting up task environment.'});
       let objStr = '';
       switch (this.collectionDef.dockerCompose.type || 'RAW') {
@@ -391,9 +392,11 @@ class VirtuinTaskDispatcher extends EventEmitter {
         if (prevCollectionDef.dockerCompose && this.collectionDef.dockerCompose) {
           changes = diff(prevCollectionDef.dockerCompose, this.collectionDef.dockerCompose);
         }
+        debugger;
         if (prevCollectionDef.collectionName !== this.collectionDef.collectionName ||
           prevCollectionDef.collectionTag !== this.collectionDef.collectionTag ||
-          changes.length > 0) {
+          (changes && changes.length > 0)) {
+        debugger;
             shouldRemoveContainers = true;
             this.updateDispatchPrimaryStatus({logMessage:
               'Using existing task collection environment.'});
@@ -439,6 +442,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
         env: { ...process.env, ...this.envs },
         shell: false
       };
+      debugger;
       const code = await this.spawnAsync(cmd, args, options,
         (buffer: Buffer) => { this.updateDispatchPrimaryStatus( {stdout: buffer.toString()} )},
         (buffer: Buffer) => { this.updateDispatchPrimaryStatus( {stderr: buffer.toString()} )});
@@ -730,7 +734,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
   }
 
   statusFromIdentifier = (taskIdent: TaskIdentifier): TaskStatus => {
-    const currStatus = this.dispatchStatus[taskIdent.groupIndex].tasksStatus[taskIdent.taskIndex];
+    const currStatus = this.dispatchStatus.groups[taskIdent.groupIndex].tasksStatus[taskIdent.taskIndex];
     return currStatus;
   }
 

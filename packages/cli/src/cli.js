@@ -116,10 +116,12 @@ class CommandHandler {
   dispatcher: VirtuinTaskDispatcher;
 
   verbosity: number;
+  finishedMessages: Array<string>
 
   constructor(dispatcher) {
     this.dispatcher = dispatcher;
     this.verbosity = dispatcher.verbosity;
+    this.finishedMessages = [];
     this.setupDispatcherLogging();
   }
 
@@ -151,28 +153,7 @@ class CommandHandler {
       return `${style}${match}\x1b[39m`;
     });
   }
-  syntaxHighlight = (json: string) => {
-    if (typeof json != 'string') {
-       json = JSON.stringify(json, undefined, 2);
-    }
-    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
-      var cls = 'number';
-      if (/^"/.test(match)) {
-          if (/:$/.test(match)) {
-              cls = 'key';
-          } else {
-              cls = 'string';
-          }
-      } else if (/true|false/.test(match)) {
-          cls = 'boolean';
-      } else if (/null/.test(match)) {
-          cls = 'null';
-      }
-      return '<span class="' + cls + '">' + match + '</span>';
-    });
-  }
-  clearConsole = function (options : {toStart: boolean} = {toStart: true}) {
+  clearConsole = function (options : {toStart: boolean} = {toStart: false}) {
     process.stdout.write('\u001b[2J')
     process.stdout.write('\u001b[1;1H')
     if (options && options.toStart) process.stdout.write('\u001b[3J')
@@ -189,29 +170,18 @@ class CommandHandler {
     });
   }
 
-  async runTask(group: number, task: number): Promise<void> {
-    await this.dispatcher.startTask({groupIndex: group, taskIndex: task}, (this.dispatcher.collectionDef.build === 'development'));
-    return new Promise(async (resolve) => {
-      const updateInterval = setInterval(async () => {
-        const status : DispatchStatus = await dispatcher.getStatus();
-        this.printStatus(status);
-        if (status.state === 'FINISHED' || status.state === 'KILLED') {
-          clearInterval(updateInterval);
-          resolve();
-        }
-      }, 500);
-    });
-  }
 
   async run(group: number, index: number): Promise<void> {
     const tasks = this.dispatcher.collectionDef.taskGroups[group].tasks || [];
     if (index >= 0 && index < tasks.length) {
       const currTask = tasks[index];
       console.log('[VIRT] Task started');
-      await this.runTask(group, index);
-      console.log('[VIRT] Task finished');
-      console.log('[VIRT] To attach manually in the service run');
-      console.log(`[VIRT] docker-compose ${[...this.dispatcher.daemonArgs, 'exec', currTask.dockerInfo.serviceName, 'bash'].join(' ')}`);
+      await this.dispatcher.startTask({groupIndex: group, taskIndex: index});
+      this.finishedMessages = [
+      '[VIRT] Task finished',
+      '[VIRT] To attach manually in the service run',
+      `[VIRT] docker-compose ${[...this.dispatcher.daemonArgs, 'exec', currTask.dockerInfo.serviceName, 'bash'].join(' ')}`
+    ];
     } else {
       throw new Error('[VIRT] Task invalid group/task index');
     }
@@ -222,10 +192,12 @@ class CommandHandler {
     if (index >= 0 && index < tasks.length) {
       const currTask = tasks[index];
       console.log('[VIRT] Sending Task data');
-      await dispatcher.sendTaskInputDataFile(currTask);
-      console.log('[VIRT] Sending Task data finished');
-      console.log(`[VIRT] To attach manually and view /virtuin_task.json in the service ${currTask.dockerInfo.serviceName} run`);
-      console.log(`[VIRT] docker-compose ${[...this.dispatcher.daemonArgs, 'exec', currTask.dockerInfo.serviceName, 'bash'].join(' ')}`);
+      await dispatcher.sendTaskInputDataFile({groupIndex: group, taskIndex: index});
+      this.finishedMessages = [
+        '[VIRT] Sending Task data finished',
+        `[VIRT] To attach manually and view /virtuin_task.json in the service ${currTask.dockerInfo.serviceName} run`,
+        `[VIRT] docker-compose ${[...this.dispatcher.daemonArgs, 'exec', currTask.dockerInfo.serviceName, 'bash'].join(' ')}`
+      ];
     } else {
       throw new Error('[VIRT] Task invalid group/task index');
     }
@@ -235,27 +207,29 @@ class CommandHandler {
     console.log('[VIRT] bringing docker-compose up');
     await this.dispatcher.up(reloadCompoase, (this.dispatcher.collectionDef.build === 'development'));
     await new Promise((resolve) => setTimeout(resolve, 500));
-    console.log('[VIRT] finished docker-compose up');
-    console.log('[VIRT] To attach manually to a service run');
-    console.log(`[VIRT] docker-compose ${[...this.dispatcher.daemonArgs, 'exec', '[service-name]', 'bash'].join(' ')}`);
+    this.finishedMessages = [
+      '[VIRT] finished docker-compose up',
+      '[VIRT] To attach manually to a service run',
+      `[VIRT] docker-compose ${[...this.dispatcher.daemonArgs, 'exec', '[service-name]', 'bash'].join(' ')}`
+    ];
   }
 
   async down(): Promise<void> {
     console.log('[VIRT] bringing Vagrant VM down');
     await this.dispatcher.down();
-    console.log('[VIRT] finished Vagrant VM down');
+    this.finishedMessages = ['[VIRT] finished Vagrant VM down'];
   }
 
   async upVM(reloadVM: boolean = false): Promise<void> {
     console.log('[VIRT] Vagrant VM up');
     await this.dispatcher.upVM(reloadVM);
-    console.log('[VIRT] finished VM up');
+    this.finishedMessages = ['[VIRT] finished VM up'];
   }
 
   async downVM(): Promise<void> {
     console.log('[VIRT] bringing Vagrant VM down');
     await this.dispatcher.downVM();
-    console.log('[VIRT] finished Vagrant VM down');
+    this.finishedMessages = ['[VIRT] finished Vagrant VM down'];
   }
 }
 // Read task sdefinitions file args[2]
@@ -311,6 +285,7 @@ if (inputCommand === 'run') {
     return true;
   }).catch(async (err) => {
     console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
+    dispatcher.end();
     process.exit(2);
   });
 } else if (inputCommand === 'up') {
@@ -357,7 +332,12 @@ process.on('SIGINT', () => {
 
 process.on('exit', (code) => {
   console.log(`[VIRT] Task dispatcher finished (code=${code}).`);
+  if (commandHandler) {
+    for(const k of commandHandler.finishedMessages.keys()) {
+      console.log(commandHandler.finishedMessages[k]);
+    }
+  }
   if (dispatcher) {
-    // dispatcher.cleanup();
+    dispatcher.end();
   }
 });
