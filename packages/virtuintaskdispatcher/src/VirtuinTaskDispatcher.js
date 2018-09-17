@@ -383,27 +383,34 @@ class VirtuinTaskDispatcher extends EventEmitter {
       // Check if previous collection exists and if so has same tag
       // If tag doesnt match, then need to perform full reload
       let changes = []; // assume all needs to be cleaned up if no prev collection exists
-      const tmpPath = await this.getTempDirPath();
-      const prevCollection = path.join(tmpPath, 'prevCollection.json');
-      const prevCollectionExists = await fse.pathExists(prevCollection);
+      let shouldRemoveContainers = false;
+      const prevCollectionExists = await fse.pathExists(this.collectionPath);
+      debugger;
       if (prevCollectionExists) {
-        const prevCollectionDef = await fse.readJson(prevCollection);
-        changes = diff(prevCollectionDef, this.collectionDef);
+        const prevCollectionDef : RootInterface = await fse.readJson(this.collectionPath);
+        if (prevCollectionDef.dockerCompose && this.collectionDef.dockerCompose) {
+          changes = diff(prevCollectionDef.dockerCompose, this.collectionDef.dockerCompose);
+        }
+        if (prevCollectionDef.collectionName !== this.collectionDef.collectionName ||
+          prevCollectionDef.collectionTag !== this.collectionDef.collectionTag ||
+          changes.length > 0) {
+            shouldRemoveContainers = true;
+            this.updateDispatchPrimaryStatus({logMessage:
+              'Using existing task collection environment.'});
+          } else {
+            this.updateDispatchPrimaryStatus({logMessage:
+              'Creating new task collection environment.'});
+          }
       }
-      if (changes) {
-        await fse.writeJson(this.collectionDef);
-      }
-      this.updateDispatchPrimaryStatus({logMessage:
-      changes == null
-        ? 'Using existing task collection environment.'
-        : 'Creating new task collection environment.'});
 
+      debugger;
       // Write compose.yml into stack folder
       await fse.outputFile(this.ymlPath, objStr);
 
       // Remove all docker containers not in this definition
-      const removeAll = fullReload || changes;
+      const removeAll = fullReload || shouldRemoveContainers;
       await this.removeContainers(removeAll ? undefined : this.composeName());
+      debugger;
 
       // Create environment file
       const envPath = path.join(this.composePath(), '.env');
@@ -869,7 +876,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
    * Returns copy of task status
    * @return {TaskStatus} Task status
    */
-  getStatus = () => ({
+  getStatus = (): DispatchStatus =>  ({
     ...this.dispatchStatus
   });
 

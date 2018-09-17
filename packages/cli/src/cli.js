@@ -1,17 +1,17 @@
 // @flow
+
 // import * as os from 'os';
 // import * as path from 'path';
 // import * as fs from 'fs';
 // import * as dotenv from 'dotenv';
-import type { ProduceRouterDelegate } from 'virtuin-rest-service';
-import type { RootInterface, CollectionEnvs } from './types';
+import type { RootInterface, CollectionEnvs } from 'virtuintaskdispatcher/distribution/types';
 // import type { ProduceRouterDelegate } from './VirtuinTaskDispatcher';
-
+import type { DispatchUpdatePrimaryStatus, DispatchStatus } from 'virtuintaskdispatcher';
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
 const program = require('commander');
-const { VirtuinTaskDispatcher } = require('./VirtuinTaskDispatcher');
+const { VirtuinTaskDispatcher } = require('virtuintaskdispatcher').VirtuinTaskDispatcher;
 
 type InputCommandType = 'run' | 'up' | 'down' | 'upVM' | 'downVM' | 'sendData'
 
@@ -32,7 +32,6 @@ program
   .command('run <collectionPath>')
   .option('-t, --task <index>', 'Task Index [0-N]', parseInt, 0)
   .option('-g, --group <index>', 'Group Index [0-M]', parseInt, 0)
-  .option('-v, --verbose <level>', 'Verbosity [0-2]', parseInt, 0)
   .action((collectionPath, options) => {
     console.log(`run ${collectionPath}`);
     inputCommand = 'run';
@@ -124,47 +123,78 @@ class CommandHandler {
     this.setupDispatcherLogging();
   }
 
-  setupDispatcherLogging() {
-    this.dispatcher.on('task-stdout', msg => {
-      console.log(`[VIRT:task-stdout] ${msg}`);
-    });
-    this.dispatcher.on('task-stderr', msg => {
-      console.log(`[VIRT:task-stderr] ${msg}`);
-    });
-    this.dispatcher.on('task-status', (err, status) => {
-      if (err) {
-        console.log(`[VIRT:error] ${err.message}`);
-      } else if (status) {
-        console.log(`[VIRT:task-status] ${JSON.stringify(status)}`);
+  JSONstringify = (json: string) => {
+    if (typeof json != 'string') {
+      json = JSON.stringify(json, undefined, '\t');
+    }
+    var
+      arr = [],
+      _string = '\x1b[92m', //'color:green',
+      _number = '\x1b[33m', //'color:darkorange',
+      _boolean = '\x1b[34m', //'color:blue',
+      _null = '\x1b[95m', //'color:magenta',
+      _key = '\x1b[91m'; //'color:red';
+
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+      var style = _number;
+      if (/^"/.test(match)) {
+          if (/:$/.test(match)) {
+              style = _key;
+          } else {
+              style = _string;
+          }
+      } else if (/true|false/.test(match)) {
+          style = _boolean;
+      } else if (/null/.test(match)) {
+          style = _null;
       }
+      return `${style}${match}\x1b[39m`;
     });
-    if (this.verbosity >= 1) {
-      this.dispatcher.on('collection-log', msg => {
-        console.log(`[VIRT:collection-log] ${msg}`);
-      });
-      this.dispatcher.on('task-log', msg => {
-        console.log(`[VIRT:task-log] ${msg}`);
-      });
+  }
+  syntaxHighlight = (json: string) => {
+    if (typeof json != 'string') {
+       json = JSON.stringify(json, undefined, 2);
     }
-    if (this.verbosity === 2) {
-      this.dispatcher.on('collection-stdout', msg => {
-        console.log(`[VIRT:collection-stdout] ${msg}`);
-      });
-      this.dispatcher.on('collection-stderr', msg => {
-        console.log(`[VIRT:collection-stderr] ${msg}`);
-      });
-    }
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+      var cls = 'number';
+      if (/^"/.test(match)) {
+          if (/:$/.test(match)) {
+              cls = 'key';
+          } else {
+              cls = 'string';
+          }
+      } else if (/true|false/.test(match)) {
+          cls = 'boolean';
+      } else if (/null/.test(match)) {
+          cls = 'null';
+      }
+      return '<span class="' + cls + '">' + match + '</span>';
+    });
+  }
+  clearConsole = function (options : {toStart: boolean} = {toStart: true}) {
+    process.stdout.write('\u001b[2J')
+    process.stdout.write('\u001b[1;1H')
+    if (options && options.toStart) process.stdout.write('\u001b[3J')
+  }
+  printStatus = function (status: DispatchStatus) {
+    this.clearConsole();
+    const t = this.JSONstringify(JSON.stringify(status, undefined, 2));
+    console.log(`[VIRT:status]\n\n${t}`);
+  }
+  setupDispatcherLogging() {
+    this.clearConsole();
+    this.dispatcher.on('task-status', status => {
+      this.printStatus(status)
+    });
   }
 
-  async runTask(group: TaskGroup, task: Task): Promise<void> {
-    const taskConfigs = {
-      task,
-      groupName: group.name
-    };
-    await this.dispatcher.startTask(taskConfigs, (this.dispatcher.collectionDef.build === 'development'));
+  async runTask(group: number, task: number): Promise<void> {
+    await this.dispatcher.startTask({groupIndex: group, taskIndex: task}, (this.dispatcher.collectionDef.build === 'development'));
     return new Promise(async (resolve) => {
       const updateInterval = setInterval(async () => {
-        const status = await dispatcher.getStatus();
+        const status : DispatchStatus = await dispatcher.getStatus();
+        this.printStatus(status);
         if (status.state === 'FINISHED' || status.state === 'KILLED') {
           clearInterval(updateInterval);
           resolve();
@@ -178,7 +208,7 @@ class CommandHandler {
     if (index >= 0 && index < tasks.length) {
       const currTask = tasks[index];
       console.log('[VIRT] Task started');
-      await this.runTask(this.dispatcher.collectionDef.taskGroups[group], currTask);
+      await this.runTask(group, index);
       console.log('[VIRT] Task finished');
       console.log('[VIRT] To attach manually in the service run');
       console.log(`[VIRT] docker-compose ${[...this.dispatcher.daemonArgs, 'exec', currTask.dockerInfo.serviceName, 'bash'].join(' ')}`);
@@ -235,6 +265,7 @@ if (!process.env.VIRT_STATION_NAME) {
 }
 const stationName: string = (process.env.VIRT_STATION_NAME: any);
 console.log(`[VIRT] running in ${stationName}`);
+debugger;
 const tmpCollectionDef: ?RootInterface = VirtuinTaskDispatcher.collectionObjectFromPath((collectionDefPath: any));
 
 if (!tmpCollectionDef || !tmpCollectionDef.stationCollectionEnvPaths
@@ -256,30 +287,16 @@ if (!collectionEnvs) {
 }
 
 const stackPath = path.join(os.tmpdir(), 'stacks');
-let dispatcher: VirtuinTaskDispatcher;
-let commandHandler: CommandHandler;
-if (inputCommand === 'run') {
-  const d: ProduceRouterDelegate = {
-    dispatch: (o): void => {
-      console.log(`called dispatch: received ${o.type} for ${o.taskUUID}`);
-    },
-    dispatchWithResponse: (o): Promise<any> => {
-      console.log(`called dispatchWithResponse: received ${o.type} for ${o.taskUUID}`);
-      return new Promise((resolve) => {
-        resolve(`received ${o.message}`);
-      });
-    }
-  };
-  dispatcher = new VirtuinTaskDispatcher(
+const dispatcher: VirtuinTaskDispatcher = new VirtuinTaskDispatcher(
     stationName,
     collectionEnvPath,
     (collectionEnvs: any),
     collectionDef,
     stackPath,
     verbosity,
-    d
   );
-  commandHandler = new CommandHandler(dispatcher);
+const commandHandler: CommandHandler = new CommandHandler(dispatcher);
+if (inputCommand === 'run') {
   commandHandler.run(groupIndex, taskIndex).then(() => {
     dispatcher.end();
     return true;
@@ -288,42 +305,50 @@ if (inputCommand === 'run') {
     dispatcher.end();
     process.exit(2);
   });
-} else {
-  dispatcher = new VirtuinTaskDispatcher(
-    stationName,
-    collectionEnvPath,
-    (collectionEnvs: any),
-    collectionDef,
-    stackPath,
-    verbosity
-  );
-  commandHandler = new CommandHandler(dispatcher);
-  if (inputCommand === 'sendData') {
-    commandHandler.sendData(groupIndex, taskIndex).then(() => true).catch(async (err) => {
-      console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
-      process.exit(2);
-    });
-  } else if (inputCommand === 'up') {
-    commandHandler.up(fullReload).then(() => true).catch(async (err) => {
-      console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
-      process.exit(2);
-    });
-  } else if (inputCommand === 'down') {
-    commandHandler.down().then(() => true).catch(async (err) => {
-      console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
-      process.exit(2);
-    });
-  } else if (inputCommand === 'upVM') {
-    commandHandler.upVM(fullReload).then(() => true).catch(async (err) => {
-      console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
-      process.exit(2);
-    });
-  } else if (inputCommand === 'downVM') {
-    commandHandler.downVM().then(() => true).catch(async (err) => {
-      console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
-      process.exit(2);
-    });
-  }
+} else if (inputCommand === 'sendData') {
+  commandHandler.sendData(groupIndex, taskIndex).then(() => {
+    dispatcher.end();
+    return true;
+  }).catch(async (err) => {
+    console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
+    process.exit(2);
+  });
+} else if (inputCommand === 'up') {
+  commandHandler.up(fullReload).then(() => {
+    dispatcher.end();
+    return true;
+  }).catch(async (err) => {
+    console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
+    dispatcher.end();
+    process.exit(2);
+  });
+} else if (inputCommand === 'down') {
+  commandHandler.down().then(() => {
+    dispatcher.end();
+    return true;
+  }).catch(async (err) => {
+    console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
+    dispatcher.end();
+    process.exit(2);
+  });
+} else if (inputCommand === 'upVM') {
+  commandHandler.upVM(fullReload).then(() => {
+    dispatcher.end();
+    return true;
+  }).catch(async (err) => {
+    console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
+    dispatcher.end();
+    process.exit(2);
+  });
+} else if (inputCommand === 'downVM') {
+  commandHandler.downVM().then(() => {
+    dispatcher.end();
+    return true;
+  }).catch(async (err) => {
+    console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
+    dispatcher.end();
+    process.exit(2);
+  });
 }
 
 process.on('SIGINT', () => {
