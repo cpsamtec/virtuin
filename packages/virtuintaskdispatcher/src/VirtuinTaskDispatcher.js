@@ -35,8 +35,8 @@ type CurrentTaskHandle = {
   cbHandles: {[string]: {uuid: string}} //, Promise<any>})
 }
 
-export type TaskIdentifier = { groupIndex: number, taskIndex: number };
-export type TaskStatus = {
+export type TaskIdentifier = {| groupIndex: number, taskIndex: number |};
+export type TaskStatus = {|
   name: string,
   description: string,
   progress: number,
@@ -46,11 +46,11 @@ export type TaskStatus = {
   error: ?string,
   viewURL: ?string,
   startDate: ?string,
+  completeDate: ?string,
   messages: Array<string>,
   stdout: string,
   stderr: string
-
-};
+|};
 export type DispatchCallbacks = {|
   uuid: string,
   message: string
@@ -61,13 +61,6 @@ export type DispatchPrimaryStatus = {|
   callbacks: {string?: DispatchCallbacks},
   stdout: string,
   stderr: string
-|}
-export type DispatchUpdatePrimaryStatus = {|
-  statusMessage?: string,
-  logMessage?: string,
-  callbacks?: {string?: DispatchCallbacks},
-  stdout?: string,
-  stderr?: string
 |}
 export type DispatchStatus = {|
   ...DispatchPrimaryStatus,
@@ -196,6 +189,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
             error: null,
             viewURL: task.viewURL,
             startDate: null,
+            completeDate: null,
             messages: [],
             stdout: "",
             stderr: ""
@@ -224,13 +218,13 @@ class VirtuinTaskDispatcher extends EventEmitter {
       const t = this.getTaskIdentifierFromUUID(o.taskUUID);
       if(t && o.percent) {
         const c = this.statusFromIdentifier(t);
-        this.updateTaskStatus(t, {...c, progress: o.percent});
+        this.updateTaskStatus(t, {progress: o.percent});
       }
     } else if(o.type === "message") {
       const t = this.getTaskIdentifierFromUUID(o.taskUUID);
       if(t && o.message) {
         const c = this.statusFromIdentifier(t);
-        this.updateTaskStatus(t, {...c, messages: [...c.messages, o.message]});
+        this.updateTaskStatus(t, {messages: [...c.messages, o.message]});
       }
     }
     console.log(`called dispatch: received ${o.type} for ${o.taskUUID}`);
@@ -638,11 +632,11 @@ class VirtuinTaskDispatcher extends EventEmitter {
 
     // Update status
     this.updateTaskStatus(taskIdent, {
-      ...currStatus,
-      taskName: task.name,
+      name: task.name,
       taskUUID: this.generateUUID(),
-      groupName: groupStatus.name,
       state: 'START_REQUEST',
+      startDate: new Date().toISOString(),
+      completeDate: null,
       error: null
     });
 
@@ -703,10 +697,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
       this.currTaskHandles = [...this.currTaskHandles, {taskIdent , activeTask, cbHandles: {}}];
 
       this.updateTaskStatus(taskIdent, {
-        ...currStatus,
         state: 'RUNNING',
-        error: null,
-        serviceName: runServiceName
+        error: null
       });
       activeTask.on('exit', (code: number, signal: ?number) => { this.taskFinishHandler(taskIdent, activeTask, code, signal); });
       activeTask.stdout.on('data', (buffer: Buffer) => { this.taskSTDOutHandler(taskIdent, buffer); });
@@ -766,12 +758,10 @@ class VirtuinTaskDispatcher extends EventEmitter {
       return { success: false, error: new Error(`Cant stop task in state ${currStatus.state}`) };
     }
 
-    currStatus = {
-      ...currStatus,
+    this.updateTaskStatus(taskIdent, {
       state: 'STOP_REQUEST',
       error: null
-    };
-    this.updateTaskStatus(taskIdent, currStatus);
+    });
     try {
       const currIndex = this.currTaskHandles.indexOf(obj => obj.taskIdent.groupIndex === taskIdent.groupIndex && obj.taskIdent.taskIndex === taskIdent.taskIndex);
       if(currIndex >= 0) { //Should never get here
@@ -798,20 +788,17 @@ class VirtuinTaskDispatcher extends EventEmitter {
       }
       this.updateDispatchPrimaryStatus({statusMessage: 'Successfully dispatched task stop.'});
     } catch (err) {
-      currStatus = {
-        ...currStatus,
+      this.updateTaskStatus(taskIdent, {
         state: 'KILLED',
         error: `Failed stopping task: ${err.message}`
-      };
-      this.updateTaskStatus(taskIdent, currStatus);
+      });
       return { success: false, error: err };
     }
-    currStatus = {
-      ...currStatus,
+    this.updateTaskStatus(taskIdent, {
       state: 'KILLED',
+      completeDate: new Date().toISOString(),
       error: null
-    };
-    this.updateTaskStatus(taskIdent, currStatus);
+    });
     this.updateDispatchPrimaryStatus({statusMessage: 'Successfully dispatched task stop.'});
     return { success: true, error: null };
   }
@@ -828,7 +815,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
       return { success: false, error: new Error(`Cant clear in state ${currStatus.state}`) };
     }
     this.updateTaskStatus(taskIdent, {
-      ...currStatus,
       state: 'IDLE',
       error: null,
     });
@@ -846,14 +832,14 @@ class VirtuinTaskDispatcher extends EventEmitter {
    */
 
 
-  updateDispatchPrimaryStatus = (primaryStatus: DispatchUpdatePrimaryStatus) => {
+  updateDispatchPrimaryStatus = (primaryStatus: $Shape<DispatchPrimaryStatus>) => {
     this.dispatchStatus = {
       ...this.dispatchStatus,
       ...primaryStatus
     }
     this.emit('task-status', this.getStatus());
   }
-  updateTaskStatus = (taskIdentifier: TaskIdentifier, newTaskStatus: TaskStatus) => {
+  updateTaskStatus = (taskIdentifier: TaskIdentifier, newTaskStatus: $Shape<TaskStatus>) => {
     this.dispatchStatus =  {
       ...this.dispatchStatus,
       groups: this.dispatchStatus.groups.map((groupItem, i) => {
@@ -867,6 +853,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
               return taskStatus;
             }
             return {
+              ...taskStatus,
               ...newTaskStatus,
             };
           })
@@ -996,11 +983,10 @@ class VirtuinTaskDispatcher extends EventEmitter {
    * @return {void}
    */
   taskSTDOutHandler = (taskIdentifier: TaskIdentifier, buffer: Buffer): void => {
-    const bufStr = buffer.toString();
+    const bufStr = buffer.toString('utf8');
     const currStatus = this.statusFromIdentifier(taskIdentifier);
     this.updateTaskStatus(taskIdentifier, {
-      ...currStatus,
-      stdout: bufStr
+      stdout: (currStatus.stdout + bufStr).slice(-200)
     })
   }
 
@@ -1015,8 +1001,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
     const bufStr = buffer.toString();
     const currStatus = this.statusFromIdentifier(taskIdentifier);
     this.updateTaskStatus(taskIdentifier, {
-      ...currStatus,
-      stderr: bufStr
+      stderr:  (currStatus.stderr + bufStr).slice(-200)
     })
   }
 
@@ -1046,8 +1031,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
       ? null
       : `Task prematurely exited (code:${code || ''}, signal:${signal || ''}).\n`;
     this.updateTaskStatus(taskIdent, {
-      ...currStatus,
       state: stopRequest ? 'KILLED' : 'FINISHED',
+      completeDate: new Date().toISOString(),
       error: errMsg
     });
     const c = this.currTaskHandles.indexOf(obj => obj.taskIdent.groupIndex === taskIdent.groupIndex && obj.taskIdent.taskIndex === taskIdent.taskIndex);

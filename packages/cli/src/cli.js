@@ -127,7 +127,7 @@ class CommandHandler {
 
   JSONstringify = (json: string) => {
     if (typeof json != 'string') {
-      json = JSON.stringify(json, undefined, '\t');
+      json = JSON.stringify(json, undefined, 2);
     }
     var
       arr = [],
