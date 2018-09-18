@@ -1,0 +1,35 @@
+.bottomArrow {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid rgba(0,0,0,0.3);
+}
+.arrowContainer:hover .bottomArrow {
+  border-top: 5px solid #fff;
+}
+
+.topArrow {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 5px solid rgba(0,0,0,0.3);
+}
+.arrowContainer:hover .topArrow {
+  border-bottom: 5px solid #fff;
+}
+.sectionHeader {
+  width: 100%;
+  color: #555;
+  margin-bottom: 15px;
+  border-bottom: solid 4px rgba(0,0,0,0.12);
+  font-weight: 500;
+  font-size: 1.5em;
+  line-height: 44px;
+}
+
+.sectionContent {
+  overflow: hidden;
+  margin-bottom: 15px;
+}

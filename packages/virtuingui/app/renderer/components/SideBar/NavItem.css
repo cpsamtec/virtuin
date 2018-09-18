@@ -1,0 +1,15 @@
+.navItem, .navItemOpen {
+  padding: 0 0px;
+  color: #ccc;
+  display: block;
+  width: 100%;
+}
+.navItemOpen {
+  background: #333;
+}
+
+.navItemContent {
+  border-top:solid 1px #777;
+  padding: 15px 25px;
+  background: #333;
+}

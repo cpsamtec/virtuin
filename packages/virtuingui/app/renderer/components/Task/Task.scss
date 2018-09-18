@@ -1,0 +1,36 @@
+.container {
+  height: 100%;
+}
+.taskView {
+  width:auto;
+  overflow: hidden;
+  height:100vh;
+  display:flex;
+  flex-direction: column;
+  position: relative;
+}
+.taskScrollView {
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  flex: 1 1 auto;
+  padding: 15px;
+  color: #000;
+  display: flex;
+  flex-direction: column;
+}
+
+.tableBody {
+  width: 100%;
+  height:100%;
+  display: table;
+}
+.tableRow {
+  display: table-row;
+  width: 100%;
+}
+.tableRowFull {
+  display: table-row;
+  width: 100%;
+  height:100%;
+}
