@@ -3,7 +3,6 @@
 // collection.env
 export type CollectionEnvs = {
   VIRT_VAGRANT_DIRECTORY: string,
-  VIRT_BROKER_ADDRESS: string,
   VIRT_DOCKER_HOST: string,
   VIRT_DOCKER_USER?: string,
   VIRT_DOCKER_PASSWORD?: string,

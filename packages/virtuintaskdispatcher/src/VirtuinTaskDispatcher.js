@@ -91,8 +91,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
 
   collectionEnvs: ?Object;
 
-  brokerAddress: string;
-
   verbosity: number;
 
   stationName: string;
@@ -125,7 +123,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
     this.vagrantDirectory = collectionEnvs.VIRT_VAGRANT_DIRECTORY;
     this.collectionEnvPath = collectionEnvPath;
     this.collectionEnvs = collectionEnvs;
-    this.brokerAddress = collectionEnvs.VIRT_BROKER_ADDRESS || 'localhost';
     this.stationName = stationName;
     this.verbosity = verbosity;
 
@@ -140,7 +137,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
 
     this.initializeDispatchStatus();
     this.envs = {
-      VIRT_BROKER_ADDRESS: this.brokerAddress,
       VIRT_STATION_NAME: this.stationName,
       COMPOSE_CONVERT_WINDOW_PATHS: 1,
       COMPOSE_FORCE_WINDOWS_HOST: 0,
@@ -380,17 +376,14 @@ class VirtuinTaskDispatcher extends EventEmitter {
       let changes = []; // assume all needs to be cleaned up if no prev collection exists
       let shouldRemoveContainers = false;
       const prevCollectionExists = await fse.pathExists(this.collectionPath);
-      debugger;
       if (prevCollectionExists) {
         const prevCollectionDef : RootInterface = await fse.readJson(this.collectionPath);
         if (prevCollectionDef.dockerCompose && this.collectionDef.dockerCompose) {
           changes = diff(prevCollectionDef.dockerCompose, this.collectionDef.dockerCompose);
         }
-        debugger;
         if (prevCollectionDef.collectionName !== this.collectionDef.collectionName ||
           prevCollectionDef.collectionTag !== this.collectionDef.collectionTag ||
           (changes && changes.length > 0)) {
-        debugger;
             shouldRemoveContainers = true;
             this.updateDispatchPrimaryStatus({logMessage:
               'Using existing task collection environment.'});
@@ -400,7 +393,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
           }
       }
 
-      debugger;
       // Write compose.yml into stack folder
       await fse.outputFile(this.ymlPath, objStr);
 

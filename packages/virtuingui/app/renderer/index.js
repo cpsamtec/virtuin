@@ -1,3 +1,4 @@
+// @flow
 import React from 'react';
 import { createHashHistory, createBrowserHistory } from 'history';
 import { render } from 'react-dom';

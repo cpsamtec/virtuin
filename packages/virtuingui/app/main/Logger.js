@@ -3,7 +3,7 @@ import { CloudLogger } from 'cloudlogging';
 
 const groupName = "virtuingui";
 const streamName = process.env.VIRT_STATION_NAME || "Invalid_No_VIRT_STATION_NAME"; //VIRT_STATION_NAME should be globally set on the computer
-const logger = new CloudLogger(groupName);
+let logger = new CloudLogger(groupName);
 logger.enableCloudwatch = false; // at first just use console transport
 (async () => {
   await logger.open(streamName);

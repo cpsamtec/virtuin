@@ -2,6 +2,7 @@ import { connect } from 'react-redux';
 import TaskControls from '../components/TaskControls/TaskControls';
 import { stopTaskRequest, startTaskRequest, clearFinishedTaskRequest } from '../../shared/actions/task';
 
+import type { DispatchUpdatePrimaryStatus, DispatchStatus } from 'virtuintaskdispatcher';
 // eslint-disable-next-line no-unused-vars
 const mapStateToProps = (state, ownProps) => {
   const taskStatus = state.taskStatus;
@@ -15,14 +16,14 @@ const mapStateToProps = (state, ownProps) => {
 
 const mapDispatchToProps = dispatch => (
   {
-    stopTask: taskUUID => {
-      dispatch(stopTaskRequest(taskUUID));
+    stopTask: taskIdentifier: TaskIdentifier => {
+      dispatch(stopTaskRequest(taskIdentifier));
     },
-    startTask: id => {
-      dispatch(startTaskRequest(id));
+    startTask: taskIdentifier: TaskIdentifier => {
+      dispatch(startTaskRequest(taskIdentifier));
     },
-    clearTask: taskUUID => {
-      dispatch(clearFinishedTaskRequest(taskUUID));
+    clearTask: taskIdentifier: TaskIdentifier => {
+      dispatch(clearFinishedTaskRequest(taskIdentifier));
     }
   }
 );

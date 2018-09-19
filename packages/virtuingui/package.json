@@ -26,7 +26,7 @@
     "package:linux": "npm run build && build --linux",
     "package:mac": "npm run build && build --mac",
     "package:win": "npm run build && build --win --x64",
-    "postinstall": "node -r babel-register internals/scripts/CheckNativeDep.js && npm run flow-typed && npm run build-dll && electron-builder install-app-deps && ../../node node_modules/fbjs-scripts/node/check-dev-engines.js package.json",
+    "postinstall": "node -r babel-register internals/scripts/CheckNativeDep.js && npm run flow-typed && npm run build-dll && electron-builder install-app-deps && ../../node_modules/fbjs-scripts/node/check-dev-engines.js package.json",
     "prestart": "npm run build",
     "release": "build",
     "start": "cross-env NODE_ENV=production electron ./app/",
@@ -131,6 +131,7 @@
     ],
     "moduleDirectories": [
       "node_modules",
+      "../../node_modules",
       "app/node_modules"
     ],
     "transform": {

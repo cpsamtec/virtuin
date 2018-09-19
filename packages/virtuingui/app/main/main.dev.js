@@ -9,7 +9,7 @@ import { configureStore } from '../shared/store/configureStore';
 import { fetchTasksRequest, startTaskRequest } from '../shared/actions/task';
 import { addLogEntry } from '../shared/actions/log';
 import { VirtuinTouchBar } from './VirtuinTouchBar';
-import { logger } from './Logger';
+import logger from './Logger';
 import { reconfigureLogger } from './Logger';
 
 const program = require('commander');

@@ -1,6 +1,7 @@
-//@flow
+// @flow
 import { app } from 'electron';
 import * as path from 'path';
+import type { RootInterface, CollectionEnvs } from 'virtuintaskdispatcher/distribution/types';
 import { VirtuinTaskDispatcher } from 'virtuintaskdispatcher';
 import { setDut } from '../shared/actions/dut';
 import { setStation } from '../shared/actions/station';
@@ -13,9 +14,7 @@ import { updateTaskStatus } from '../shared/actions/taskStatus';
 import { addLogEntry } from '../shared/actions/log';
 import logger from './Logger';
 
-import type { ProduceRouterDelegate } from 'virtuin-rest-service';
 import type { RootInterface } from 'virtuintaskdispatcher';
-
 
 const fse = require('fs-extra');
 
@@ -50,6 +49,7 @@ class TaskController {
       logger.info(`Task environment configs being saved in ${stackPath}.`);
       await fse.ensureDir(stackPath);
       if(this.dispatcher) {
+        this.dispatcher.removeAllListeners();
         this.dispatcher.end();
       }
       const tmpCollectionDef: ?RootInterface = VirtuinTaskDispatcher.collectionObjectFromPath((filepath: any));
@@ -75,19 +75,13 @@ class TaskController {
         filepath,
         (collectionEnvs: any),
         collectionDef,
-        stackPath,
-        2,
-        ({dispatch, dispatchWithResponse} = this)
+        stackPath
       );
-      this.dispatcher.on('task-status', this.dispatcherStatusUpdate);
-      this.dispatcher.on('task-log', this.dispatcherTaskLog);
-      this.dispatcher.on('collection-log', this.dispatcherCollectionLog);
-      this.dispatcher.on('error', this.dispatcherError);
+      this.setupDispatcherEvents();
       await this.dispatcher.upVM(false);
       await this.dispatcher.login();
-      await this.dispatcher.up(false, (this.dispatcher.collectionDef.build === 'development'));
-
-      msg = `[VIRT] Subscribing to task results.`;
+      await this.dispatcher.up(false);
+      msg = `[VIRT] Subscribing to task status.`;
       logger.info(msg);
       this.store.dispatch(addLogEntry({ type: 'info', data: msg }));
       // Connect and subscribe to Task Publisher
@@ -98,96 +92,16 @@ class TaskController {
     }
   }
 
-  //ProduceRouterDelegate
-  /**
-   * dispatch
-   * Handles simple messages from the rest end point
-  */
-  dispatch = (o): void => {
-    console.log(`called dispatch: received ${o.type} for ${o.taskUUID}`);
-  },
-  /**
-   * dispatchWithResponse
-   * Handles messages where a response is expected
-  */
-  dispatchWithResponse = async (o): Promise<any> => {
-    console.log(`called dispatchWithResponse: received ${o.type} for ${o.taskUUID}`);
-    return `received ${o.message}`
-  }
-  //End ProduceRouterDelegate
+  setupDispatcherEvents = () => {
+    this.dispatcher.on('task-status', status => {
+      try {
+        const msg = JSON.stringify(status, undefined, "  ");
+        //logger.info(msg);
+        //this.store.dispatch(addLogEntry({ type: 'info', data: msg }));
+      } catch(error) {
 
-  /**
-   * Handles status update of task handler via task dispatcher.
-   * @param  {Error} err     Task dispatcher error.
-   * @param  {Object} status Task handler status Object
-   * @return {void}
-   */
-  dispatcherStatusUpdate = (err, status) => {
-    if (err) {
-      // TODO: Handle error
-      const errMsg = `[VIRT:TASK-STATUS] Dispatcher received task error: ${err}`;
-      logger.warn(errMsg);
-      this.store.dispatch(addLogEntry({ type: 'warn', data: errMsg }));
-    }
-    if (status) {
-      const storeState = this.store.getState();
-      const actTask = storeState.task.activeTask;
-      // if actTask shows RUNNING/STOP_REQUEST but status is KILLED, update active task
-      if (actTask && ['RUNNING', 'STOP_REQUEST'].find(s => s === actTask.state) && status.state === 'KILLED') {
-        this.store.dispatch(addLogEntry({ type: 'warn', data: '[VIRT:TASK-STATUS] Active task prematurely finished.' }));
-        this.store.dispatch(setActiveTaskState('KILLED'));
-        this.store.dispatch(updateActiveTask({ state: 'KILLED', error: 'Active task prematurely finished.' }));
-        logger.info(`[VIRT:TASK-STATUS] Active task ${actTask.name} prematurely finished.`);
       }
-      // TODO: Dispatcher updates happen instantly. May need small delay to receive task's update
-      if (actTask && actTask.state === 'RUNNING' && status.state === 'FINISHED') {
-        this.handleTaskFinished({ ...status, error: 'Virtuin Task Server showing task finished already.', passed: false });
-        logger.info(`[VIRT:TASK-STATUS] Dispatcher shows task ${actTask.name} finished already.`);
-      }
-    }
-  }
-
-  /**
-   * Handles dispatcher task logs
-   * @param  {string} log The log
-   * @return {void}
-   */
-  dispatcherTaskLog = (log) => {
-    this.store.dispatch(addLogEntry({ type: 'data', data: `[VIRT:TASK-LOG] ${log}` }));
-    logger.info(`[VIRT:TASK-LOG] ${log}.`);
-  }
-
-  /**
-   * Handles dispatcher collection logs
-   * @param  {string} log The log
-   * @return {void}
-   */
-  dispatcherCollectionLog = (log) => {
-    this.store.dispatch(addLogEntry({ type: 'data', data: `[VIRT:COLL-LOG] ${log}` }));
-    logger.info(`[VIRT:COLL-LOG] ${log}.`);
-  }
-
-  /**
-   * Handles dispatcher runtime errors
-   * @param  {Error} error The error object
-   * @return {void}
-   */
-  dispatcherError = (error) => {
-    this.store.dispatch(addLogEntry({ type: 'error', data: `[VIRT:ERROR] ${error.message}` }));
-    logger.info(`[VIRT:ERROR] ${error.message}`);
-  }
-
-  /**
-   * Handles results update of active task.
-   * @param  {Array|Object} results Database result(s)
-   * @return {void}
-   */
-  handleDBResults = (results) => {
-    if (results instanceof Array) {
-      results.forEach((result) => { this.store.dispatch(addTaskResult(result)); });
-    } else if (results instanceof Object) {
-      this.store.dispatch(addTaskResult(results));
-    }
+    });
   }
 
   /**
@@ -342,6 +256,5 @@ class TaskController {
       throw err;
     }
   }
-
 // eslint-disable-next-line import/prefer-default-export
 export const sharedTaskController = new TaskController();
