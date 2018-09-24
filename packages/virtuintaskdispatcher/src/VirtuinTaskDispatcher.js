@@ -1,10 +1,11 @@
 // @flow
 import type {
-  ProduceRouterDelegate, PRDispatchInput, PRDispatchWithResponseInput,
-  ProduceRouterProgress, ProduceRouterMessage
+  PRDispatchInput, PRDispatchWithResponseInput
 } from 'virtuin-task-rest-service/build/types/types';
 import RestServer from 'virtuin-task-rest-service';
-import type { Task, RootInterface, CollectionEnvs, GroupMode } from './types';
+import type {
+  Task, RootInterface, CollectionEnvs, GroupMode
+} from './types';
 
 const os = require('os');
 const fs = require('fs');
@@ -32,7 +33,7 @@ type DockerCredentials = {
 type CurrentTaskHandle = {
   taskIdent: TaskIdentifier,
   activeTask: Object,
-  cbHandles: {[string]: {uuid: string}} //, Promise<any>})
+  cbHandles: {[string]: {uuid: string}} // , Promise<any>})
 }
 
 export type TaskIdentifier = {| groupIndex: number, taskIndex: number |};
@@ -90,6 +91,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
   ymlPath: string;
 
   collectionEnvs: ?Object;
+
 
   verbosity: number;
 
@@ -152,22 +154,32 @@ class VirtuinTaskDispatcher extends EventEmitter {
       };
     }
     this.restServer = new RestServer();
-    const {dispatch, dispatchWithResponse} = this;
-    RestServer.setProducerDelegate({dispatch, dispatchWithResponse});
+    const { dispatch, dispatchWithResponse } = this;
+    RestServer.setProducerDelegate({ dispatch, dispatchWithResponse });
     this.restServer.begin();
   }
 
   initializeDispatchStatus = (): void => {
     this.dispatchStatus = VirtuinTaskDispatcher.genInitDispatchStatusForDef(this.collectionDef);
   }
+
+  static genInitDispatchStatus = (): DispatchStatus => ({
+    statusMessage: '',
+    logMessage: '',
+    callbacks: {},
+    stdout: '',
+    stderr: '',
+    groups: []
+  })
+
   static genInitDispatchStatusForDef = (collectionDef: RootInterface): DispatchStatus => {
     const groups = collectionDef.taskGroups;
     return {
-      statusMessage: "",
-      logMessage: "",
+      statusMessage: '',
+      logMessage: '',
       callbacks: {},
-      stdout: "",
-      stderr: "",
+      stdout: '',
+      stderr: '',
       groups: Array(groups.length).fill().map((ignore, i) => ({
         name: groups[i].name,
         description: groups[i].description || '',
@@ -187,44 +199,46 @@ class VirtuinTaskDispatcher extends EventEmitter {
             startDate: null,
             completeDate: null,
             messages: [],
-            stdout: "",
-            stderr: ""
+            stdout: '',
+            stderr: ''
           };
         })
       }))
-    }
+    };
   }
 
   getTaskIdentifierFromUUID = (taskUUID: string): ?TaskIdentifier => {
     for (const i of this.dispatchStatus.groups.keys()) {
-        const j = this.dispatchStatus.groups[i].tasksStatus.findIndex((task) => !task.taskUUID && task.taskUUID === taskUUID);
-        if(j >= 0) {
-          return {groupIndex: i, taskIndex: j};
-        }
+      const j = this.dispatchStatus.groups[i].tasksStatus.findIndex((task) => !task.taskUUID && task.taskUUID === taskUUID);
+      if (j >= 0) {
+        return { groupIndex: i, taskIndex: j };
+      }
     }
     return null;
   }
-  //ProduceRouterDelegate
+
+  // ProduceRouterDelegate
   /**
    * dispatch
    * Handles simple messages from the rest end point
   */
   dispatch = (o: PRDispatchInput): void => {
-    if(o.type === "progress") {
+    if (o.type === 'progress') {
       const t = this.getTaskIdentifierFromUUID(o.taskUUID);
-      if(t && o.percent) {
+      if (t && o.percent) {
         const c = this.statusFromIdentifier(t);
-        this.updateTaskStatus(t, {progress: o.percent});
+        this.updateTaskStatus(t, { progress: o.percent });
       }
-    } else if(o.type === "message") {
+    } else if (o.type === 'message') {
       const t = this.getTaskIdentifierFromUUID(o.taskUUID);
-      if(t && o.message) {
+      if (t && o.message) {
         const c = this.statusFromIdentifier(t);
-        this.updateTaskStatus(t, {messages: [...c.messages, o.message]});
+        this.updateTaskStatus(t, { messages: [...c.messages, o.message] });
       }
     }
     console.log(`called dispatch: received ${o.type} for ${o.taskUUID}`);
   }
+
   /**
    * dispatchWithResponse
    * Handles messages where a response is expected
@@ -233,7 +247,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
     console.log(`called dispatchWithResponse: received ${o.type} for ${o.taskUUID}`);
     return `received ${o.type}`;
   }
-  //End ProduceRouterDelegate
+  // End ProduceRouterDelegate
 
   end = (): void => {
     if (this.restServer) {
@@ -296,8 +310,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
         shell: false
       };
       const code = await this.spawnAsync(cmd, args, options,
-      (buffer: Buffer) => { this.updateDispatchPrimaryStatus( {stdout: buffer.toString()} )},
-      (buffer: Buffer) => { this.updateDispatchPrimaryStatus( {stderr: buffer.toString()} )});
+        (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stdout: buffer.toString() }); },
+        (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stderr: buffer.toString() }); });
 
       if (code) {
         throw new Error(`Failed logging into Docker ${code || 'unknown'}`);
@@ -326,14 +340,14 @@ class VirtuinTaskDispatcher extends EventEmitter {
    */
   upVM = async (fullReload: boolean = false): Promise<void> => {
     try {
-      this.updateDispatchPrimaryStatus({logMessage: 'Ensuring VM Ready'});
+      this.updateDispatchPrimaryStatus({ logMessage: 'Ensuring VM Ready' });
       if (this.vagrantDirectory) {
         const cb: ((string) => void) = (status) => {
-          this.updateDispatchPrimaryStatus({logMessage: status});
+          this.updateDispatchPrimaryStatus({ logMessage: status });
         };
         await vagrant.ensureOnlyMachineRunningAtDirectory(this.vagrantDirectory, fullReload, cb);
       } else {
-        this.updateDispatchPrimaryStatus({logMessage: 'No VM specified'});
+        this.updateDispatchPrimaryStatus({ logMessage: 'No VM specified' });
       }
     } catch (error) {
       throw error;
@@ -359,7 +373,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
   up = async (fullReload: boolean = false): Promise<void> => {
     try {
       const fullRebuild = this.collectionDef.build === 'development';
-      this.updateDispatchPrimaryStatus({logMessage: 'Starting up task environment.'});
+      this.updateDispatchPrimaryStatus({ logMessage: 'Starting up task environment.' });
       let objStr = '';
       switch (this.collectionDef.dockerCompose.type || 'RAW') {
         case 'RAW':
@@ -377,20 +391,24 @@ class VirtuinTaskDispatcher extends EventEmitter {
       let shouldRemoveContainers = false;
       const prevCollectionExists = await fse.pathExists(this.collectionPath);
       if (prevCollectionExists) {
-        const prevCollectionDef : RootInterface = await fse.readJson(this.collectionPath);
+        const prevCollectionDef: RootInterface = await fse.readJson(this.collectionPath);
         if (prevCollectionDef.dockerCompose && this.collectionDef.dockerCompose) {
           changes = diff(prevCollectionDef.dockerCompose, this.collectionDef.dockerCompose);
         }
-        if (prevCollectionDef.collectionName !== this.collectionDef.collectionName ||
-          prevCollectionDef.collectionTag !== this.collectionDef.collectionTag ||
-          (changes && changes.length > 0)) {
-            shouldRemoveContainers = true;
-            this.updateDispatchPrimaryStatus({logMessage:
-              'Using existing task collection environment.'});
-          } else {
-            this.updateDispatchPrimaryStatus({logMessage:
-              'Creating new task collection environment.'});
-          }
+        if (prevCollectionDef.collectionName !== this.collectionDef.collectionName
+          || prevCollectionDef.collectionTag !== this.collectionDef.collectionTag
+          || (changes && changes.length > 0)) {
+          shouldRemoveContainers = true;
+          this.updateDispatchPrimaryStatus({
+            logMessage:
+              'Using existing task collection environment.'
+          });
+        } else {
+          this.updateDispatchPrimaryStatus({
+            logMessage:
+              'Creating new task collection environment.'
+          });
+        }
       }
 
       // Write compose.yml into stack folder
@@ -430,8 +448,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
       };
       debugger;
       const code = await this.spawnAsync(cmd, args, options,
-        (buffer: Buffer) => { this.updateDispatchPrimaryStatus( {stdout: buffer.toString()} )},
-        (buffer: Buffer) => { this.updateDispatchPrimaryStatus( {stderr: buffer.toString()} )});
+        (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stdout: buffer.toString() }); },
+        (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stderr: buffer.toString() }); });
       if (code) {
         throw new Error(`Failed starting up task environment: ${code || 'unknown'}`);
       }
@@ -439,8 +457,10 @@ class VirtuinTaskDispatcher extends EventEmitter {
       // We check collection change to determine bring-up.
       // On failure, we need to ensure we retry complete bring-up.
       await fse.outputFile(this.collectionPath, JSON.stringify(this.collectionDef));
-      this.updateDispatchPrimaryStatus({logMessage:
-       'Successfully started task environment.'});
+      this.updateDispatchPrimaryStatus({
+        logMessage:
+       'Successfully started task environment.'
+      });
       return;
     } catch (err) {
       throw err;
@@ -456,8 +476,10 @@ class VirtuinTaskDispatcher extends EventEmitter {
    */
   down = async (rm: boolean = false): Promise<void> => {
     try {
-      this.updateDispatchPrimaryStatus({logMessage:
-        'Stopping task environment.'});
+      this.updateDispatchPrimaryStatus({
+        logMessage:
+        'Stopping task environment.'
+      });
       // Perform docker-compose down or stop
       const cmd = 'docker-compose';
       const args = [...this.daemonArgs, rm ? 'down' : 'stop'];
@@ -467,13 +489,15 @@ class VirtuinTaskDispatcher extends EventEmitter {
         shell: false
       };
       const code = await this.spawnAsync(cmd, args, options,
-        (buffer: Buffer) => { this.updateDispatchPrimaryStatus( {stdout: buffer.toString()} )},
-        (buffer: Buffer) => { this.updateDispatchPrimaryStatus( {stderr: buffer.toString()} )});
+        (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stdout: buffer.toString() }); },
+        (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stderr: buffer.toString() }); });
       if (code) {
         throw new Error(`Failed stopping task environment: ${code || 'unknown'}`);
       }
-      this.updateDispatchPrimaryStatus({logMessage:
-        'Successfully stopped task environment.'});
+      this.updateDispatchPrimaryStatus({
+        logMessage:
+        'Successfully stopped task environment.'
+      });
       return;
     } catch (err) {
       throw err;
@@ -487,23 +511,32 @@ class VirtuinTaskDispatcher extends EventEmitter {
    * @return {Promise<void>}
    * @throws
    */
-  downVM = async (): Promise<void> => {
+  downVM = async (): Promise<boolean> => {
     try {
-      this.updateDispatchPrimaryStatus({logMessage:
-      'Bringing Vagrant VM Down'});
+      this.updateDispatchPrimaryStatus({
+        logMessage:
+      'Bringing Vagrant VM Down'
+      });
       if (this.vagrantDirectory) {
         const s = await vagrant.vagrantStopVMInDirectory(this.vagrantDirectory);
         if (s) {
-          this.updateDispatchPrimaryStatus({logMessage:
-            'Vagrant VM successfully brought down'});
-        } else {
-          this.updateDispatchPrimaryStatus({logMessage:
-            'Unable to bring Vagrant VM down'});
+          this.updateDispatchPrimaryStatus({
+            logMessage:
+            'Vagrant VM successfully brought down'
+          });
+          return true;
         }
-      } else {
-        this.updateDispatchPrimaryStatus({logMessage:
-          'No Vagrant VM in specified collection'});
+        this.updateDispatchPrimaryStatus({
+          logMessage:
+            'Unable to bring Vagrant VM down'
+        });
+        return false;
       }
+      this.updateDispatchPrimaryStatus({
+        logMessage:
+          'No Vagrant VM in specified collection'
+      });
+      return false;
     } catch (error) {
       throw error;
     }
@@ -517,8 +550,10 @@ class VirtuinTaskDispatcher extends EventEmitter {
    * @throws
    */
   pull = async (): Promise<void> => {
-    this.updateDispatchPrimaryStatus({logMessage:
-      'Pulling collection service\'s images.'});
+    this.updateDispatchPrimaryStatus({
+      logMessage:
+      'Pulling collection service\'s images.'
+    });
     if (this.dockerCredentials) {
       await this.login();
     }
@@ -531,8 +566,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
     };
     try {
       const code = await this.spawnAsync(cmd, args, options,
-        (buffer: Buffer) => { this.updateDispatchPrimaryStatus( {stdout: buffer.toString()} )},
-        (buffer: Buffer) => { this.updateDispatchPrimaryStatus( {stderr: buffer.toString()} )});
+        (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stdout: buffer.toString() }); },
+        (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stderr: buffer.toString() }); });
 
       if (code !== 0) {
         throw new Error(`Failed pulling service's images: ${code || 'unknown'}`);
@@ -540,8 +575,10 @@ class VirtuinTaskDispatcher extends EventEmitter {
     } catch (error) {
       console.log(`Caught error ${error}`);
     }
-    this.updateDispatchPrimaryStatus({logMessage:
-      'Successfully pulled collection service\'s images.'});
+    this.updateDispatchPrimaryStatus({
+      logMessage:
+      'Successfully pulled collection service\'s images.'
+    });
   }
 
   sendTaskInputDataFile = async (taskIdent: TaskIdentifier): Promise<{success: boolean,
@@ -549,10 +586,12 @@ class VirtuinTaskDispatcher extends EventEmitter {
     if (!this.validTaskIdentifier(taskIdent)) {
       return { success: false, error: Error(`task identifier is not valid group ${taskIdent.groupIndex}, task ${taskIdent.taskIndex}`) };
     }
-    const task: Task = (this.taskFromIdentifier(taskIdent) : any);
+    const task: Task = (this.taskFromIdentifier(taskIdent): any);
     // Perform up
-    this.updateDispatchPrimaryStatus({statusMessage:
-      'Task send data requested.'});
+    this.updateDispatchPrimaryStatus({
+      statusMessage:
+      'Task send data requested.'
+    });
 
     try {
       const runConfigs = task.dockerInfo || {};
@@ -585,13 +624,13 @@ class VirtuinTaskDispatcher extends EventEmitter {
     if (!this.validTaskIdentifier(taskIdent)) {
       return { success: false, error: Error(`task identifier is not valid group ${taskIdent.groupIndex}, task ${taskIdent.taskIndex}`) };
     }
-    const task: Task = (this.taskFromIdentifier(taskIdent) : any);
+    const task: Task = (this.taskFromIdentifier(taskIdent): any);
     const groupStatus = this.dispatchStatus.groups[taskIdent.groupIndex];
     const currStatus: TaskStatus = groupStatus.tasksStatus[taskIdent.taskIndex];
     const cmd = 'docker-compose';
     if (rebuildService && task.dockerInfo
       && task.dockerInfo.serviceName) {
-      this.updateDispatchPrimaryStatus({statusMessage: `rebuilding service ${task.dockerInfo.serviceName}.`});
+      this.updateDispatchPrimaryStatus({ statusMessage: `rebuilding service ${task.dockerInfo.serviceName}.` });
       const args = [
         ...this.daemonArgs, 'up', '-d', '--build', `${task.dockerInfo.serviceName}`
       ];
@@ -602,8 +641,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
       };
       try {
         const code = await this.spawnAsync(cmd, args, options,
-        (buffer: Buffer) => { this.updateDispatchPrimaryStatus( {stdout: buffer.toString()} )},
-        (buffer: Buffer) => { this.updateDispatchPrimaryStatus( {stderr: buffer.toString()} )});
+          (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stdout: buffer.toString() }); },
+          (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stderr: buffer.toString() }); });
         if (code) {
           throw new Error(`Failed rebuilding service ${task.dockerInfo.serviceName}
             error: ${code || 'unknown'}`);
@@ -613,7 +652,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
         console.error(`start task failed to rebuild the service ${task.dockerInfo.serviceName}`);
       }
     }
-    this.updateDispatchPrimaryStatus({statusMessage: 'Task start dispatch requested.'});
+    this.updateDispatchPrimaryStatus({ statusMessage: 'Task start dispatch requested.' });
 
     // Return if task is already running
     for (const taskStatus of groupStatus.tasksStatus) {
@@ -673,8 +712,10 @@ class VirtuinTaskDispatcher extends EventEmitter {
         runCmd,
         ...runArgs
       ];
-      this.updateDispatchPrimaryStatus({statusMessage:
-        `${cmd} ${args.join(' ')}`});
+      this.updateDispatchPrimaryStatus({
+        statusMessage:
+        `${cmd} ${args.join(' ')}`
+      });
       const options = {
         cwd: this.composePath(),
         env: { ...process.env, ...this.envs },
@@ -683,10 +724,10 @@ class VirtuinTaskDispatcher extends EventEmitter {
 
       const activeTask = spawn(cmd, args, options);
       const currIndex = this.currTaskHandles.indexOf(obj => obj.taskIdent.groupIndex === taskIdent.groupIndex && obj.taskIdent.taskIndex === taskIdent.taskIndex);
-      if(currIndex >= 0) { //Should never get here
+      if (currIndex >= 0) { // Should never get here
 
       }
-      this.currTaskHandles = [...this.currTaskHandles, {taskIdent , activeTask, cbHandles: {}}];
+      this.currTaskHandles = [...this.currTaskHandles, { taskIdent, activeTask, cbHandles: {} }];
 
       this.updateTaskStatus(taskIdent, {
         state: 'RUNNING',
@@ -695,8 +736,10 @@ class VirtuinTaskDispatcher extends EventEmitter {
       activeTask.on('exit', (code: number, signal: ?number) => { this.taskFinishHandler(taskIdent, activeTask, code, signal); });
       activeTask.stdout.on('data', (buffer: Buffer) => { this.taskSTDOutHandler(taskIdent, buffer); });
       activeTask.stderr.on('data', (buffer: Buffer) => { this.taskSTDErrHandler(taskIdent, buffer); });
-      this.updateDispatchPrimaryStatus({statusMessage:
-        'Successfully dispatched task start.'});
+      this.updateDispatchPrimaryStatus({
+        statusMessage:
+        'Successfully dispatched task start.'
+      });
 
       return { success: true, error: null };
     } catch (err) {
@@ -739,9 +782,9 @@ class VirtuinTaskDispatcher extends EventEmitter {
     if (!this.validTaskIdentifier(taskIdent)) {
       return { success: false, error: Error(`task identifier is not valid group ${taskIdent.groupIndex}, task ${taskIdent.taskIndex}`) };
     }
-    this.updateDispatchPrimaryStatus({statusMessage: 'Task stop dispatch requested.'});
+    this.updateDispatchPrimaryStatus({ statusMessage: 'Task stop dispatch requested.' });
     // Return success if no task running
-    let currStatus = this.statusFromIdentifier(taskIdent);
+    const currStatus = this.statusFromIdentifier(taskIdent);
     if (['IDLE', 'KILLED', 'FINISHED'].find(s => s === currStatus.state) !== undefined) {
       return { success: true, error: null };
     }
@@ -756,7 +799,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
     });
     try {
       const currIndex = this.currTaskHandles.indexOf(obj => obj.taskIdent.groupIndex === taskIdent.groupIndex && obj.taskIdent.taskIndex === taskIdent.taskIndex);
-      if(currIndex >= 0) { //Should never get here
+      if (currIndex >= 0) { // Should never get here
         const activeTask = this.currTaskHandles[currIndex].activeTask;
         activeTask.kill('SIGTERM'); // Ask nicely
         setTimeout(async () => {
@@ -769,7 +812,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
               await this.restartService(t.dockerInfo.serviceName);
             }
             const c = this.currTaskHandles.indexOf(obj => obj.taskIdent.groupIndex === taskIdent.groupIndex && obj.taskIdent.taskIndex === taskIdent.taskIndex);
-            if(c >= 0) { //Should never get here
+            if (c >= 0) { // Should never get here
               this.currTaskHandles = [
                 ...this.currTaskHandles.slice(0, c),
                 ...this.currTaskHandles.slice(c + 1)
@@ -778,7 +821,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
           }
         }, 1500);
       }
-      this.updateDispatchPrimaryStatus({statusMessage: 'Successfully dispatched task stop.'});
+      this.updateDispatchPrimaryStatus({ statusMessage: 'Successfully dispatched task stop.' });
     } catch (err) {
       this.updateTaskStatus(taskIdent, {
         state: 'KILLED',
@@ -791,7 +834,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
       completeDate: new Date().toISOString(),
       error: null
     });
-    this.updateDispatchPrimaryStatus({statusMessage: 'Successfully dispatched task stop.'});
+    this.updateDispatchPrimaryStatus({ statusMessage: 'Successfully dispatched task stop.' });
     return { success: true, error: null };
   }
 
@@ -800,7 +843,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
    * @return {{  success: boolean, error: Error }}
    */
   clearTask = (taskIdent: TaskIdentifier): { success: boolean, error: ?Error} => {
-    this.updateDispatchPrimaryStatus({statusMessage: 'Task clear dispatch requested.'});
+    this.updateDispatchPrimaryStatus({ statusMessage: 'Task clear dispatch requested.' });
     // If existing task not finished then cant clear
     const currStatus = this.statusFromIdentifier(taskIdent);
     if (['IDLE', 'KILLED', 'FINISHED'].find(s => s === currStatus.state) === undefined) {
@@ -810,7 +853,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
       state: 'IDLE',
       error: null,
     });
-    this.updateDispatchPrimaryStatus({statusMessage: 'Successfully dispatched task clear.'});
+    this.updateDispatchPrimaryStatus({ statusMessage: 'Successfully dispatched task clear.' });
     return { success: true, error: null };
   }
 
@@ -828,11 +871,12 @@ class VirtuinTaskDispatcher extends EventEmitter {
     this.dispatchStatus = {
       ...this.dispatchStatus,
       ...primaryStatus
-    }
+    };
     this.emit('task-status', this.getStatus());
   }
+
   updateTaskStatus = (taskIdentifier: TaskIdentifier, newTaskStatus: $Shape<TaskStatus>) => {
-    this.dispatchStatus =  {
+    this.dispatchStatus = {
       ...this.dispatchStatus,
       groups: this.dispatchStatus.groups.map((groupItem, i) => {
         if (i !== taskIdentifier.groupIndex) {
@@ -851,7 +895,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
           })
         };
       })
-    }
+    };
     this.emit('task-status', this.getStatus());
   }
 
@@ -859,7 +903,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
    * Returns copy of task status
    * @return {TaskStatus} Task status
    */
-  getStatus = (): DispatchStatus =>  ({
+  getStatus = (): DispatchStatus => ({
     ...this.dispatchStatus
   });
 
@@ -892,8 +936,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
       shell: false
     };
     const code = await this.spawnAsync(cmd, args, options,
-      (buffer: Buffer) => { this.updateDispatchPrimaryStatus( {stdout: buffer.toString()} )},
-      (buffer: Buffer) => { this.updateDispatchPrimaryStatus( {stderr: buffer.toString()} )});
+      (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stdout: buffer.toString() }); },
+      (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stderr: buffer.toString() }); });
 
     if (code) {
       throw new Error(`Failed restarting service ${serviceName}: ${code || 'unknown'}.`);
@@ -979,7 +1023,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
     const currStatus = this.statusFromIdentifier(taskIdentifier);
     this.updateTaskStatus(taskIdentifier, {
       stdout: (currStatus.stdout + bufStr).slice(-200)
-    })
+    });
   }
 
   /**
@@ -993,8 +1037,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
     const bufStr = buffer.toString();
     const currStatus = this.statusFromIdentifier(taskIdentifier);
     this.updateTaskStatus(taskIdentifier, {
-      stderr:  (currStatus.stderr + bufStr).slice(-200)
-    })
+      stderr: (currStatus.stderr + bufStr).slice(-200)
+    });
   }
 
   /**
@@ -1010,7 +1054,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
       return;
     }
     const currStatus = this.statusFromIdentifier(taskIdent);
-    const task : Task = (this.taskFromIdentifier(taskIdent): any);
+    const task: Task = (this.taskFromIdentifier(taskIdent): any);
     const stopRequest = currStatus.state === 'STOP_REQUEST';
     activeTask.removeAllListeners('exit');
     if (activeTask.stdout != null) {
@@ -1028,7 +1072,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
       error: errMsg
     });
     const c = this.currTaskHandles.indexOf(obj => obj.taskIdent.groupIndex === taskIdent.groupIndex && obj.taskIdent.taskIndex === taskIdent.taskIndex);
-    if(c >= 0) { //Should never get here
+    if (c >= 0) { // Should never get here
       this.currTaskHandles = [
         ...this.currTaskHandles.slice(0, c),
         ...this.currTaskHandles.slice(c + 1)
@@ -1106,10 +1150,14 @@ class VirtuinTaskDispatcher extends EventEmitter {
       (data) => { prst += data.toString(); });
     // Get container ids for removal and remove
     const removeContainerIds = prst.split('\n').filter(x => x && !excludeContainerIds.some(id => id === x));
-    this.updateDispatchPrimaryStatus({logMessage:
-      `Reusing previous service containers: ${excludeContainerIds.join(' ')}`});
-    this.updateDispatchPrimaryStatus({logMessage:
-      `Removing following containers: ${removeContainerIds.join(' ')}`});
+    this.updateDispatchPrimaryStatus({
+      logMessage:
+      `Reusing previous service containers: ${excludeContainerIds.join(' ')}`
+    });
+    this.updateDispatchPrimaryStatus({
+      logMessage:
+      `Removing following containers: ${removeContainerIds.join(' ')}`
+    });
     await this.spawnAsync('docker', ['-H', this.daemonAddress, 'rm', '--force', ...removeContainerIds], {},
       (data) => { prst += data.toString(); });
   }

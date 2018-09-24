@@ -4,9 +4,8 @@
  */
 import { app, BrowserWindow, dialog } from 'electron';
 import MenuBuilder from './menu';
-import { sharedTaskController } from './TaskController';
+import sharedTaskController from './TaskController';
 import { configureStore } from '../shared/store/configureStore';
-import { fetchTasksRequest, startTaskRequest } from '../shared/actions/task';
 import { addLogEntry } from '../shared/actions/log';
 import { VirtuinTouchBar } from './VirtuinTouchBar';
 import logger from './Logger';
@@ -262,26 +261,7 @@ app.on('ready', async () => {
   mainWindow.reloadVM = async () => {
     store.dispatch(addLogEntry({ type: 'data', data: '[VIRT] Restarting Virtuin VM.' }));
     try {
-      if (process.env.VIRT_PATH == null && process.env.VIRT_BOX_PATH == null) {
-        throw new Error('Either VIRT_PATH or VIRT_BOX_PATH must be defined.');
-      }
-      // $FlowFixMe
-      const vagrantDir = process.env.VIRT_BOX_PATH || path.join(process.env.VIRT_PATH, 'box');
-      const machine = vagrant.create({ cwd: vagrantDir });
-      await new Promise((resolve, reject) => {
-        const cb = (err, out) => {
-          if (err) {
-            reject(new Error(err));
-            return;
-          }
-          resolve(out);
-        };
-        try {
-          machine.reload(cb);
-        } catch (error) {
-          reject(error);
-        }
-      });
+      const succ = await sharedTaskController.reqRestartVM();
       store.dispatch(addLogEntry({ type: 'data', data: '[VIRT] Successfully restarted Virtuin VM.' }));
     } catch (err) {
       const errMsg = `[VIRT] Failed restarting Virtuin VM with error: ${err.message}`;

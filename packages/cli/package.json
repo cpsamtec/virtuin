@@ -38,11 +38,12 @@
   "license": "MIT",
   "homepage": "https://bitbucket.org/samteccmd/virtuintaskdispatcher#readme",
   "dependencies": {
-    "virtuintaskdispatcher": "^0.0.24",
     "commander": "^2.16.0",
+    "dateformat": "^3.0.3",
     "deep-diff": "^1.0.2",
     "dotenv": "^6.0.0",
-    "fs-extra": "^7.0.0"
+    "fs-extra": "^7.0.0",
+    "virtuintaskdispatcher": "^0.0.24"
   },
   "devDependencies": {
     "babel-cli": "^6.24.1",
@@ -67,7 +68,7 @@
     "eslint-plugin-jsx-a11y": "^6.1.1",
     "eslint-plugin-promise": "^4.0.0",
     "eslint-plugin-react": "^7.3.0",
-    "flow-bin": "^0.80.0",
+    "flow-bin": "^0.81.0",
     "flow-copy-source": "^2.0.2",
     "flow-remove-types": "^1.2.3",
     "flow-typed": "^2.3.0",

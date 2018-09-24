@@ -6,7 +6,7 @@ assets/*
 
 [include]
 src/*
-../..
+./
 
 [libs]
 flow-typed
