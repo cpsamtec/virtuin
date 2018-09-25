@@ -56,7 +56,6 @@ export default merge.smart(baseConfig, {
     publicPath: `http://localhost:${port}/dist/`,
     filename: 'renderer.dev.js'
   },
-
   module: {
     rules: [
       {

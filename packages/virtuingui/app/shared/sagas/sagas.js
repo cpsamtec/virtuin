@@ -1,6 +1,7 @@
 import { put, takeEvery } from 'redux-saga/effects';
 import { sharedTaskController } from '../../main/TaskController';
 import { addLogEntry } from '../actions/log';
+import { START_TASK_REQUEST, STOP_TASK_REQUEST } from '../types'
 
 function* startTaskRequest(action) {
   try {

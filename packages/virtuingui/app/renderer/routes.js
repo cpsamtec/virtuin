@@ -19,4 +19,5 @@ export default () => (
       <Redirect from="/" to="/task" />
     </Switch>
   </App>
-);*/
+);
+*/

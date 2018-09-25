@@ -14,6 +14,7 @@ type hystoryType = ?Object;
 type rootState = ?Object;
 
 function configureStore(initialState: rootState, scope: scopeType = 'main', history: hystoryType = undefined) {
+  console.log('slelksjelkjse');
   let middleware = [];
   const enhancers = [];
   middleware.push(thunk);
@@ -45,10 +46,13 @@ function configureStore(initialState: rootState, scope: scopeType = 'main', hist
   const enhancer = compose(...enhancers);
   const store = createStore(rootReducer, initialState, enhancer);
 
+  console.log('OOY here');
   if (scope === 'main') {
+    console.log('OOY in main');
     sagaMiddleware.run(rootSaga);
     replayActionMain(store);
   } else {
+    console.log('OOY in renderer');
     replayActionRenderer(store);
   }
 

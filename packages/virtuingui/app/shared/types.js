@@ -19,8 +19,8 @@ export const STOP_TASK_REQUEST: string = 'STOP_TASK_REQUEST';
 export const UPDATE_STATUS: string = 'UPDATE_STATUS';
 
 export type DispatchStatusAction = {
-  type: 'UPDATE_STATUS',
-  payload: $Shape<DispatchStatus>
+  type: string,
+  payload: $Shape<DispatchStatus> | ?Object;
 }
 
 // Log Entries

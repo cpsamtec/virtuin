@@ -1162,4 +1162,4 @@ class VirtuinTaskDispatcher extends EventEmitter {
       (data) => { prst += data.toString(); });
   }
 }
-exports.VirtuinTaskDispatcher = VirtuinTaskDispatcher;
+export default {VirtuinTaskDispatcher};

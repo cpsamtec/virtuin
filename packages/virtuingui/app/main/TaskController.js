@@ -2,11 +2,11 @@
 import { app } from 'electron';
 import * as path from 'path';
 import type { RootInterface, CollectionEnvs } from 'virtuintaskdispatcher/distribution/types';
-import { VirtuinTaskDispatcher } from 'virtuintaskdispatcher';
 import { addLogEntry } from '../shared/actions/log';
 import { updateDispatchStatus } from '../shared/actions/dispatch';
 import logger from './Logger';
 
+const { VirtuinTaskDispatcher } = require('virtuintaskdispatcher').VirtuinTaskDispatcher;
 const fse = require('fs-extra');
 
 /**
@@ -97,6 +97,7 @@ class TaskController {
     }
     this.dispatcher.on('task-status', status => {
       try {
+        debugger;
         const msg = JSON.stringify(status, undefined, "  ");
         this.store.dispatch(updateDispatchStatus(status));
         //this.store.dispatch(addLogEntry({ type: 'info', data: msg }));

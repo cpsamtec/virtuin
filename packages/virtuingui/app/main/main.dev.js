@@ -2,15 +2,16 @@
 /**
  * @flow
  */
+  debugger;
 import { app, BrowserWindow, dialog } from 'electron';
 import MenuBuilder from './menu';
 import sharedTaskController from './TaskController';
-import { configureStore } from '../shared/store/configureStore';
 import { addLogEntry } from '../shared/actions/log';
 import { VirtuinTouchBar } from './VirtuinTouchBar';
 import logger from './Logger';
 import { reconfigureLogger } from './Logger';
 
+import { configureStore } from '../shared/store/configureStore';
 const program = require('commander');
 const vagrant = require('node-vagrant');
 const os = require('os');
@@ -112,43 +113,6 @@ app.on('ready', async () => {
 
   mainWindow.loadURL(`file://${__dirname}/../renderer/assets/html/app.html`);
 
-  mainWindow.webContents.on('did-finish-load', async () => {
-    if (!mainWindow) {
-      throw new Error('"mainWindow" is not defined');
-    }
-    mainWindow.show();
-    mainWindow.focus();
-    // mainWindow.setFullScreen(true);
-    // TODO: Use commander. Dont expect task always
-    try {
-      await mainWindow.loadCredentials();
-      // Process program arguments
-      const args = [process.argv[0], 'run', ...process.argv.slice(1)];
-      program
-        .version('0.8.3')
-        .option('-c, --collection <path>', 'Directly run given collection')
-        .parse(args);
-      console.log(args);
-      if (program.collection) {
-        mainWindow.loadCollection(program.collection);
-      }
-      if (process.platform === 'darwin') {
-        virtTouchBar = new VirtuinTouchBar(store, mainWindow);
-        virtTouchBar.initialize();
-      }
-    } catch (err) {
-      const dialogOptions = {
-        type: 'error',
-        buttons: ['Exit'],
-        title: 'Fatal Error',
-        message: `Unable to connect to task server with following error: ${err}.`
-      };
-      setTimeout(() => {
-        dialog.showMessageBox(mainWindow, dialogOptions);
-        app.quit(2);
-      }, 500);
-    }
-  });
 
   store = configureStore(global.state, 'main', undefined);
 
@@ -197,8 +161,10 @@ app.on('ready', async () => {
   };
 
   mainWindow.loadCredentials = async () => {
+    debugger;
     const credentialPath = path.join(app.getPath('userData'), 'virtuin_credentials.json');
     const exists = await fse.pathExists(credentialPath);
+    debugger;
     if (exists) {
       store.dispatch(addLogEntry({ type: 'data', data: '[VIRT] Loading credentials.' }));
       const credentials = await fse.readJson(credentialPath);
@@ -208,6 +174,7 @@ app.on('ready', async () => {
       };
       debugger;
       await reconfigureLogger();
+      debugger;
     }
   };
 
@@ -234,7 +201,7 @@ app.on('ready', async () => {
             throw new Error('Credential file doesnt exist or invalid permisions.');
           }
           await fse.copy(filepaths[0], credentialPath, { overwrite: true });
-          await mainWindow.loadCredentials();
+          //await mainWindow.loadCredentials();
           store.dispatch(addLogEntry({
             type: 'data',
             data: '[VIRT] Successfully updated credentials.'
@@ -278,6 +245,45 @@ app.on('ready', async () => {
       }, 100);
     }
   };
+
+  mainWindow.webContents.on('did-finish-load', async () => {
+    if (!mainWindow) {
+      throw new Error('"mainWindow" is not defined');
+    }
+    mainWindow.show();
+    mainWindow.focus();
+    // mainWindow.setFullScreen(true);
+    // TODO: Use commander. Dont expect task always
+    try {
+      debugger;
+      await mainWindow.loadCredentials();
+      // Process program arguments
+      const args = [process.argv[0], 'run', ...process.argv.slice(1)];
+      program
+        .version('0.8.3')
+        .option('-c, --collection <path>', 'Directly run given collection')
+        .parse(args);
+      console.log(args);
+      if (program.collection) {
+        mainWindow.loadCollection(program.collection);
+      }
+      if (process.platform === 'darwin') {
+        virtTouchBar = new VirtuinTouchBar(store, mainWindow);
+        virtTouchBar.initialize();
+      }
+    } catch (err) {
+      const dialogOptions = {
+        type: 'error',
+        buttons: ['Exit'],
+        title: 'Fatal Error',
+        message: `Unable to connect to task server with following error: ${err}.`
+      };
+      setTimeout(() => {
+        dialog.showMessageBox(mainWindow, dialogOptions);
+        //app.quit(2);
+      }, 500);
+    }
+  });
 
   const menuBuilder = new MenuBuilder(mainWindow);
   menuBuilder.buildMenu();

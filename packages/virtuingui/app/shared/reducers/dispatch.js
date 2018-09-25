@@ -1,18 +1,16 @@
 // @flow
 
 import {
-  START_TASK_REQUEST,
-  STOP_TASK_REQUEST,
   DispatchStatusAction,
+  UPDATE_STATUS,
 } from '../types';
-import { VirtuinTaskDispatcher } from 'virtuintaskdispatcher';
+const { VirtuinTaskDispatcher } = require('virtuintaskdispatcher').VirtuinTaskDispatcher;
 import type { DispatchStatus } from 'virtuintaskdispatcher';
 
-
-export default function dispatchStatus(state: DispatchStatus = VirtuinTaskDispatcher.getInitDispatchStatus(), action: DispatchStatusAction): DispatchStatus {
+export default function dispatchStatus(state: DispatchStatus = VirtuinTaskDispatcher.genInitDispatchStatus(), action: DispatchStatusAction): DispatchStatus {
   const { type, payload } = action;
   switch (type) {
-    case 'UPDATE_STATUS': {
+    case UPDATE_STATUS: {
       return {
         ...state,
         ...payload

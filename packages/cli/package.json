@@ -12,7 +12,7 @@
     "prepare": "npm run build && npm run build:flow",
     "build": "./node_modules/.bin/babel ./src --out-dir ./distribution --source-maps",
     "build:flow": "flow-copy-source -v -i '**/__tests__/**' src distribution",
-    "start": "./distribution/cli.js",
+    "start": "node ./distribution/cli.js upVM ../../../ProcessExample/build/collection.yml",
     "precommit": "lint-staged",
     "lint": "eslint --cache --format=node_modules/eslint-formatter-pretty .",
     "lint-fix": "npm run lint -- --fix"

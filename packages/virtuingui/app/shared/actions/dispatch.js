@@ -2,6 +2,7 @@
 
 import { createAliasedAction } from 'electron-redux';
 import type { DispatchStatus } from 'virtuintaskdispatcher'
+import type { DispatchStatusAction } from '../types'
 
 import {
   UPDATE_STATUS,
@@ -9,12 +10,9 @@ import {
 
 
 
-export const updateDispatchStatus = createAliasedAction(
-  UPDATE_STATUS,
-  (dispatchStatus: $Shape<DispatchStatus>) => (
-    {
-      type: UPDATE_STATUS,
-      payload: dispatchStatus
-    }
-  )
-);
+export function updateDispatchStatus(dispatchStatus: $Shape<DispatchStatus> = {}): DispatchStatusAction {
+  return {
+    type: UPDATE_STATUS,
+    payload: dispatchStatus
+  }
+}
