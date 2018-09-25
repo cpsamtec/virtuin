@@ -18,10 +18,9 @@ export const START_TASK_REQUEST: string = 'START_TASK_REQUEST';
 export const STOP_TASK_REQUEST: string = 'STOP_TASK_REQUEST';
 export const UPDATE_STATUS: string = 'UPDATE_STATUS';
 
-export type DispatchStatusAction = {
-  type: string,
-  payload: $Shape<DispatchStatus> | ?Object;
-}
+export type DispatchStatusAction =
+  | BaseAction<DispatchStatus>
+  | BaseAction<?Object>;
 
 // Log Entries
 export type LogType = {
