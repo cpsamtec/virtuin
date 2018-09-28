@@ -75,15 +75,10 @@ function configureStore(initialState: rootState, scope: scopeType = 'main', hist
     );
   }
 
-  console.log('OOY here');
   if (scope === 'main') {
-    console.log('OOY main');
     sagaMiddleware.run(rootSaga);
-    debugger;
     replayActionMain(store);
   } else {
-    debugger;
-    console.log('OOY renderer');
     replayActionRenderer(store);
   }
 

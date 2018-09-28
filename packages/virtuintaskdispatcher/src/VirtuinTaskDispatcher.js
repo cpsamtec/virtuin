@@ -119,7 +119,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
     verbosity: number = 0,
   ) {
     super();
-
     this.dockerCredentials = null;
     this.stackBasePath = stackBasePath || os.tmpdir();
     this.vagrantDirectory = collectionEnvs.VIRT_VAGRANT_DIRECTORY;
@@ -372,6 +371,10 @@ class VirtuinTaskDispatcher extends EventEmitter {
    */
   up = async (fullReload: boolean = false): Promise<void> => {
     try {
+      const stat = await fse.lstat(this.collectionEnvPath);
+      if(stat.isDirectory() == false) {
+        throw new Error(`collectionEnvPath must be a directory (${this.collectionEnvPath})`);
+      }
       const fullRebuild = this.collectionDef.build === 'development';
       this.updateDispatchPrimaryStatus({ logMessage: 'Starting up task environment.' });
       let objStr = '';
@@ -417,7 +420,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
       // Remove all docker containers not in this definition
       const removeAll = fullReload || shouldRemoveContainers;
       await this.removeContainers(removeAll ? undefined : this.composeName());
-      debugger;
 
       // Create environment file
       const envPath = path.join(this.composePath(), '.env');
@@ -451,6 +453,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
         (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stdout: buffer.toString() }); },
         (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stderr: buffer.toString() }); });
       if (code) {
+        debugger;
         throw new Error(`Failed starting up task environment: ${code || 'unknown'}`);
       }
       // Write collection into stack folder on successful up

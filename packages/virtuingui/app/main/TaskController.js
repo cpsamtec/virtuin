@@ -5,6 +5,7 @@ import type { RootInterface, CollectionEnvs } from 'virtuintaskdispatcher/distri
 import { addLogEntry } from '../shared/actions/log';
 import { updateDispatchStatus } from '../shared/actions/dispatch';
 import logger from './Logger';
+import os from 'os';
 
 const { VirtuinTaskDispatcher } = require('virtuintaskdispatcher').VirtuinTaskDispatcher;
 const fse = require('fs-extra');
@@ -32,6 +33,7 @@ class TaskController {
    * @throws {Error}            Throws if fails to connect to RabbitMQ or read configs
    */
   initialize = async (filepath: string, store: Object) => {
+    debugger;
     try {
       let msg;
       this.store = store;
@@ -41,7 +43,8 @@ class TaskController {
         throw new Error(`The environment variable VIRT_STATION_NAME must be set`);
       }
       // Connect and subscribe to Task Server
-      const stackPath = path.join(app.getPath('appData'), 'stacks');
+      //const stackPath = path.join(app.getPath('appData'), 'stacks');
+      const stackPath = path.join(os.tmpdir(), 'stacks');
       logger.info(`Task environment configs being saved in ${stackPath}.`);
       await fse.ensureDir(stackPath);
       if(this.dispatcher !== null) {
@@ -69,13 +72,15 @@ class TaskController {
       if (!collectionEnvs) {
         throw new Error(`Could not parse environment variables for collection`);
       }
+      debugger;
       this.dispatcher = new VirtuinTaskDispatcher(
         stationName,
-        filepath,
+        path.dirname(filepath),
         (collectionEnvs: any),
         collectionDef,
         stackPath
       );
+      debugger;
       this.setupDispatcherEvents();
       this.dispatcher && await this.dispatcher.upVM(false);
       this.dispatcher && await this.dispatcher.login();

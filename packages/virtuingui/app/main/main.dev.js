@@ -2,7 +2,6 @@
 /**
  * @flow
  */
-  debugger;
 import { app, BrowserWindow, dialog } from 'electron';
 import MenuBuilder from './menu';
 import sharedTaskController from './TaskController';
@@ -161,20 +160,17 @@ app.on('ready', async () => {
   };
 
   mainWindow.loadCredentials = async () => {
-    debugger;
     const credentialPath = path.join(app.getPath('userData'), 'virtuin_credentials.json');
     const exists = await fse.pathExists(credentialPath);
-    debugger;
     if (exists) {
       store.dispatch(addLogEntry({ type: 'data', data: '[VIRT] Loading credentials.' }));
+      //TODO add some checks for credentials
       const credentials = await fse.readJson(credentialPath);
       process.env = {
         ...process.env,
         ...credentials
       };
-      debugger;
       await reconfigureLogger();
-      debugger;
     }
   };
 
@@ -229,7 +225,11 @@ app.on('ready', async () => {
     store.dispatch(addLogEntry({ type: 'data', data: '[VIRT] Restarting Virtuin VM.' }));
     try {
       const succ = await sharedTaskController.reqRestartVM();
-      store.dispatch(addLogEntry({ type: 'data', data: '[VIRT] Successfully restarted Virtuin VM.' }));
+      if(succ) {
+        store.dispatch(addLogEntry({ type: 'data', data: '[VIRT] Successfully restarted Virtuin VM.' }));
+      } else {
+        store.dispatch(addLogEntry({ type: 'data', data: '[VIRT] Could not restart Virtuin VM.' }));
+      }
     } catch (err) {
       const errMsg = `[VIRT] Failed restarting Virtuin VM with error: ${err.message}`;
       store.dispatch(addLogEntry({ type: 'data', data: `[VIRT] Failed restarting Virtuin VM with error: ${err.message}` }));
@@ -255,7 +255,6 @@ app.on('ready', async () => {
     // mainWindow.setFullScreen(true);
     // TODO: Use commander. Dont expect task always
     try {
-      debugger;
       await mainWindow.loadCredentials();
       // Process program arguments
       const args = [process.argv[0], 'run', ...process.argv.slice(1)];
@@ -276,11 +275,11 @@ app.on('ready', async () => {
         type: 'error',
         buttons: ['Exit'],
         title: 'Fatal Error',
-        message: `Unable to connect to task server with following error: ${err}.`
+        message: `Unable to load with the following error: ${err}.`
       };
       setTimeout(() => {
         dialog.showMessageBox(mainWindow, dialogOptions);
-        //app.quit(2);
+        app.quit(2);
       }, 500);
     }
   });

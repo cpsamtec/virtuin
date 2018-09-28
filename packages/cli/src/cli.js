@@ -13,7 +13,6 @@ const fs = require('fs');
 const program = require('commander');
 const { VirtuinTaskDispatcher } = require('virtuintaskdispatcher').VirtuinTaskDispatcher;
 
-debugger;
 type InputCommandType = 'run' | 'up' | 'down' | 'upVM' | 'downVM' | 'sendData'
 
 // import VirtuinTaskDispatcher from './VirtuinTaskDispatcher';
@@ -240,7 +239,6 @@ if (!process.env.VIRT_STATION_NAME) {
 }
 const stationName: string = (process.env.VIRT_STATION_NAME: any);
 console.log(`[VIRT] running in ${stationName}`);
-debugger;
 const tmpCollectionDef: ?RootInterface = VirtuinTaskDispatcher.collectionObjectFromPath((collectionDefPath: any));
 
 if (!tmpCollectionDef || !tmpCollectionDef.stationCollectionEnvPaths

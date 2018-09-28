@@ -11,6 +11,7 @@ export default function dispatchStatus(state: DispatchStatus = VirtuinTaskDispat
   const { type, payload } = action;
   switch (type) {
     case UPDATE_STATUS: {
+    debugger;
       return {
         ...state,
         ...payload
