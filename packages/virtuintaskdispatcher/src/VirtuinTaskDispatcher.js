@@ -372,7 +372,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
   up = async (fullReload: boolean = false): Promise<void> => {
     try {
       const stat = await fse.lstat(this.collectionEnvPath);
-      if(stat.isDirectory() == false) {
+      if (stat.isDirectory() === false) {
         throw new Error(`collectionEnvPath must be a directory (${this.collectionEnvPath})`);
       }
       const fullRebuild = this.collectionDef.build === 'development';
@@ -617,6 +617,27 @@ class VirtuinTaskDispatcher extends EventEmitter {
     }
   }
 
+  /**
+   * Begin Tasks if Auto Start enabled on gruop
+   * @param  {Object}  taskConfig Task definition object
+   * @return {Promise<{ success: boolean, error: Error}>}
+   */
+  beginTasksIfAutoStart = async (rebuildService: boolean = false): Promise<{ success: boolean, error: ?Error}> => {
+    const groups = this.collectionDef.taskGroups;
+    let anyError = null;
+    for (const index of groups.keys()) {
+      if (groups[index].autoStart) {
+        const { success, error } = await this.startTask({ groupIndex: index, taskIndex: 0 }, rebuildService);
+        if (error) {
+          anyError = error;
+          break;
+        }
+      }
+    }
+    return { success: anyError === null, error: anyError };
+  }
+
+  // Perform up
   /**
    * Start a task
    * @param  {Object}  taskConfig Task definition object
@@ -1065,6 +1086,29 @@ class VirtuinTaskDispatcher extends EventEmitter {
     }
     if (activeTask.stderr != null) {
       activeTask.stderr.removeAllListeners('data');
+    }
+    if (!stopRequest && code === 0) {
+      const group = this.collectionDef.taskGroups[taskIdent.groupIndex];
+      if (group.mode && group.mode === 'sequential' && taskIdent.taskIndex < (group.tasks.length - 1)) {
+        this.startTask({ groupIndex: taskIdent.groupIndex, taskIndex: taskIdent.taskIndex + 1 }, false).then(({ success, error }) => {
+          if (success) {
+            this.updateDispatchPrimaryStatus({
+              logMessage:
+              `Successfully started next sequential task - group: ${taskIdent.groupIndex}, task: ${taskIdent.taskIndex + 1}`
+            });
+          } else if (error && error.description) {
+            this.updateDispatchPrimaryStatus({
+              logMessage:
+              `Error starting next sequential task - $group: ${taskIdent.groupIndex}, task: ${taskIdent.taskIndex + 1} ${error.description}`
+            });
+          }
+        }).catch((error) => {
+            this.updateDispatchPrimaryStatus({
+              logMessage:
+              `Error starting next sequential task - $group: ${taskIdent.groupIndex}, task: ${taskIdent.taskIndex + 1} ${error.description}`
+            });
+        });
+      }
     }
     const errMsg = (code === 0)
       ? null

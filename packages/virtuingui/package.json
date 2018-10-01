@@ -21,14 +21,13 @@
     "lint-styles": "stylelint app/*.css app/components/*.css --syntax scss",
     "lint-styles-fix": "stylefmt -r app/*.css app/components/*.css",
     "pack": "electron-builder --dir",
-    "package": "npm run build && build --publish never",
-    "package-all": "npm run build && build -mwl",
-    "package:linux": "npm run build && build --linux",
-    "package:mac": "npm run build && build --mac",
-    "package:win": "npm run build && build --win --x64",
+    "package": "npm run build && electron-builder build --publish never",
+    "package-all": "npm run build && electron-builder build -mwl",
+    "package:linux": "npm run build && electron-builder build --linux",
+    "package:mac": "npm run build && electron-builder build --mac",
+    "package:win": "npm run build && electron-builder build --win --x64",
     "postinstall": "node -r babel-register internals/scripts/CheckNativeDep.js && npm run flow-typed && npm run build-dll && electron-builder install-app-deps && ./node_modules/fbjs-scripts/node/check-dev-engines.js package.json",
     "prestart": "npm run build",
-    "release": "build",
     "start": "cross-env NODE_ENV=production electron ./app/",
     "start-main-dev": "cross-env HOT=1 NODE_ENV=development electron --inspect=5858 -r babel-register ./app/main/main.dev.js",
     "start-renderer-dev": "cross-env NODE_ENV=development node --trace-warnings -r babel-register ./node_modules/webpack-dev-server/bin/webpack-dev-server --config webpack.config.renderer.dev.js",
@@ -36,7 +35,7 @@
     "test": "cross-env NODE_ENV=test BABEL_DISABLE_CACHE=1 node --trace-warnings -r babel-register ./internals/scripts/RunTests.js",
     "test-all": "npm run lint && npm run flow && npm run build && npm run test && npm run test-e2e",
     "test-e2e": "cross-env NODE_ENV=test BABEL_DISABLE_CACHE=1 node --trace-warnings -r babel-register ./internals/scripts/RunTests.js e2e",
-    "test-watch": "npm test -- --watch"
+    "test-watch": "npm run test -- --watch"
   },
   "browserslist": "electron 1.6",
   "build": {

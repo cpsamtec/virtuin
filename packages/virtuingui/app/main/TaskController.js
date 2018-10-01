@@ -33,7 +33,6 @@ class TaskController {
    * @throws {Error}            Throws if fails to connect to RabbitMQ or read configs
    */
   initialize = async (filepath: string, store: Object) => {
-    debugger;
     try {
       let msg;
       this.store = store;
@@ -72,10 +71,9 @@ class TaskController {
       if (!collectionEnvs) {
         throw new Error(`Could not parse environment variables for collection`);
       }
-      debugger;
       this.dispatcher = new VirtuinTaskDispatcher(
         stationName,
-        path.dirname(filepath),
+        collectionEnvPath,
         (collectionEnvs: any),
         collectionDef,
         stackPath
@@ -85,6 +83,7 @@ class TaskController {
       this.dispatcher && await this.dispatcher.upVM(false);
       this.dispatcher && await this.dispatcher.login();
       this.dispatcher && await this.dispatcher.up(false);
+      this.dispatcher && await this.dispatcher.beginTasksIfAutoStart(false);
       msg = `[VIRT] Subscribing to task status.`;
       logger.info(msg);
       this.store.dispatch(addLogEntry({ type: 'info', data: msg }));
@@ -102,10 +101,11 @@ class TaskController {
     }
     this.dispatcher.on('task-status', status => {
       try {
-        debugger;
-        const msg = JSON.stringify(status, undefined, "  ");
-        this.store.dispatch(updateDispatchStatus(status));
-        //this.store.dispatch(addLogEntry({ type: 'info', data: msg }));
+        setTimeout(() => {
+          this.store.dispatch(updateDispatchStatus(status));
+          //const msg = JSON.stringify(status, undefined, "  ");
+          //this.store.dispatch(addLogEntry({ type: 'info', data: msg }));
+        }, 0);
       } catch(error) {
 
       }

@@ -38,8 +38,12 @@ $ yarn run dev
 You Run these two commands __simultaneously__ in different console tabs:
 
 ```bash
-$ yarn run hot-updates-server
-$ yarn run start-hot-renderer
+lerna run build --scope virtuintaskdispatcher
+lerna bootstrap
+
+
+$ lerna run hot-updates-server --scope virtuin-gui
+$ yarn run start-hot-renderer --scope virtuin-gui
 ```
 
 ## Editor Configuration

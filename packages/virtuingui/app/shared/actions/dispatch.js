@@ -10,9 +10,11 @@ import {
 
 
 
-export function updateDispatchStatus(dispatchStatus: $Shape<DispatchStatus> = {}): DispatchStatusAction {
+export const updateDispatchStatus = createAliasedAction(
+  UPDATE_STATUS,
+  (dispatchStatus: {}): DispatchStatusAction => {
   return {
     type: UPDATE_STATUS,
     payload: dispatchStatus
   }
-}
+});
