@@ -171,6 +171,25 @@ class VirtuinTaskDispatcher extends EventEmitter {
     groups: []
   })
 
+  static genInitTaskStatusForTaskIdent = (taskIdent: TaskIdentifier, collectionDef: RootInterface): TaskStatus => {
+    const groups = collectionDef.taskGroups;
+    const task = groups[taskIdent.groupIndex].tasks[taskIdent.taskIndex];
+    return {
+      name: task.name,
+      description: task.description || '',
+      progress: 0,
+      identifier: { groupIndex: taskIdent.groupIndex, taskIndex: taskIdent.taskIndex },
+      state: 'IDLE',
+      taskUUID: null,
+      error: null,
+      viewURL: task.viewURL,
+      startDate: null,
+      completeDate: null,
+      messages: [],
+      stdout: '',
+      stderr: ''
+    };
+  }
   static genInitDispatchStatusForDef = (collectionDef: RootInterface): DispatchStatus => {
     const groups = collectionDef.taskGroups;
     return {
@@ -185,22 +204,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
         mode: groups[i].mode || 'individual',
         autoStart: groups[i].autoStart,
         tasksStatus: Array(groups[i].tasks.length).fill().map((ignore2, j) => {
-          const task = groups[i].tasks[j];
-          return {
-            name: task.name,
-            description: task.description || '',
-            progress: 0,
-            identifier: { groupIndex: i, taskIndex: j },
-            state: 'IDLE',
-            taskUUID: null,
-            error: null,
-            viewURL: task.viewURL,
-            startDate: null,
-            completeDate: null,
-            messages: [],
-            stdout: '',
-            stderr: ''
-          };
+          return VirtuinTaskDispatcher.genInitTaskStatusForTaskIdent({groupIndex: i, taskIndex: j}, collectionDef);
         })
       }))
     };
@@ -648,8 +652,11 @@ class VirtuinTaskDispatcher extends EventEmitter {
     }
     const task: Task = (this.taskFromIdentifier(taskIdent): any);
     const groupStatus = this.dispatchStatus.groups[taskIdent.groupIndex];
-    const currStatus: TaskStatus = groupStatus.tasksStatus[taskIdent.taskIndex];
+    //const currStatus: TaskStatus = groupStatus.tasksStatus[taskIdent.taskIndex];
     const cmd = 'docker-compose';
+    //Reset the status fields for the task
+    this.updateTaskStatus(taskIdent, VirtuinTaskDispatcher.genInitTaskStatusForTaskIdent(taskIdent, this.collectionDef));
+
     if (rebuildService && task.dockerInfo
       && task.dockerInfo.serviceName) {
       this.updateDispatchPrimaryStatus({ statusMessage: `rebuilding service ${task.dockerInfo.serviceName}.` });
@@ -684,9 +691,10 @@ class VirtuinTaskDispatcher extends EventEmitter {
     }
 
     // Update status
+    const newTaskUUID = this.generateUUID();
     this.updateTaskStatus(taskIdent, {
       name: task.name,
-      taskUUID: this.generateUUID(),
+      taskUUID: newTaskUUID,
       state: 'START_REQUEST',
       startDate: new Date().toISOString(),
       completeDate: null,
@@ -709,7 +717,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
       const taskData = ({
         // eslint-disable-line camelcase
         data: { ...sharedData, ...virt_stations[this.stationName] },
-        taskUUID: currStatus.taskUUID
+        taskUUID: newTaskUUID
       });
       const taskStr = JSON.stringify(taskData);
       await fse.outputFile(taskSrcPath, taskStr);
@@ -766,7 +774,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
       return { success: true, error: null };
     } catch (err) {
       this.updateTaskStatus(taskIdent, {
-        ...currStatus,
         state: 'KILLED',
         error: `Failed spawning task: ${err.message}`
       });

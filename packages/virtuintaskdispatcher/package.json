@@ -7,6 +7,7 @@
     "flow": "flow check",
     "flow-typed": "rimraf flow-typed/npm && flow-typed install --overwrite || true",
     "prepare": "npm run build && npm run build:flow",
+    "prepublish": "npm run build && npm run build:flow",
     "build": "./node_modules/.bin/babel ./src --out-dir ./distribution --source-maps",
     "build:flow": "flow-copy-source -v -i '**/__tests__/**' src distribution",
     "api-html": "./node_modules/.bin/documentation build src/ -f html -o ./docs --shallow",
