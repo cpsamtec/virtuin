@@ -448,12 +448,10 @@ class VirtuinTaskDispatcher extends EventEmitter {
         env: { ...process.env, ...this.envs },
         shell: false
       };
-      debugger;
       const code = await this.spawnAsync(cmd, args, options,
         (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stdout: buffer.toString() }); },
         (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stderr: buffer.toString() }); });
       if (code) {
-        debugger;
         throw new Error(`Failed starting up task environment: ${code || 'unknown'}`);
       }
       // Write collection into stack folder on successful up

@@ -78,7 +78,6 @@ class TaskController {
         collectionDef,
         stackPath
       );
-      debugger;
       this.setupDispatcherEvents();
       this.dispatcher && await this.dispatcher.upVM(false);
       this.dispatcher && await this.dispatcher.login();
