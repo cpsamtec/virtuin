@@ -1101,10 +1101,10 @@ class VirtuinTaskDispatcher extends EventEmitter {
             });
           }
         }).catch((error) => {
-            this.updateDispatchPrimaryStatus({
-              logMessage:
+          this.updateDispatchPrimaryStatus({
+            logMessage:
               `Error starting next sequential task - $group: ${taskIdent.groupIndex}, task: ${taskIdent.taskIndex + 1} ${error.description}`
-            });
+          });
         });
       }
     }
