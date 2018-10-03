@@ -152,6 +152,16 @@ class VirtuinTaskDispatcher extends EventEmitter {
         server: collectionEnvs.VIRT_DOCKER_HOST,
       };
     }
+    /*
+    if(this.vagrantDirectory) {
+      vagrant.vagrantEmitter.on('vagrant-status', (str) => {
+        this.updateDispatchPrimaryStatus({ statusMessage: str });
+      });
+      vagrant.vagrantEmitter.on('vagrant-error', (str) => {
+        this.updateDispatchPrimaryStatus({ statusMessage: str });
+      });
+    }
+    */
     this.restServer = new RestServer();
     const { dispatch, dispatchWithResponse } = this;
     RestServer.setProducerDelegate({ dispatch, dispatchWithResponse });
@@ -190,6 +200,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
       stderr: ''
     };
   }
+
   static genInitDispatchStatusForDef = (collectionDef: RootInterface): DispatchStatus => {
     const groups = collectionDef.taskGroups;
     return {
@@ -203,9 +214,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
         description: groups[i].description || '',
         mode: groups[i].mode || 'individual',
         autoStart: groups[i].autoStart,
-        tasksStatus: Array(groups[i].tasks.length).fill().map((ignore2, j) => {
-          return VirtuinTaskDispatcher.genInitTaskStatusForTaskIdent({groupIndex: i, taskIndex: j}, collectionDef);
-        })
+        tasksStatus: Array(groups[i].tasks.length).fill().map((ignore2, j) => VirtuinTaskDispatcher.genInitTaskStatusForTaskIdent({ groupIndex: i, taskIndex: j }, collectionDef))
       }))
     };
   }
@@ -255,6 +264,9 @@ class VirtuinTaskDispatcher extends EventEmitter {
   end = (): void => {
     if (this.restServer) {
       this.restServer.end();
+    }
+    if(this.vagrantDirectory) {
+      vagrant.vagrantEmitter.removeAllListeners();
     }
     RestServer.setProducerDelegate(null);
   }
@@ -652,9 +664,9 @@ class VirtuinTaskDispatcher extends EventEmitter {
     }
     const task: Task = (this.taskFromIdentifier(taskIdent): any);
     const groupStatus = this.dispatchStatus.groups[taskIdent.groupIndex];
-    //const currStatus: TaskStatus = groupStatus.tasksStatus[taskIdent.taskIndex];
+    // const currStatus: TaskStatus = groupStatus.tasksStatus[taskIdent.taskIndex];
     const cmd = 'docker-compose';
-    //Reset the status fields for the task
+    // Reset the status fields for the task
     this.updateTaskStatus(taskIdent, VirtuinTaskDispatcher.genInitTaskStatusForTaskIdent(taskIdent, this.collectionDef));
 
     if (rebuildService && task.dockerInfo

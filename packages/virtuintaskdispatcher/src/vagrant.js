@@ -81,6 +81,7 @@ export async function vagrantStopMachine(machine: VagrantMachineInfo) {
       await exec(`vagrant halt -f ${machine.id}`);
     } catch (e) {
       vagrantEmitter.emit('vagrant-error', `Vagrant could not stop ${machine.name} at ${machine.cwd} -- error ${e}`);
+      throw Error(`Vagrant could not stop ${machine.name} at ${machine.cwd} -- error ${e}`);
     }
   }
 }
@@ -91,6 +92,7 @@ export async function vagrantStartMachine(machine: VagrantMachineInfo) {
     vagrantEmitter.emit('vagrant-status', 'started ', machine.name);
   } catch (error) {
     vagrantEmitter.emit('vagrant-error', `Vagrant could not start ${machine.name} at ${machine.cwd} -- error ${error}`);
+    throw Error(`Vagrant could not start ${machine.name} at ${machine.cwd} -- error ${error}`);
   }
 }
 export async function ensureOnlyMachineRunningAtDirectory(directory: string, fullReload: boolean = false, statusCallback: ?((string) => void) = null) {
@@ -127,7 +129,7 @@ export async function ensureOnlyMachineRunningAtDirectory(directory: string, ful
     statusCallback && statusCallback('[~0 s] complete');
     // console.log('stderr:', stderr);
   } catch (error) {
-    statusCallback && statusCallback(`[~0 s] Vagrant could not start machine at ${directory} -- error ${error}`);
+    statusCallback && statusCallback(`[~0 s] Vagrant Error\n${error}`);
   }
 }
 // ensureOnlyMachineRunningAtDirectory('/home/chris/Documents/Samtec/Virtuin/ProcessExample/vm');
