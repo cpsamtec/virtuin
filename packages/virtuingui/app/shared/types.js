@@ -17,10 +17,15 @@ export const SET_STATION = 'SET_STATION';
 export const START_TASK_REQUEST: string = 'START_TASK_REQUEST';
 export const STOP_TASK_REQUEST: string = 'STOP_TASK_REQUEST';
 export const UPDATE_STATUS: string = 'UPDATE_STATUS';
+export const UPDATE_ERROR: string = 'UPDATE_ERROR';
 
 export type DispatchStatusAction =
   | BaseAction<DispatchStatus>
   | BaseAction<?Object>;
+
+export type DispatchErrorAction =
+  | BaseAction<String>
+  | BaseAction<?String>;
 
 // Log Entries
 export type LogType = {

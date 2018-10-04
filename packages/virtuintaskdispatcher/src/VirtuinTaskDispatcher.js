@@ -57,6 +57,7 @@ export type DispatchCallbacks = {|
   message: string
 |}
 export type DispatchPrimaryStatus = {|
+  collectionState: 'Not Loaded' | 'Loaded',
   statusMessage: string,
   logMessage: string,
   callbacks: {string?: DispatchCallbacks},
@@ -166,6 +167,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
     const { dispatch, dispatchWithResponse } = this;
     RestServer.setProducerDelegate({ dispatch, dispatchWithResponse });
     this.restServer.begin();
+    this.updateDispatchPrimaryStatus({ collectionState: 'Loaded'}); 
   }
 
   initializeDispatchStatus = (): void => {
@@ -173,6 +175,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
   }
 
   static genInitDispatchStatus = (): DispatchStatus => ({
+    collectionState: 'Not Loaded',
     statusMessage: '',
     logMessage: '',
     callbacks: {},
@@ -204,6 +207,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
   static genInitDispatchStatusForDef = (collectionDef: RootInterface): DispatchStatus => {
     const groups = collectionDef.taskGroups;
     return {
+      collectionState: 'Not Loaded',
       statusMessage: '',
       logMessage: '',
       callbacks: {},
@@ -265,7 +269,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
     if (this.restServer) {
       this.restServer.end();
     }
-    if(this.vagrantDirectory) {
+    if (this.vagrantDirectory) {
       vagrant.vagrantEmitter.removeAllListeners();
     }
     RestServer.setProducerDelegate(null);

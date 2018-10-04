@@ -3,7 +3,7 @@ import { app } from 'electron';
 import * as path from 'path';
 import type { RootInterface, CollectionEnvs } from 'virtuintaskdispatcher/distribution/types';
 import { addLogEntry } from '../shared/actions/log';
-import { updateDispatchStatus } from '../shared/actions/dispatch';
+import { updateDispatchStatus, updateError } from '../shared/actions/dispatch';
 import logger from './Logger';
 import os from 'os';
 
@@ -79,18 +79,44 @@ class TaskController {
         stackPath
       );
       this.setupDispatcherEvents();
+      this.dispatcher && this.store.dispatch(updateDispatchStatus(this.dispatcher.getStatus()));
       this.dispatcher && await this.dispatcher.upVM(false);
       this.dispatcher && await this.dispatcher.login();
       this.dispatcher && await this.dispatcher.up(false);
-      this.dispatcher && await this.dispatcher.beginTasksIfAutoStart(false);
-      msg = `[VIRT] Subscribing to task status.`;
+      msg = `[VIRT] Finished loading collection`;
       logger.info(msg);
       this.store.dispatch(addLogEntry({ type: 'info', data: msg }));
       // Connect and subscribe to Task Publisher
       this.isInitialized = true;
     } catch (err) {
       this.isInitialized = false;
-      throw err;
+      if(this.dispatcher) {
+        //For now if initialization fails just stop environment
+        try {
+          this.store.dispatch(addLogEntry({ type: 'info', data: `Could not initialize dispatcher. Shutting what can down` }));
+          this.dispatcher && await this.dispatcher.down();
+          this.dispatcher && await this.dispatcher.downVM();
+        } catch(e) {
+          this.store.dispatch(addLogEntry({ type: 'info', data: `Error shutting down: ${e}` }));
+        }
+        this.dispatcher && this.dispatcher.removeAllListeners();
+        this.dispatcher && this.dispatcher.end();
+        this.dispatcher = null;
+      }
+      this.store.dispatch(updateDispatchStatus(VirtuinTaskDispatcher.genInitDispatchStatus()));
+      this.store.dispatch(updateError(err.description));
+    }
+    if(this.dispatcher) {
+      try {
+        const {success, error} = await this.dispatcher.beginTasksIfAutoStart(false);
+        if(success) {
+          this.store.dispatch(addLogEntry({ type: 'info', data: `Successfully ran autoStart tasks` }));
+        } else if(error) {
+          this.store.dispatch(updateError(`Error beginning autoStart tasks - ${error.description}`));
+        }
+      } catch(err) {
+        this.store.dispatch(updateError(`Error beginning autoStart tasks - ${err.description}`));
+      }
     }
   }
 

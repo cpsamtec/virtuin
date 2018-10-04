@@ -130,6 +130,7 @@ export async function ensureOnlyMachineRunningAtDirectory(directory: string, ful
     // console.log('stderr:', stderr);
   } catch (error) {
     statusCallback && statusCallback(`[~0 s] Vagrant Error\n${error}`);
+    throw error;
   }
 }
 // ensureOnlyMachineRunningAtDirectory('/home/chris/Documents/Samtec/Virtuin/ProcessExample/vm');

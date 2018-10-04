@@ -222,6 +222,7 @@ app.on('ready', async () => {
   };
 
   mainWindow.reloadVM = async () => {
+    //TODO I would like this to take the path to a collection and restart the VM without loading it
     store.dispatch(addLogEntry({ type: 'data', data: '[VIRT] Restarting Virtuin VM.' }));
     try {
       const succ = await sharedTaskController.reqRestartVM();
