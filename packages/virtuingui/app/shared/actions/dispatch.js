@@ -20,9 +20,9 @@ export const updateDispatchStatus = createAliasedAction(
   }
 });
 
-export const updateError = createAliasedAction(
+export const updateDispatchError = createAliasedAction(
   UPDATE_ERROR,
-  (error: ""): DispatchErrorAction => {
+  (error: {message: string}): DispatchErrorAction => {
   return {
     type: UPDATE_ERROR,
     payload: error

@@ -1,8 +1,11 @@
 // @flow
 
-import {
+import type {
   DispatchStatusAction,
   DispatchErrorAction,
+  DispatchErrorStatus,
+} from '../types';
+import {
   UPDATE_STATUS,
   UPDATE_ERROR,
 } from '../types';
@@ -23,13 +26,16 @@ export default function dispatchStatus(state: DispatchStatus = VirtuinTaskDispat
   }
 }
 
-export function dispatchError(state: string = "", action: DispatchErrorAction): string {
+export function dispatchError(state: DispatchErrorStatus = {message: ""}, action: DispatchErrorAction): DispatchErrorStatus {
   const { type, payload } = action;
   switch (type) {
-    case UPDATE_ERROR: {
-        payload
-    }
+    case UPDATE_ERROR:
+      return {
+        ...state,
+        ...payload
+      };
     default:
+      console.log(`state is ${state} ${typeof state}`);
       return state;
   }
 }

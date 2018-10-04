@@ -117,8 +117,7 @@ export async function ensureOnlyMachineRunningAtDirectory(directory: string, ful
         statusCallback && statusCallback(`[~10 min] starting new machine at ${directory}`);
         /* const { stdout, stderr } = */
         await exec('vagrant up',
-          { cwd: directory }
-        );
+          { cwd: directory });
       } else {
         statusCallback && statusCallback(`[~3 min] starting ${machines[index].name}`);
         await vagrantStartMachine(machines[index]);

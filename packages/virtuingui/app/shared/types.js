@@ -19,13 +19,16 @@ export const STOP_TASK_REQUEST: string = 'STOP_TASK_REQUEST';
 export const UPDATE_STATUS: string = 'UPDATE_STATUS';
 export const UPDATE_ERROR: string = 'UPDATE_ERROR';
 
+export type DispatchErrorStatus = {
+  +message: string
+}
 export type DispatchStatusAction =
   | BaseAction<DispatchStatus>
   | BaseAction<?Object>;
 
 export type DispatchErrorAction =
-  | BaseAction<String>
-  | BaseAction<?String>;
+  | BaseAction<DispatchErrorStatus>
+  | BaseAction<?Object>;
 
 // Log Entries
 export type LogType = {

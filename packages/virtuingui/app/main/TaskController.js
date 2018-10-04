@@ -3,7 +3,7 @@ import { app } from 'electron';
 import * as path from 'path';
 import type { RootInterface, CollectionEnvs } from 'virtuintaskdispatcher/distribution/types';
 import { addLogEntry } from '../shared/actions/log';
-import { updateDispatchStatus, updateError } from '../shared/actions/dispatch';
+import { updateDispatchStatus, updateDispatchError } from '../shared/actions/dispatch';
 import logger from './Logger';
 import os from 'os';
 
@@ -104,7 +104,7 @@ class TaskController {
         this.dispatcher = null;
       }
       this.store.dispatch(updateDispatchStatus(VirtuinTaskDispatcher.genInitDispatchStatus()));
-      this.store.dispatch(updateError(err.description));
+      this.store.dispatch(updateDispatchError({message: err.description}));
     }
     if(this.dispatcher) {
       try {
@@ -112,10 +112,10 @@ class TaskController {
         if(success) {
           this.store.dispatch(addLogEntry({ type: 'info', data: `Successfully ran autoStart tasks` }));
         } else if(error) {
-          this.store.dispatch(updateError(`Error beginning autoStart tasks - ${error.description}`));
+          this.store.dispatch(updateDispatchError({message: `Error beginning autoStart tasks - ${error.description}`}));
         }
       } catch(err) {
-        this.store.dispatch(updateError(`Error beginning autoStart tasks - ${err.description}`));
+        this.store.dispatch(updateDispatchError({message: `Error beginning autoStart tasks - ${err.description}`}));
       }
     }
   }

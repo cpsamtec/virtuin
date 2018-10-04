@@ -167,7 +167,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
     const { dispatch, dispatchWithResponse } = this;
     RestServer.setProducerDelegate({ dispatch, dispatchWithResponse });
     this.restServer.begin();
-    this.updateDispatchPrimaryStatus({ collectionState: 'Loaded'}); 
+    this.updateDispatchPrimaryStatus({ collectionState: 'Loaded' });
   }
 
   initializeDispatchStatus = (): void => {
