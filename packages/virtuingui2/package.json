@@ -1,0 +1,15 @@
+{
+  "name": "virtuingui2",
+  "version": "1.0.0",
+  "description": "Virtuin GUI",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "author": "Pages",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^5.0.0-beta.2"
+  }
+}
