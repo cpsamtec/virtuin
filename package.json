@@ -3,5 +3,16 @@
   "private": true,
   "devDependencies": {
     "lerna": "^3.3.1"
+  },
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ],
+    "nohoist": [
+      "**/electron-builder",
+      "**/electron-builder/**",
+      "**/electron-webpack",
+      "**/electron-webpack/**"
+    ]
   }
 }
