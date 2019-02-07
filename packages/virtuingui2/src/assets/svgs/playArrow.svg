@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="12" height="15" viewBox="0, 0, 12, 15">
+  <g id="SideBar" transform="translate(147, -235.5)">
+    <path d="M-144,236 C-144,236 -135,243 -135,243 C-135,243 -144,250 -144,250 C-144,250 -144,236 -144,236 z M-143,238.045 L-143,247.955 C-142.236,247.361 -141.472,246.767 -140.708,246.173 C-139.348,245.115 -137.989,244.058 -136.629,243 C-137.592,242.25 -138.556,241.501 -139.52,240.752 C-140.68,239.849 -141.84,238.947 -143,238.045 z"/>
+  </g>
+</svg>
