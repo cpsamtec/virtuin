@@ -10,6 +10,7 @@ import Navbar from './components/Navbar';
 import TaskGroupList from './components/TaskGroupList';
 
 import createStore from './redux';
+import TaskView from './components/TaskView';
 
 // create our store
 const store = createStore();
@@ -26,7 +27,7 @@ class App extends Component {
   render() {
     return (
       <Provider store={store}>
-        <div>
+        <>
           <CssBaseline />
           <MuiThemeProvider theme={theme}>
             <AppContainer>
@@ -35,10 +36,11 @@ class App extends Component {
               </Sidebar>
               <View>
                 <Navbar />
+                <TaskView />
               </View>
             </AppContainer>
           </MuiThemeProvider>
-        </div>
+        </>
       </Provider>
     );
   }

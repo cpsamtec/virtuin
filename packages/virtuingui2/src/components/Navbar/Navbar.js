@@ -29,9 +29,14 @@ const Spacer = styled.div`
 const Navbar = ({ show, task, toggleSidebar }) => (
   <Nav position="relative">
     <Row>
-      {!show && [<CircleButton fullWhite onClick={toggleSidebar}>
-        <ReactSVG src={require("../../assets/svgs/navigation.svg")}/>
-      </CircleButton>,<Spacer/>]}
+      {!show && 
+        <>
+          <CircleButton fullWhite onClick={toggleSidebar}>
+            <ReactSVG src={require("../../assets/svgs/navigation.svg")}/>
+          </CircleButton>
+          <Spacer/>
+        </>
+      }
       <Typography variant="h6">Task Name 0</Typography>
     </Row>
     

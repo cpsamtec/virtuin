@@ -24,27 +24,29 @@ const stateMapper = (state) => {
 }
 const Task = ({task, last}) => {
   const showTaskProgress = task.state.match(/(START_REQUEST|STOP_REQUEST|FINISHED)/);
-  return [
-    <ListItem button active key={task.name}>
-      <ListItemText 
-        primary={
-          <div>
-            <ListItemPrimary>{task.name}</ListItemPrimary>
-            <OutlinedChip label={task.state} color={stateMapper(task.state)} />
-          </div>
-        } 
-        secondary={task.description} />
-        <ListItemSecondaryAction>
-          {showTaskProgress ? 
-            <CircleProgress value={task.progress} /> :
-            <CircleButton disabled onClick={() => {console.log('called circle')}}>
-              <ReactSVG src={PlayArrow}/>
-            </CircleButton>
-          }
-        </ListItemSecondaryAction>
-    </ListItem>,
-    last ? null : <Divider key="divider" />
-  ]
+  return (
+    <>
+      <ListItem button active key={task.name}>
+        <ListItemText 
+          primary={
+            <div>
+              <ListItemPrimary>{task.name}</ListItemPrimary>
+              <OutlinedChip label={task.state} color={stateMapper(task.state)} />
+            </div>
+          } 
+          secondary={task.description} />
+          <ListItemSecondaryAction>
+            {showTaskProgress ? 
+              <CircleProgress value={task.progress} /> :
+              <CircleButton disabled onClick={() => {console.log('called circle')}}>
+                <ReactSVG src={PlayArrow}/>
+              </CircleButton>
+            }
+          </ListItemSecondaryAction>
+      </ListItem>,
+      {last ? null : <Divider key="divider" />}
+    </>
+  )
 }
 
 export default Task;

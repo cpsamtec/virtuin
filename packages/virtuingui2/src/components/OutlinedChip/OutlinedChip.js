@@ -13,7 +13,7 @@ const colorSelector = (color) => {
   }
   return colors[color] ? colors[color] : '#999';
 }
-export const OutlinedChip = styled(Chip)`
+export const OutlinedChip = styled(Chip, {shouldForwardProp: prop => !prop.match(/color/)})`
   color: ${props => colorSelector(props.color)};
   border-color: ${props => colorSelector(props.color)};
 `;
