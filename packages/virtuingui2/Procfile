@@ -1,2 +1,0 @@
-react: yarn run start
-electron: node src/electron-wait-react
