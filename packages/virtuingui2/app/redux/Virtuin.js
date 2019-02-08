@@ -30,19 +30,38 @@ const defaultState = {
           messages: ['hi', 'hola'],
           stdout: 'huh',
           stderr: ''
+        }, {
+          name: 'Task 1',
+          description: 'here is the task description',
+          progress: 32,
+          identifier: {groupIndex: 0, taskIndex: 1},
+          state: 'KILLED',
+          autoStart: true,
+          taskUUID: "1232132",
+          error: null,
+          viewURL: 'http://localhost:3000',
+          startDate: 'now',
+          completeDate: 'tomorrow',
+          messages: ['hi', 'hola'],
+          stdout: 'huh',
+          stderr: ''
         }
       ] 
       
     }
   ]
 }
-
-export const { toggleSidebar } = createActions({
-  'TOGGLE_SIDEBAR': () => null
+export const VirtuinSagaActions = createActions({
+  'UP': () => null,
+  'RUN': () => null,
+  'DOWN': () => null
 });
 
+export const VirtuinSagaResponseActions = createActions({
+
+})
+
 const reducer = handleActions({
-  [toggleSidebar]: (state) => ({...state, show: !state.show})
 }, defaultState);
 
 export default reducer;

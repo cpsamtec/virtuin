@@ -23,8 +23,6 @@ const View = styled.div`
   width: 100%;
 `;
 
-console.log("AHHHH")
-
 class App extends Component {
   render() {
     return (

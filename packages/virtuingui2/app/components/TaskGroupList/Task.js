@@ -1,9 +1,13 @@
 import React from 'react';
+import { connect } from 'react-redux';
 import ReactSVG from 'react-svg'
 
 import Divider from '@material-ui/core/Divider';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemText from '@material-ui/core/ListItemText';
+
+import { setTaskView } from '../../redux/TaskView';
+
 import { ListItem, ListItemPrimary } from './TaskGroupList.style';
 import PlayArrow from '../../assets/svgs/playArrow.svg';
 console.log('PlayArrow', PlayArrow);
@@ -22,11 +26,13 @@ const stateMap = {
 const stateMapper = (state) => {
   return stateMap[state] ? stateMap[state] : 'default'
 }
-const Task = ({task, last}) => {
+const Task = ({task, last, currentTask, setTaskView}) => {
   const showTaskProgress = task.state.match(/(START_REQUEST|STOP_REQUEST|FINISHED)/);
+  const {groupIndex, taskIndex} = task.identifier;
+  const active = currentTask.groupIndex === groupIndex && currentTask.taskIndex === taskIndex;
   return (
     <>
-      <ListItem button active key={task.name}>
+      <ListItem button={!active} active={active} key={task.name} onClick={() => setTaskView(task)}>
         <ListItemText 
           primary={
             <div>
@@ -49,4 +55,14 @@ const Task = ({task, last}) => {
   )
 }
 
-export default Task;
+const mapDispatchToProps = (dispatch) => ({
+  setTaskView: (task) => dispatch(setTaskView(task))
+})
+
+const mapStateToProps = (state, ownProps) => {
+  return ({
+    currentTask: state.taskView.identifier
+  });
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Task);

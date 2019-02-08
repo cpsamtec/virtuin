@@ -13,6 +13,8 @@
 import { app, BrowserWindow } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
+require('dotenv').config();
+
 import MenuBuilder from './menu';
 
 export default class AppUpdater {
@@ -24,6 +26,9 @@ export default class AppUpdater {
 }
 
 let mainWindow = null;
+
+
+console.log('process.env', process.env.VIRTUIN_COLLECTION_LOCATION);
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');

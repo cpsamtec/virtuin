@@ -14,6 +14,7 @@ export const CircleButton = styled(ButtonBase, {shouldForwardProp: prop => prop 
   fill: ${props => props.fullWhite ? `#fff` : `#ccc`};
   text-align: center;
   display: flex;
+  opacity: ${props => props.disabled ? 0.4 : 1};
   align-items: center;
   justify-content: center;
   &:hover {

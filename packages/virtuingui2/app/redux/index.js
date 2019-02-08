@@ -4,12 +4,13 @@ import { combineReducers } from 'redux';
 import configureStore from './CreateStore';
 import rootSaga from '../sagas/';
 import sidebar from './Sidebar';
-import virtuin from './Virtuin'
+import virtuin from './Virtuin';
+import taskView from './TaskView';
 
 /* ------------- Assemble The Reducers ------------- */
 
 export const reducers = combineReducers({
-  sidebar, virtuin
+  sidebar, virtuin, taskView
 })
 
 
