@@ -13,6 +13,14 @@
 import { app, BrowserWindow } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
+
+
+import os from 'os';
+import path from 'path';
+import fs from 'fs';
+
+import TaskDelegator from './server/taskDelegator';
+
 require('dotenv').config();
 
 import MenuBuilder from './menu';
@@ -26,9 +34,6 @@ export default class AppUpdater {
 }
 
 let mainWindow = null;
-
-
-console.log('process.env', process.env.VIRTUIN_COLLECTION_LOCATION);
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -51,6 +56,14 @@ const installExtensions = async () => {
     extensions.map(name => installer.default(installer[name], forceDownload))
   ).catch(console.log);
 };
+
+
+// start task delegator
+const stationName = process.env.VIRT_STATION_NAME;
+const collectionDefPath = process.env.VIRTUIN_COLLECTION_LOCATION;
+const stackPath = path.join(os.tmpdir(), 'stacks');
+TaskDelegator.init(stationName, collectionDefPath, stackPath);
+
 
 /**
  * Add event listeners...

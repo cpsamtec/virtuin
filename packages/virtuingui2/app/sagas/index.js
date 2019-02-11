@@ -1,6 +1,6 @@
 //@flow
-import {  all } from 'redux-saga/effects';
-import { take, call, race, put } from 'redux-saga/effects';
+import { eventChannel } from 'redux-saga';
+import { all, take, call, race, put } from 'redux-saga/effects';
 import { IPCSagaActions } from '../redux/IPC';
 import { VirtuinSagaActions } from '../redux/Virtuin';
 
@@ -56,6 +56,7 @@ function watchMessages() {
   return eventChannel((emit) => {
     // take every response and emit
     ipcRenderer.on(ipcChannels.response, (event, arg) => emit(event))
+    ipcRenderer.send(ipcChannels.action, VirtuinSagaActions.connect())
     return () => {
       // remove listener
       ipcRenderer.removeAllListeners();

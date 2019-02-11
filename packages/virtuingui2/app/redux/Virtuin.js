@@ -52,13 +52,18 @@ const defaultState = {
   ]
 }
 export const VirtuinSagaActions = createActions({
+  'CONNECT': () => null,
   'UP': () => null,
-  'RUN': () => null,
-  'DOWN': () => null
+  'RUN': (taskIndex, groupIndex) => null,
+  'DOWN': () => null,
 });
 
 export const VirtuinSagaResponseActions = createActions({
-
+  'CONNECT_RESPONSE': (status) => ({ status }),
+  'UP_RESPONSE': () => null,
+  'RUN_RESPONSE': (groupIndex, taskIndex, status) => ({ taskIndex, groupIndex, status}),
+  'DOWN_RESPONSE': () => null,
+  'TASK_STATUS_RESPONSE': (taskStatus) => ({ taskStatus })
 })
 
 const reducer = handleActions({
