@@ -9,9 +9,8 @@ import ListItemText from '@material-ui/core/ListItemText';
 import { setTaskView } from '../../redux/TaskView';
 import { VirtuinSagaActions } from '../../redux/Virtuin';
 
-import { ListItem, ListItemPrimary } from './TaskGroupList.style';
+import { ListItem, ListItemPrimary, ListItemSecondary } from './TaskGroupList.style';
 import PlayArrow from '../../assets/svgs/playArrow.svg';
-console.log('PlayArrow', PlayArrow);
 import OutlinedChip from '../OutlinedChip';
 import CircleButton from '../CircleButton';
 import CircleProgress from '../CircleProgress';
@@ -44,7 +43,7 @@ const Task = ({task, last, currentTask, setTaskView, runTask}) => {
   const active = currentTask.groupIndex === groupIndex && currentTask.taskIndex === taskIndex;
   return (
     <>
-      <ListItem button={!active} active={active} key={task.name} onClick={() => setTaskView(task)}>
+      <ListItem button={!active} active={active} key={task.name} onClick={() => setTaskView(task.identifier)}>
         <ListItemText 
           primary={
             <div>
@@ -52,7 +51,7 @@ const Task = ({task, last, currentTask, setTaskView, runTask}) => {
               <OutlinedChip label={stateNameMapper(task.state)} color={stateMapper(task.state)} />
             </div>
           } 
-          secondary={task.description} />
+          secondary={<ListItemSecondary variant="caption">{task.description}</ListItemSecondary>} />
           <ListItemSecondaryAction>
             {showTaskProgress ? 
               <CircleProgress value={task.progress} /> :
@@ -68,7 +67,7 @@ const Task = ({task, last, currentTask, setTaskView, runTask}) => {
 }
 
 const mapDispatchToProps = (dispatch) => ({
-  setTaskView: (task) => dispatch(setTaskView(task)),
+  setTaskView: (identifier) => dispatch(setTaskView(identifier)),
   runTask: (groupIndex, taskIndex) => dispatch(VirtuinSagaActions.run(groupIndex, taskIndex))
 })
 

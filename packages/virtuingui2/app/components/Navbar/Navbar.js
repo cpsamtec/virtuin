@@ -4,7 +4,6 @@ import styled from '@emotion/styled';
 import AppBar from '@material-ui/core/AppBar';
 import Typography from '@material-ui/core/Typography';
 import Navigation from '../../assets/svgs/navigation.svg';
-console.log('Navigation', Navigation);
 import CircleButton from '../CircleButton';
 
 const Nav = styled(AppBar)`
