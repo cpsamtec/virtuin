@@ -1,29 +1,32 @@
 
-import type { RootInterface, CollectionEnvs } from 'virtuintaskdispatcher/distribution/types';
-import type { DispatchUpdatePrimaryStatus, DispatchStatus } from 'virtuintaskdispatcher';
+//import type { RootInterface, CollectionEnvs } from 'virtuintaskdispatcher/distribution/types';
+//import type { DispatchUpdatePrimaryStatus, DispatchStatus } from 'virtuintaskdispatcher';
 
 import { ipcChannels } from '../sagas';
 import { VirtuinSagaResponseActions } from '../redux/Virtuin';
 
 const { VirtuinTaskDispatcher } = require('virtuintaskdispatcher').VirtuinTaskDispatcher;
-
 const {ipcMain} = require('electron');
 
 class TaskDelegator {
-  dispatcher: VirtuinTaskDispatcher;
-
-  actionHandlers = {
-    'CONNECT': this.connect,
-    'UP': this.up,
-    'RUN': this.run,
-    'DOWN': this.down
+  dispatcher = null;
+  constructor() {
+    this.actionHandlers = {
+      'CONNECT': this.connect,
+      'UP': this.up,
+      'RUN': this.run,
+      'DOWN': this.down
+    }
   }
   init(stationName, collectionDefPath, stackPath, verbosity = 0) {
     // get collection and environment variables for the dispatcher
+    let collectionDef, collectionEnvPath, collectionEnvs;
     try {
-      const collectionDef = VirtuinTaskDispatcher.collectionObjectFromPath((collectionDefPath));
-      const collectionEnvs = VirtuinTaskDispatcher.collectionEnvFromPath(collectionEnvPath);
+      collectionDef = VirtuinTaskDispatcher.collectionObjectFromPath(collectionDefPath);
+      collectionEnvPath = collectionDef.stationCollectionEnvPaths[stationName];
+      collectionEnvs = VirtuinTaskDispatcher.collectionEnvFromPath(collectionEnvPath);
     } catch (error) {
+      console.log(error);
       console.error('Invalid collection def or environment variables provided');
       process.exit(1);
     }
@@ -40,16 +43,20 @@ class TaskDelegator {
     ipcMain.on(ipcChannels.action, this.handleAction);
     
   }
-  connect(client) {
+  connect = (client) => {
+    console.log('######### client connected ###########')
     this.dispatcher.on('task-status', status => {
-      client.send(ipcChannels.response, status);
+      console.log('task-status', status);
+      client.send(ipcChannels.response, VirtuinSagaResponseActions.taskStatusResponse(status));
     });
   }
-  async up(client, { reloadCompose: boolean = false }) {
-    await this.dispatcher.up(reloadCompose, (this.dispatcher.collectionDef.build === 'development'));
+  up = async (client) => {
+    console.log('waiting for up to finish');
+    await this.dispatcher.up(false, (this.dispatcher.collectionDef.build === 'development'));
+    console.log('UP FINISHED');
     client.send(ipcChannels.response, VirtuinSagaResponseActions.upResponse());
   }
-  async run(client, { groupIndex, taskIndex }) {
+  run = async (client, { groupIndex, taskIndex }) => {
     try {
       const task = this.dispatcher.collectionDef.taskGroups[groupIndex].tasks[taskIndex];
     } catch (err) {
@@ -58,7 +65,7 @@ class TaskDelegator {
     await this.dispatcher.startTask({ groupIndex, taskIndex });
     client.send(ipcChannels.response, VirtuinSagaResponseActions.runResponse(groupIndex, taskIndex, 'GOOD'))
   }
-  async down(client) {
+  down = async (client) => {
     await this.dispatcher.down();
     client.send(ipcChannels.response, VirtuinSagaResponseActions.downResponse());
   }
@@ -67,14 +74,15 @@ class TaskDelegator {
    * @param {*} event 
    * @param {*} arg 
    */
-  async handleAction(event, arg) {
+  handleAction = async (event, arg) => {
     try {
-      await actionHandlers[arg.type](event.sender, arg.payload);
+      console.log(this.actionHandlers);
+      await this.actionHandlers[arg.type](event.sender, arg.payload);
     } catch(err) {
       console.log(err);
     }
   }
 }
 
-const TaskDelegatorSingleton = TaskDelegator();
+const TaskDelegatorSingleton = new TaskDelegator();
 export default TaskDelegatorSingleton;

@@ -61,9 +61,8 @@ const installExtensions = async () => {
 // start task delegator
 const stationName = process.env.VIRT_STATION_NAME;
 const collectionDefPath = process.env.VIRTUIN_COLLECTION_LOCATION;
-const stackPath = path.join(os.tmpdir(), 'stacks');
+const stackPath = process.env.STACK_PATH;
 TaskDelegator.init(stationName, collectionDefPath, stackPath);
-
 
 /**
  * Add event listeners...

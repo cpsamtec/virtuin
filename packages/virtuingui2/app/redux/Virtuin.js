@@ -54,7 +54,7 @@ const defaultState = {
 export const VirtuinSagaActions = createActions({
   'CONNECT': () => null,
   'UP': () => null,
-  'RUN': (taskIndex, groupIndex) => null,
+  'RUN': (groupIndex, taskIndex ) => ({groupIndex, taskIndex}),
   'DOWN': () => null,
 });
 
@@ -67,6 +67,7 @@ export const VirtuinSagaResponseActions = createActions({
 })
 
 const reducer = handleActions({
+  [VirtuinSagaResponseActions.taskStatusResponse]: (state, { payload: { taskStatus } }) => ({...state, ...taskStatus})
 }, defaultState);
 
 export default reducer;

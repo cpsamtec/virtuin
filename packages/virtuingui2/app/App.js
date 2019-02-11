@@ -10,10 +10,18 @@ import Navbar from './components/Navbar';
 import TaskGroupList from './components/TaskGroupList';
 
 import createStore from './redux';
+import { VirtuinSagaActions } from './redux/Virtuin';
+import { IPCSagaActions } from './redux/IPC';
+
 import TaskView from './components/TaskView';
 
 // create our store
 const store = createStore();
+
+store.dispatch(IPCSagaActions.startIpc());
+store.dispatch(VirtuinSagaActions.connect());
+store.dispatch(VirtuinSagaActions.up());
+
 
 const AppContainer = styled.div`
   display: flex;

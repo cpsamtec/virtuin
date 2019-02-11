@@ -25,42 +25,46 @@ const virtuinDelegatorResponse = 'VIRTUIN_DELEGATOR_RESPONSE';
 function* ipcHandling() {
   while (true) {
     const data = yield take(IPCSagaActions.startIpc);
+    console.log('starting IPC');
     const ipcChannel = yield call(watchMessages);
     const { cancel } = yield race({
-      task: [call(externalListener), call(internalListener)],
+      task: all([call(externalListener, ipcChannel), call(internalListener, ipcRenderer)]),
       cancel: take(IPCSagaActions.stopIpc)
     });
+    yield put(VirtuinSagaActions.up());
     if (cancel) {
       ipcRenderer.removeAllListeners();
     }
   }
 }
 
-function* internalListener() {
+function* internalListener(ipcRenderer) {
   while (true) {
     // take every virtuin saga action and send over ipc
-    const action = yield take(Object.keys(VirtuinSagaActions));
+    const action = yield take(Object.values(VirtuinSagaActions));
     ipcRenderer.send(ipcChannels.action, action);
   }
 }
 
-function* externalListener() {
+function* externalListener(ipcChannel) {
   while (true) {
     // take every ipc response action and dispatch
-    const action = yield take(socketChannel);
+    const {event, action} = yield take(ipcChannel);
     yield put(action);
   }
 }
 
 function watchMessages() {
-  return eventChannel((emit) => {
+  return eventChannel(emit => {
     // take every response and emit
-    ipcRenderer.on(ipcChannels.response, (event, arg) => emit(event))
-    ipcRenderer.send(ipcChannels.action, VirtuinSagaActions.connect())
-    return () => {
-      // remove listener
-      ipcRenderer.removeAllListeners();
-    };
+    const responseHandler = (event, arg) => {
+      emit({event, action: arg});
+    }
+    const unsubscribe = () => {
+       ipcRenderer.removeAllListeners();
+    }
+    ipcRenderer.on(ipcChannels.response, responseHandler);
+    return unsubscribe;
   });
 }
 
