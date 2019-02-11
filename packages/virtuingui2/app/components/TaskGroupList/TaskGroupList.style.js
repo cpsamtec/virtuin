@@ -11,5 +11,6 @@ export const ListItemPrimary = styled.span`
 
 export const ListItemSecondary = styled(Typography)`
   color: #ccc;
+  margin-top: 8px;
   line-height: 1.4;
 `;

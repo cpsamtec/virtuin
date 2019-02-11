@@ -16,7 +16,7 @@ const theme = createMuiTheme({
       },
       paper: {
         borderRight: 'none',
-        width: 300,
+        width: '100%',
         position: 'relative',
         background: '#333'
       },

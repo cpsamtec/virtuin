@@ -46,10 +46,10 @@ const Task = ({task, last, currentTask, setTaskView, runTask}) => {
       <ListItem button={!active} active={active} key={task.name} onClick={() => setTaskView(task.identifier)}>
         <ListItemText 
           primary={
-            <div>
+            <>
               <ListItemPrimary>{task.name}</ListItemPrimary>
               <OutlinedChip label={stateNameMapper(task.state)} color={stateMapper(task.state)} />
-            </div>
+            </>
           } 
           secondary={<ListItemSecondary variant="caption">{task.description}</ListItemSecondary>} />
           <ListItemSecondaryAction>

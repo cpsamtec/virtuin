@@ -2,8 +2,8 @@ import styled from '@emotion/styled';
 import Drawer from '@material-ui/core/Drawer';
 
 export const SidebarDrawer = styled(Drawer, {shouldForwardProp: prop => prop !== 'show'})`
-  width: 300px;
-  margin-left: ${props => props.show ? '0' : '-300px'};
+  width: 350px;
+  margin-left: ${props => props.show ? '0' : '-350px'};
   transition:  margin-left 300ms ease;
   position: relative;
   overflow: visible;
