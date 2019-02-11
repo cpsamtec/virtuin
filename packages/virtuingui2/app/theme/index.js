@@ -30,6 +30,7 @@ const theme = createMuiTheme({
         paddingBottom: 0
       }
     },
+    
     MuiListSubheader: {
       sticky: {
         height: 50,

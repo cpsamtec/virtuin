@@ -43,7 +43,7 @@ const Task = ({task, last, currentTask, setTaskView, runTask}) => {
   const active = currentTask.groupIndex === groupIndex && currentTask.taskIndex === taskIndex;
   return (
     <>
-      <ListItem button={!active} active={active} key={task.name} onClick={() => setTaskView(task.identifier)}>
+      <ListItem button={!active} active={active} key={task.name} onClick={setTaskView.bind(null, task.identifier)}>
         <ListItemText 
           primary={
             <>

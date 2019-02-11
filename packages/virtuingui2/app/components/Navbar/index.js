@@ -1,17 +1,8 @@
 import { connect } from 'react-redux';
-import { createSelector } from 'reselect'
 import { toggleSidebar } from '../../redux/Sidebar';
+import getCurrentTask from '../../selectors/currentTask';
 import Navbar from './Navbar';
 
-
-
-const getTaskIdentifier = state => state.taskView.identifier;
-const getTaskGroup = state => state.virtuin.groups;
-
-const getCurrentTask = createSelector(
-  [getTaskIdentifier, getTaskGroup], 
-  ({groupIndex, taskIndex}, taskGroup) => taskGroup[groupIndex].tasksStatus[taskIndex]
-)
 
 const mapDispatchToProps = dispatch => ({
   toggleSidebar: () => dispatch(toggleSidebar())

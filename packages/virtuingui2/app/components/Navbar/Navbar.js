@@ -38,10 +38,13 @@ const Navbar = ({ show, taskView, toggleSidebar }) => (
           <Spacer />
         </>
       )}
-      <TaskInfo>
-        <Typography variant="h6">{taskView.name}</Typography>
-        <Typography variant="caption">{taskView.viewURL}</Typography>
-      </TaskInfo>
+      { taskView != null &&
+        <TaskInfo>
+          <Typography variant="h6">{taskView.name}</Typography>
+          <Typography variant="caption">{taskView.viewURL}</Typography>
+        </TaskInfo>
+      }
+      
     </Row>
   </Nav>
 );

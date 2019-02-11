@@ -3,6 +3,7 @@ import List from '@material-ui/core/List';
 import TaskGroup from './TaskGroup';
 
 const TaskGroupList = ({groups}) => {
+  if (!groups) return null;
   return (
     <List>
       {groups.map(taskGroup => (
