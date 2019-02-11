@@ -26,21 +26,24 @@ const Spacer = styled.div`
   width: 16px;
 `;
 
+const TaskInfo = stlyed.div``;
 
-const Navbar = ({ show, task, toggleSidebar }) => (
+const Navbar = ({ show, taskView, toggleSidebar }) => (
   <Nav position="relative">
     <Row>
-      {!show && 
+      {!show && (
         <>
           <CircleButton fullWhite onClick={toggleSidebar}>
             <Navigation />
           </CircleButton>
-          <Spacer/>
+          <Spacer />
         </>
-      }
-      <Typography variant="h6">Task Name 0</Typography>
+      )}
+      <TaskInfo>
+        <Typography variant="h6">{taskView.name}</Typography>
+        <Typography variant="caption">{taskView.viewURL}</Typography>
+      </TaskInfo>
     </Row>
-    
   </Nav>
 );
 
