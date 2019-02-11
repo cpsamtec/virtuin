@@ -26,7 +26,7 @@ const Spacer = styled.div`
   width: 16px;
 `;
 
-const TaskInfo = stlyed.div``;
+const TaskInfo = styled.div``;
 
 const Navbar = ({ show, taskView, toggleSidebar }) => (
   <Nav position="relative">
