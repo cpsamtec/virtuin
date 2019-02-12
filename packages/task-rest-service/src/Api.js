@@ -21,6 +21,7 @@ export default class Api {
   // register middlewares
   middleware(): void {
     this.express.use(morgan('dev'));
+    this.express.use(bodyParser.text());
     this.express.use(bodyParser.json());
     this.express.use(bodyParser.urlencoded({extended: false}));
   }

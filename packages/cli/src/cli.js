@@ -13,7 +13,7 @@ const fs = require('fs');
 const program = require('commander');
 const { VirtuinTaskDispatcher } = require('virtuintaskdispatcher').VirtuinTaskDispatcher;
 
-type InputCommandType = 'run' | 'up' | 'down' | 'upVM' | 'downVM' | 'sendData'
+type InputCommandType = 'run' | 'up' | 'down' | 'upVM' | 'downVM' | 'sendData' 
 
 // import VirtuinTaskDispatcher from './VirtuinTaskDispatcher';
 // Define required arguments
@@ -39,6 +39,14 @@ program
     groupIndex = options.group;
     taskIndex = options.task;
     verbosity = options.verbose;
+  });
+
+program
+  .command('getRunningLocation')
+  .action((options) => {
+    const stackPath = path.join(os.tmpdir(), 'stacks');
+    console.log(`Running docker location of collections can be found at ${stackPath}`);
+    process.exit(0)
   });
 
 program

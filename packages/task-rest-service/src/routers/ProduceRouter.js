@@ -47,12 +47,29 @@ export default class ProduceRouter {
       ProduceRouter.delegate.messageHandle({type: 'progress', taskUUID, percent: progress});
     }
   }
+  updateMessages(req: $Request, res: $Response): void {
+    const message = req.body;
+    const taskUUID = req.params.taskUUID;
+    debugMessage(`new message ${message}`);
+    res.status(200).json({
+      status: res.status,
+      message: `Success!`,
+    });
+    if (ProduceRouter.delegate) {
+      ProduceRouter.delegate.messageHandle({type: 'message', taskUUID, message: message});
+    }
+  }
+
 
   /**
    * Attach route handlers to their endpoints.
    */
   init(): void {
     this.router.put('/progress/:taskUUID/:progress', this.updateProgress);
+    this.router.put('/message/:taskUUID', this.updateMessages);
+
+    this.router.post('/progress/:taskUUID/:progress', this.updateProgress);
+    this.router.post('/message/:taskUUID', this.updateMessages);
   }
 }
 ProduceRouter.delegate = null;

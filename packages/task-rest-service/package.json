@@ -9,7 +9,7 @@
   "scripts": {
     "start": "DEBUG=\"vrs:*\" node build/index.js",
     "test": "jest",
-    "prepare": "gulp build && npm run build:flow",
+    "prepare": "gulp build && yarn run build:flow",
     "build:flow": "flow-copy-source -v -i '**/__tests__/**' src build"
   },
   "files": [
