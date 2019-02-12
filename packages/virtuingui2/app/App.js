@@ -8,6 +8,7 @@ import theme from './theme';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import TaskGroupList from './components/TaskGroupList';
+import MessageConsole from './components/MessageConsole';
 
 import createStore from './redux';
 import { VirtuinSagaActions } from './redux/Virtuin';
@@ -17,10 +18,7 @@ import TaskView from './components/TaskView';
 
 // create our store
 const store = createStore();
-
 store.dispatch(IPCSagaActions.startIpc());
-store.dispatch(VirtuinSagaActions.connect());
-store.dispatch(VirtuinSagaActions.up());
 
 
 const AppContainer = styled.div`
@@ -29,6 +27,7 @@ const AppContainer = styled.div`
 
 const View = styled.div`
   width: 100%;
+  position: relative;
 `;
 
 class App extends Component {
@@ -45,6 +44,7 @@ class App extends Component {
               <View>
                 <Navbar />
                 <TaskView />
+                <MessageConsole />
               </View>
             </AppContainer>
           </MuiThemeProvider>

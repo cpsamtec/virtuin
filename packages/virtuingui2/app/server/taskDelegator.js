@@ -13,6 +13,7 @@ class TaskDelegator {
   constructor() {
     this.actionHandlers = {
       'CONNECT': this.connect,
+      'SEND_DATA': this.sendData,
       'UP': this.up,
       'RUN': this.run,
       'DOWN': this.down
@@ -68,6 +69,15 @@ class TaskDelegator {
   down = async (client) => {
     await this.dispatcher.down();
     client.send(ipcChannels.response, VirtuinSagaResponseActions.downResponse());
+  }
+  sendData = async (client, {groupIndex, taskIndex}) => {
+    try {
+      const task = this.dispatcher.collectionDef.taskGroups[groupIndex].tasks[taskIndex];
+    } catch (err) {
+      throw new Error('[VIRT] Task invalid group/task index')
+    }
+    await dispatcher.sendTaskInputDataFile({groupIndex, taskIndex});
+    client.send(ipcChannels.response, VirtuinSagaResponseActions.sendDataResponse(groupIndex, taskIndex, 'GOOD'));
   }
   /**
    * Handles incoming action by mapping w/ actionHandlers and provides back a response
