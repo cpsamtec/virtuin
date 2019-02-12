@@ -1,10 +1,9 @@
-// @ flow
-
+// @flow
 import { Router }  from 'express';
 import debug from 'debug';
 import EventEmitter from 'events'
 const debugMessage = debug('vrs:producer');
-import type { ProduceRouterMessage, ProduceRouterProgress, ProduceRouterDelegate } from './types/types'
+import type { ProduceRouterMessage, ProduceRouterProgress, ProduceRouterDelegate } from '../types/types'
 
 
 export default class ProduceRouter {
@@ -12,7 +11,6 @@ export default class ProduceRouter {
   static delegate : ?ProduceRouterDelegate;
   router: Router;
   path: string;
-  delegate: ?ProduceRouterDelegate
 
   // take the mount path as the constructor argument
   constructor(path = '/api/v1/virtuin') {
@@ -44,7 +42,7 @@ export default class ProduceRouter {
       percent: progress
     });
     if (ProduceRouter.delegate) {
-      ProduceRouter.delegate.messageHandle({type: 'progress', taskUUID, percent: progress});
+      ProduceRouter.delegate.dispatch({type: 'progress', taskUUID, percent: progress});
     }
   }
   updateMessages(req: $Request, res: $Response): void {
@@ -56,7 +54,7 @@ export default class ProduceRouter {
       message: `Success!`,
     });
     if (ProduceRouter.delegate) {
-      ProduceRouter.delegate.messageHandle({type: 'message', taskUUID, message: message});
+      ProduceRouter.delegate.dispatch({type: 'message', taskUUID, message: message});
     }
   }
 
