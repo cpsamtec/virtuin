@@ -13,7 +13,7 @@ const fs = require('fs');
 const program = require('commander');
 const { VirtuinTaskDispatcher } = require('virtuintaskdispatcher').VirtuinTaskDispatcher;
 
-type InputCommandType = 'run' | 'up' | 'down' | 'upVM' | 'downVM' | 'sendData' 
+type InputCommandType = 'run' | 'up' | 'down' | 'upVM' | 'downVM' | 'sendData'
 
 // import VirtuinTaskDispatcher from './VirtuinTaskDispatcher';
 // Define required arguments
@@ -279,7 +279,7 @@ const dispatcher: VirtuinTaskDispatcher = new VirtuinTaskDispatcher(
 const commandHandler: CommandHandler = new CommandHandler(dispatcher);
 if (inputCommand === 'run') {
   commandHandler.run(groupIndex, taskIndex).then(() => {
-    dispatcher.end();
+    //dispatcher.end();
     return true;
   }).catch(async (err) => {
     console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);

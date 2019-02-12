@@ -9,13 +9,13 @@
   "scripts": {
     "flow": "flow check",
     "flow-typed": "rimraf flow-typed/npm && flow-typed install --overwrite || true",
-    "prepare": "npm run build && npm run build:flow",
+    "prepare": "yarn run build && yarn run build:flow",
     "build": "./node_modules/.bin/babel ./src --out-dir ./distribution --source-maps",
     "build:flow": "flow-copy-source -v -i '**/__tests__/**' src distribution",
     "start": "node ./distribution/cli.js",
     "precommit": "lint-staged",
     "lint": "eslint --cache --format=node_modules/eslint-formatter-pretty .",
-    "lint-fix": "npm run lint -- --fix"
+    "lint-fix": "yarn run lint -- --fix"
   },
   "files": [
     "distribution/"
