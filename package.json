@@ -1,6 +1,16 @@
 {
   "name": "root",
   "private": true,
+  "scripts": {
+    "bootstrap": "lerna bootstrap",
+    "run:gui": "lerna run --scope virtuingui2 dev --stream",
+    "build:dispatcher": "lerna run build --scope virtuin-task-dispatcher --stream",
+    "build:dispatcher": "lerna run build --scope virtuin-task-dispatcher --stream",
+    "build:cli": "lerna run build --scope virtuin-cli --stream",
+    "up": "lerna run --stream --scope virtuin-cli start -- up $(pwd)/../virtuinbasicexample/build/collection.yml",
+    "down": "lerna run --stream --scope virtuin-cli start -- down $(pwd)/../virtuinbasicexample/build/collection.yml",
+    "run:taskone": "lerna run --stream --scope virtuin-cli start -- run -t 0 -g 0 $(pwd)/../virtuinbasicexample/build/collection.yml"
+  },
   "devDependencies": {
     "lerna": "^3.3.1"
   },
