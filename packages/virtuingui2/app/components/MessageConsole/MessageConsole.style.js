@@ -32,6 +32,7 @@ export const ConsoleText = styled.span`
 export const Console = styled(Resizable)`
   padding-top: 36px;
   background: #ccc;
+  max-height: 60vh;
 `;
 
 export const ConsoleMessage = styled(Typography)`
