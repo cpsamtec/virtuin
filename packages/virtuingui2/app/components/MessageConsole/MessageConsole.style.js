@@ -5,9 +5,9 @@ import Resizable from 're-resizable';
 
 export const MessageConsoleWrapper = styled.div`
   position: absolute;
-  bottom: 15px;
-  left: 15px;
-  right: 15px;
+  bottom: 0;
+  left: 0;
+  right: 0;
   
 `;
 
@@ -21,7 +21,7 @@ export const ConsoleButton = styled(Button, {shouldForwardProp: prop => prop !==
   padding-right: 15px;
   z-index: 2;
   &:hover {
-    background: #bbb;
+    background: #ccc;
   }
 `;
 export const ConsoleText = styled.span`
@@ -30,19 +30,21 @@ export const ConsoleText = styled.span`
   text-transform: none;
 `;
 export const Console = styled(Resizable)`
-  padding-top: 36px;
   background: #ccc;
   max-height: 60vh;
 `;
 
 export const ConsoleMessage = styled(Typography)`
   padding: 5px 0;
-  color: #444;
+  font-size: 12px;
+  color: #666;
+  border-bottom: solid 1px #bbb;
 `;
 
 export const DividerLine = styled.div`
   width: 100%;
-  border-bottom: solid 1px #bbb;
+  background: #bbb;
+  height: 36px;
 `;
 
 export const ConsoleTextArea = styled.div`

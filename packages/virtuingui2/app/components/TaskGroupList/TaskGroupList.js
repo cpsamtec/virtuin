@@ -4,6 +4,7 @@ import TaskGroup from './TaskGroup';
 
 const TaskGroupList = ({groups}) => {
   if (!groups) return null;
+  console.log('groups', groups)
   return (
     <List>
       {groups.map(taskGroup => (

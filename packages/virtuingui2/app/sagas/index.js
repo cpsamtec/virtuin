@@ -64,6 +64,7 @@ function watchMessages() {
   return eventChannel(emit => {
     // take every response and emit
     const responseHandler = (event, arg) => {
+      console.log('Recieved from dispatcher', arg);
       emit({event, action: arg});
     }
     const unsubscribe = () => {

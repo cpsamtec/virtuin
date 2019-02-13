@@ -225,7 +225,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
 
   getTaskIdentifierFromUUID = (taskUUID: string): ?TaskIdentifier => {
     for (const i of this.dispatchStatus.groups.keys()) {
-      const j = this.dispatchStatus.groups[i].tasksStatus.findIndex((task) => !task.taskUUID && task.taskUUID === taskUUID);
+      const j = this.dispatchStatus.groups[i].tasksStatus.findIndex((task) => task.taskUUID && task.taskUUID === taskUUID);
       if (j >= 0) {
         return { groupIndex: i, taskIndex: j };
       }
@@ -240,7 +240,9 @@ class VirtuinTaskDispatcher extends EventEmitter {
   */
   dispatch = (o: PRDispatchInput): void => {
     if (o.type === 'progress') {
+      console.log('dispatch', o);
       const t = this.getTaskIdentifierFromUUID(o.taskUUID);
+      console.log('taskIdentifier', t);
       if (t && o.percent) {
         const c = this.statusFromIdentifier(t);
         this.updateTaskStatus(t, { progress: o.percent });

@@ -6,7 +6,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 const CircleProgressContainer = styled.div`
   width: 36px;
   height: 36px;
-  border: solid 1px #ccc;
+  border: solid 1px #fff;
   border-radius: 36px;
   display: flex;
   align-items: center;
@@ -21,7 +21,7 @@ const CircleProgressFront = styled(CircularProgress)`
 
 const Progress = styled(Typography)`
   font-size: 10px;
-  color: #ccc;
+  color: #fff;
 `;
 
 const CircleButtonComponent = ({onClick, value}) => (
