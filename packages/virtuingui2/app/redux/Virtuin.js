@@ -6,7 +6,8 @@ export const VirtuinSagaActions = createActions({
   'UP': () => null,
   'RUN': (groupIndex, taskIndex) => ({groupIndex, taskIndex}),
   'DOWN': () => null,
-  'SEND_DATA': (groupIndex, taskIndex) => ({groupIndex, taskIndex})
+  'SEND_DATA': (groupIndex, taskIndex) => ({groupIndex, taskIndex}),
+  'BEGIN_TASKS_IF_AUTO_START': () => null
 });
 
 export const VirtuinSagaResponseActions = createActions({
@@ -15,7 +16,8 @@ export const VirtuinSagaResponseActions = createActions({
   'RUN_RESPONSE': (groupIndex, taskIndex, status) => ({ taskIndex, groupIndex, status}),
   'DOWN_RESPONSE': () => null,
   'TASK_STATUS_RESPONSE': (taskStatus) => ({ taskStatus }),
-  'SEND_DATA_RESPONSE': (groupIndex, taskIndex, status) => ({askIndex, groupIndex, status})
+  'SEND_DATA_RESPONSE': (groupIndex, taskIndex, status) => ({askIndex, groupIndex, status}),
+  'BEGIN_TASKS_IF_AUTO_START_RESPONSE': () => null
 })
 
 const reducer = handleActions({

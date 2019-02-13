@@ -1,6 +1,6 @@
 {
   "name": "virtuingui2",
-  "productName": "ElectronReact",
+  "productName": "Virtuin",
   "version": "0.17.1",
   "description": "Electron application boilerplate based on React, React Router, Webpack, React Hot Loader for rapid application development",
   "scripts": {
@@ -56,8 +56,8 @@
   },
   "main": "./app/main.prod.js",
   "build": {
-    "productName": "ElectronReact",
-    "appId": "org.develar.ElectronReact",
+    "productName": "Virtuin",
+    "appId": "com.samtec.virtuin",
     "files": [
       "app/dist/",
       "app/app.html",
@@ -189,6 +189,7 @@
     "babel-jest": "^23.6.0",
     "babel-loader": "^8.0.4",
     "babel-plugin-dev-expression": "^0.2.1",
+    "babel-plugin-emotion": "^10.0.7",
     "babel-plugin-transform-react-remove-prop-types": "^0.4.20",
     "chalk": "^2.4.1",
     "concurrently": "^4.1.0",
@@ -261,12 +262,11 @@
     "@fortawesome/fontawesome-free": "^5.5.0",
     "@material-ui/core": "^3.9.2",
     "@material-ui/icons": "^3.0.2",
-    "babel-plugin-emotion": "^10.0.7",
     "devtron": "^1.4.0",
     "dotenv": "^6.2.0",
     "electron-debug": "^2.0.0",
     "electron-log": "^2.2.17",
-    "electron-updater": "^3.2.3",
+    "electron-updater": "^4.0.0",
     "history": "^4.7.2",
     "re-resizable": "^4.11.0",
     "react": "^16.6.3",
