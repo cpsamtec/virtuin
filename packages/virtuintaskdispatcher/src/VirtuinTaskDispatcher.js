@@ -170,6 +170,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
     this.updateDispatchPrimaryStatus({ collectionState: 'Loaded' });
   }
 
+  //Call to refresh the state
   initializeDispatchStatus = (): void => {
     this.dispatchStatus = VirtuinTaskDispatcher.genInitDispatchStatusForDef(this.collectionDef);
   }
@@ -214,7 +215,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
       stdout: '',
       stderr: '',
       groups: Array(groups.length).fill().map((ignore, i) => ({
-        name: groups[i].name,
+        name: groups[i].name || 'No name',
         description: groups[i].description || '',
         mode: groups[i].mode || 'individual',
         autoStart: groups[i].autoStart,
@@ -1112,7 +1113,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
     }
     if (!stopRequest && code === 0) {
       const group = this.collectionDef.taskGroups[taskIdent.groupIndex];
-      if (group.mode && group.mode === 'sequential' && taskIdent.taskIndex < (group.tasks.length - 1)) {
+      if (group.autoStart && group.mode && group.mode === 'sequential' && taskIdent.taskIndex < (group.tasks.length - 1)) {
         this.startTask({ groupIndex: taskIdent.groupIndex, taskIndex: taskIdent.taskIndex + 1 }, false).then(({ success, error }) => {
           if (success) {
             this.updateDispatchPrimaryStatus({
