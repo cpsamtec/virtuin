@@ -16,7 +16,8 @@ class TaskDelegator {
       'SEND_DATA': this.sendData,
       'UP': this.up,
       'RUN': this.run,
-      'DOWN': this.down
+      'DOWN': this.down,
+      'BEGIN_TASKS_IF_AUTO_START': this.beginTasksIfAutoStart
     }
   }
   init(stationName, collectionDefPath, stackPath, verbosity = 0) {
@@ -66,6 +67,10 @@ class TaskDelegator {
     await this.dispatcher.startTask({ groupIndex, taskIndex });
     client.send(ipcChannels.response, VirtuinSagaResponseActions.runResponse(groupIndex, taskIndex, 'GOOD'))
   }
+  beginTasksIfAutoStart =  async (client) => {
+    await this.dispatcher.beginTasksIfAutoStart();
+    client.send(ipcChannels.response, VirtuinSagaResponseActions.beginTasksIfAutoStartResponse());
+  }
   down = async (client) => {
     await this.dispatcher.down();
     client.send(ipcChannels.response, VirtuinSagaResponseActions.downResponse());
@@ -89,7 +94,7 @@ class TaskDelegator {
       console.log(this.actionHandlers);
       await this.actionHandlers[arg.type](event.sender, arg.payload);
     } catch(err) {
-      console.log(err);
+      console.error(err);
     }
   }
 }

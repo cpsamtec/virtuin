@@ -42,6 +42,7 @@ function* ipcHandling() {
 function* connectToIpc() {
   yield put(VirtuinSagaActions.connect()); //connect the server and client ipc
   yield put(VirtuinSagaActions.up()); // start container
+  yield put(VirtuinSagaActions.beginTasksIfAutoStart())
 }
 
 function* internalListener(ipcRenderer) {
