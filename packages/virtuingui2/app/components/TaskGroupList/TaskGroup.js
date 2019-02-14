@@ -1,7 +1,8 @@
 import React,  { useState } from 'react';
 import Collapse from '@material-ui/core/Collapse';
+import Button from '@material-ui/core/Button';
 import ListSubheader from '@material-ui/core/ListSubheader';
-import ArrowLeft from '@material-ui/icons/ArrowLeft';
+import ArrowRight from '@material-ui/icons/ArrowRight';
 import ArrowDropDown from '@material-ui/icons/ArrowDropDown';
 
 import { FlexRow, Line, ToggleButton } from './TaskGroupList.style';
@@ -13,11 +14,15 @@ const TaskGroup = ({taskGroup}) => {
     <>
       <ListSubheader>
         <FlexRow>
+          <ToggleButton onClick={() => setOpen(!open)}>
+            {open ? <ArrowDropDown fontSize="small" /> : <ArrowRight fontSize="small" />} 
+          </ToggleButton>
           {taskGroup.name}
           <Line />
-          <ToggleButton onClick={() => setOpen(!open)}>
-            {open ? <ArrowDropDown fontSize="small" /> : <ArrowLeft fontSize="small" />} 
-          </ToggleButton>
+          <Button variant="outlined" size="small" color="secondary">
+            Reset
+          </Button>
+          
         </FlexRow>
         
       </ListSubheader>
@@ -29,6 +34,7 @@ const TaskGroup = ({taskGroup}) => {
             last={taskIdx === taskGroup.tasksStatus.length - 1}
           />
         ))}
+        
       </Collapse>
   </>)
 }

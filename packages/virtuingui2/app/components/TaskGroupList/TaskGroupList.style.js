@@ -20,6 +20,13 @@ export const FlexRow = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
+
+  & > * {
+    margin-right: 15px;
+  }
+  & > *:last-child {
+    margin-right: 0;
+  }
 `;
 
 export const Line = styled.div`
@@ -29,7 +36,8 @@ export const Line = styled.div`
 `;
 
 export const ToggleButton = styled(IconButton)`
-  width: 36px;
-  height: 36px;
+  width: 18px;
+  height: 18px;
+  margin-right: 5px;
   padding: 0;
 `

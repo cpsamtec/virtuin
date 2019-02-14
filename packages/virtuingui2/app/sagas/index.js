@@ -1,6 +1,6 @@
 //@flow
-import { eventChannel, delay } from 'redux-saga';
-import { all, take, call, race, put, fork } from 'redux-saga/effects';
+import { eventChannel } from 'redux-saga';
+import { all, take, call, race, put, fork , delay} from 'redux-saga/effects';
 import { IPCSagaActions } from '../redux/IPC';
 import { VirtuinSagaActions } from '../redux/Virtuin';
 
@@ -15,9 +15,6 @@ export const ipcChannels = {
   response: 'VIRTUIN_DELEGATOR_RESPONSE'
 }
 
-const virtuinDelegatorAction = 'VITUIN_DELEGATOR_ACTION';
-const virtuinDelegatorResponse = 'VIRTUIN_DELEGATOR_RESPONSE';
-
 /* ------------- Sagas ------------- */
 
 /* ------------- Connect Types To Sagas ------------- */
@@ -25,9 +22,9 @@ const virtuinDelegatorResponse = 'VIRTUIN_DELEGATOR_RESPONSE';
 function* ipcHandling() {
   while (true) {
     const data = yield take(IPCSagaActions.startIpc);
-    console.log('starting IPC');
     const ipcChannel = yield call(watchMessages);
-    yield fork(connectToIpc);
+    ipcRenderer.send(ipcChannels.action, VirtuinSagaActions.connect());
+    // ipcRenderer.send(ipcChannels.action, VirtuinSagaActions.up());
     const { cancel } = yield race({
       task: all([call(externalListener, ipcChannel), call(internalListener, ipcRenderer)]),
       cancel: take(IPCSagaActions.stopIpc)
@@ -35,14 +32,9 @@ function* ipcHandling() {
     
     if (cancel) {
       ipcRenderer.removeAllListeners();
+      yield put(VirtuinSagaActions.down());
     }
   }
-}
-// called in parallel to connect to ipc and cause the vm container to start
-function* connectToIpc() {
-  yield put(VirtuinSagaActions.connect()); //connect the server and client ipc
-  yield put(VirtuinSagaActions.up()); // start container
-  yield put(VirtuinSagaActions.beginTasksIfAutoStart())
 }
 
 function* internalListener(ipcRenderer) {

@@ -1,5 +1,12 @@
 // @flow
-import { app, Menu, shell, BrowserWindow } from 'electron';
+import { app, Menu, shell, BrowserWindow, dialog } from 'electron';
+import prompt from 'electron-prompt';
+import http from 'http';
+import path from 'path';
+import fs from 'fs';
+
+import TaskDelegator from './server/taskDelegator';
+
 
 export default class MenuBuilder {
   mainWindow: BrowserWindow;
@@ -71,6 +78,44 @@ export default class MenuBuilder {
           accelerator: 'Command+Q',
           click: () => {
             app.quit();
+          }
+        }
+      ]
+    };
+    const subMenuFile = {
+      label: 'File',
+      submenu: [
+        {
+          label: 'Load Collection File',
+          accelerator: 'Command+L',
+          click: () => {
+            const collectionPath = dialog.showOpenDialog({ properties: ['openFile'], filters: [{name: 'yaml', extensions: ['yml']}] })
+            if (collectionPath == null) return; // stop if cancelled selecting file
+            TaskDelegator.reinit(collectionPath[0]);
+          }
+        },
+        {
+          label: 'Load Collection URL',
+          accelerator: 'Command+Shift+L',
+          click: () => {
+            prompt({
+              title: 'Load Collection from URL',
+              label: 'URL:',
+              value: 'http://example.org',
+              inputAttrs: {
+                  type: 'url'
+              }
+            })
+            .then(url => {
+              if (url == null) return;
+              const collectionPath =  path.resolve(app.getPath('appData'), 'tmpCollection.yml')
+              const file = fs.createWriteStream(collectionPath);
+              const request = http.get(url, (response) => {
+                response.pipe(file);
+                TaskDelegator.reinit(collectionPath);
+              });
+            })
+            .catch(console.error);
           }
         }
       ]
@@ -177,7 +222,7 @@ export default class MenuBuilder {
     const subMenuView =
       process.env.NODE_ENV === 'development' ? subMenuViewDev : subMenuViewProd;
 
-    return [subMenuAbout, subMenuEdit, subMenuView, subMenuWindow, subMenuHelp];
+    return [subMenuAbout, subMenuFile, subMenuEdit, subMenuView, subMenuWindow, subMenuHelp];
   }
 
   buildDefaultTemplate() {

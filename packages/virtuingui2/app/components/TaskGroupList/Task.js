@@ -1,4 +1,5 @@
 import React from 'react';
+import { createSelector } from 'reselect';
 import { connect } from 'react-redux';
 import ReactSVG from 'react-svg'
 
@@ -15,6 +16,7 @@ import OutlinedChip from '../OutlinedChip';
 import CircleButton from '../CircleButton';
 import CircleProgress from '../CircleProgress';
 
+const inProgress = /(START_REQUEST|STOP_REQUEST|RUNNING)/;
 const stateMap = {
   'IDLE': 'default',
   'START_REQUEST': 'info',
@@ -38,7 +40,7 @@ const stateNameMapper = (state) => {
   return stateMapNames[state] ? stateMapNames[state] : '???'
 }
 const Task = ({task, last, currentTask, setTaskView, runTask}) => {
-  const showTaskProgress = task.state.match(/(START_REQUEST|STOP_REQUEST|RUNNING)/);
+  const showTaskProgress = task.state.match(inProgress);
   const {groupIndex, taskIndex} = task.identifier;
   const active = currentTask.groupIndex === groupIndex && currentTask.taskIndex === taskIndex;
   return (
@@ -66,6 +68,14 @@ const Task = ({task, last, currentTask, setTaskView, runTask}) => {
   )
 }
 
+
+const getTaskGroup = (state, ownProps) => state.virtuin.groups[ownProps.task.identifier.groupIndex];
+
+//is runnable if no task in the group is in progress
+const isRunnable = createSelector(
+  [getTaskGroup], 
+  taskGroup => taskGroup.tasksStatus.reduce((acc,task) => acc && !task.state.match(inProgress),  true)
+)
 const mapDispatchToProps = (dispatch) => ({
   setTaskView: (identifier) => dispatch(setTaskView(identifier)),
   runTask: (groupIndex, taskIndex) => dispatch(VirtuinSagaActions.run(groupIndex, taskIndex))
@@ -73,7 +83,8 @@ const mapDispatchToProps = (dispatch) => ({
 
 const mapStateToProps = (state, ownProps) => {
   return ({
-    currentTask: state.taskView.identifier
+    currentTask: state.taskView.identifier,
+    isRunnable: isRunnable(state, ownProps) 
   });
 }
 

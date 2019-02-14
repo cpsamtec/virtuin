@@ -4,11 +4,7 @@ import Button from '@material-ui/core/Button';
 import Resizable from 're-resizable';
 
 export const MessageConsoleWrapper = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  
+  position: relative;
 `;
 
 export const ConsoleButton = styled(Button, {shouldForwardProp: prop => prop !== 'open'})`

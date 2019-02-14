@@ -6,6 +6,9 @@ const theme = createMuiTheme({
     primary: {
       main: '#F39952'
     },
+    secondary: {
+      main: '#ccc'
+    },
     type: 'dark',
   },
   typography: {
@@ -13,6 +16,14 @@ const theme = createMuiTheme({
   },
   overrides: {
     // Name of the component ⚛️ / style sheet
+    MuiButton: {
+      outlined: {
+        borderRadius: 200
+      },
+      sizeSmall: {
+        fontSize: 10
+      }
+    },
     MuiDrawer: {
       root: {
         height: '100vh',

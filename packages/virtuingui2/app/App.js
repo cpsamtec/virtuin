@@ -27,6 +27,9 @@ const AppContainer = styled.div`
 
 const View = styled.div`
   width: 100%;
+  height: 100vh;
+  flex-direction: column;
+  display: flex;
   position: relative;
 `;
 

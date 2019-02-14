@@ -63,7 +63,7 @@ const stationName = process.env.VIRT_STATION_NAME || 'VIRT_DEFAULT_STATION';
 const collectionDefPath = (process.env.NODE_ENV === 'production') ? process.argv[1] : process.env.VIRTUIN_COLLECTION_LOCATION;
 const stackPath = process.env.STACK_PATH || app.getPath('appData');
 TaskDelegator.init(stationName, collectionDefPath, stackPath);
-
+TaskDelegator.up();
 /**
  * Add event listeners...
  */
