@@ -153,16 +153,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
         server: collectionEnvs.VIRT_DOCKER_HOST,
       };
     }
-    /*
-    if(this.vagrantDirectory) {
-      vagrant.vagrantEmitter.on('vagrant-status', (str) => {
-        this.updateDispatchPrimaryStatus({ statusMessage: str });
-      });
-      vagrant.vagrantEmitter.on('vagrant-error', (str) => {
-        this.updateDispatchPrimaryStatus({ statusMessage: str });
-      });
-    }
-    */
     this.restServer = new RestServer();
     const { dispatch, dispatchWithResponse } = this;
     RestServer.setProducerDelegate({ dispatch, dispatchWithResponse });
@@ -1111,6 +1101,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
     if (activeTask.stderr != null) {
       activeTask.stderr.removeAllListeners('data');
     }
+    /*
+    This code would autostart next task when mode is sequential and group set to autoStart
     if (!stopRequest && code === 0) {
       const group = this.collectionDef.taskGroups[taskIdent.groupIndex];
       if (group.autoStart && group.mode && group.mode === 'sequential' && taskIdent.taskIndex < (group.tasks.length - 1)) {
@@ -1133,7 +1125,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
           });
         });
       }
-    }
+    }*/
     const errMsg = (code === 0)
       ? null
       : `Task prematurely exited (code:${code || ''}, signal:${signal || ''}).\n`;
