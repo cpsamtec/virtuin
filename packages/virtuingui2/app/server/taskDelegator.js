@@ -22,6 +22,7 @@ class TaskDelegator {
   }
   
   init = (stationName, collectionDefPath, stackPath, verbosity = 0) => {
+    debugger;
     // get collection and environment variables for the dispatcher
     let collectionDef, collectionEnvPath, collectionEnvs;
     try {
@@ -50,7 +51,7 @@ class TaskDelegator {
   reinit = async (collectionDefPath) => {
     await this.down();
     await this.dispatcher.end();
-    await this.dispatcher.removeAllListeners();
+    this.dispatcher.removeAllListeners();
     this.dispatcher = null;
     this.init(this.stationName, collectionDefPath, this.stackPath);
     await this.connect();

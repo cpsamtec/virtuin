@@ -698,7 +698,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
         return { success: false, error: new Error('Task ${taskStatus.name} already running in the group ${}') };
       }
     }
-
+    debugger;
     // Update status
     const newTaskUUID = this.generateUUID();
     this.updateTaskStatus(taskIdent, {
