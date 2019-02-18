@@ -10,7 +10,8 @@
     "build:cli": "lerna run build --scope virtuin-cli --stream",
     "up": "lerna run --stream --scope virtuin-cli start -- up $(pwd)/../virtuinbasicexample/build/collection.yml",
     "down": "lerna run --stream --scope virtuin-cli start -- down $(pwd)/../virtuinbasicexample/build/collection.yml",
-    "run:taskone": "lerna run --stream --scope virtuin-cli start -- run -t 0 -g 0 $(pwd)/../virtuinbasicexample/build/collection.yml"
+    "run:taskone": "lerna run --stream --scope virtuin-cli start -- run -t 0 -g 0 $(pwd)/../virtuinbasicexample/build/collection.yml",
+    "run:gui": "lerna run --stream --scope virtuingui2 dev -- $(pwd)/../virtuinbasicexample/build/collection.yml"
   },
   "devDependencies": {
     "lerna": "^3.3.1"
