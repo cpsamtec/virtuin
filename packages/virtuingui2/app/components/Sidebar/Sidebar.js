@@ -3,7 +3,7 @@ import ReactSVG from 'react-svg'
 import { SidebarDrawer, Header, Logo } from './Sidebar.style';
 import CircleButton from '../CircleButton';
 import Navigation from '../../assets/svgs/navigation.svg';
-import SamtecLogo from '../../assets/images/samtecLogoWhite.png';
+import VirtuinLogo from '../../assets/images/virtuinLogo.png';
 
 const SidebarComponent = ({ show, toggleSidebar, children }) => (
   <SidebarDrawer
@@ -13,7 +13,7 @@ const SidebarComponent = ({ show, toggleSidebar, children }) => (
     show={show}
   >
     <Header>
-      <Logo src={SamtecLogo} />
+      <Logo src={VirtuinLogo} />
       <CircleButton fullWhite onClick={toggleSidebar}>
         <Navigation />
       </CircleButton>
