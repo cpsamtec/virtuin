@@ -178,10 +178,11 @@ class VirtuinTaskDispatcher extends EventEmitter {
 
   static genInitTaskStatusForTaskIdent = (taskIdent: TaskIdentifier, collectionDef: RootInterface): TaskStatus => {
     const groups = collectionDef.taskGroups;
-    const task = groups[taskIdent.groupIndex].tasks[taskIdent.taskIndex];
+    const task: Task = groups[taskIdent.groupIndex].tasks[taskIdent.taskIndex];
     return {
       name: task.name,
       description: task.description || '',
+      enabled: groups[taskIdent.groupIndex].mode === 'user' || taskIdent.taskIndex === 0 ? true : false, //if managed will require post to allow next task run
       progress: 0,
       identifier: { groupIndex: taskIdent.groupIndex, taskIndex: taskIdent.taskIndex },
       state: 'IDLE',

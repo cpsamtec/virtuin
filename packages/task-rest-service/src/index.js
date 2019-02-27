@@ -91,7 +91,7 @@ export default class RestServer {
     Api.setProducerDelegate(delegate);
   }
   getAddressAndPort() : Promise<[string, number]> {
-      return this.listeningPromise;
+    return this.listeningPromise;
   }
   end(): void {
     this.server.close();
