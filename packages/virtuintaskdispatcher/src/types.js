@@ -41,7 +41,7 @@ export type StationCollectionEnvPaths = {
 };
 
 
-export type GroupMode = 'sequential' | 'individual'
+export type GroupMode = 'user' | 'managed'; // in managed get rest api to dictate which tasks can be run, in user user can select any
 export type TaskGroup = {
   description: string,
   name: string,

@@ -40,6 +40,7 @@ export type TaskIdentifier = {| groupIndex: number, taskIndex: number |};
 export type TaskStatus = {|
   name: string,
   description: string,
+  enabled: boolean,
   progress: number,
   identifier: TaskIdentifier,
   state: TaskState,
@@ -207,7 +208,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
       groups: Array(groups.length).fill().map((ignore, i) => ({
         name: groups[i].name || 'No name',
         description: groups[i].description || '',
-        mode: groups[i].mode || 'individual',
+        mode: groups[i].mode || 'user',
         autoStart: groups[i].autoStart,
         tasksStatus: Array(groups[i].tasks.length).fill().map((ignore2, j) => VirtuinTaskDispatcher.genInitTaskStatusForTaskIdent({ groupIndex: i, taskIndex: j }, collectionDef))
       }))
