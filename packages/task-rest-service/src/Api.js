@@ -30,7 +30,6 @@ export default class Api {
   routes(): void {
     // create an instance of ProduceRouter
     const produceRouter = new ProduceRouter();
-
     // attach it to our express app
     this.express.use(produceRouter.path, produceRouter.router);
   }

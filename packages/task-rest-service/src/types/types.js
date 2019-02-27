@@ -13,8 +13,14 @@ export type ProduceRouterMessage = {| ...ProduceRouterDispatch,
   message: string
 |};
 
+export type ProduceRouterPrompt = {| ...ProduceRouterDispatch,
+  type: "prompt",
+  message: string,
+  promptType: "confirmation" | "text" | "confirmCancel"
+|};
+
 export type PRDispatchInput = ProduceRouterProgress | ProduceRouterMessage
-export type PRDispatchWithResponseInput = ProduceRouterMessage
+export type PRDispatchWithResponseInput = ProduceRouterPrompt
 export type ProduceRouterDelegate = {
   dispatch: ((PRDispatchInput) => void),
   dispatchWithResponse: ((PRDispatchWithResponseInput) => Promise<any>)
