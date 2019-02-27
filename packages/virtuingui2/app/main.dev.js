@@ -22,6 +22,7 @@ import fs from 'fs';
 import TaskDelegator from './server/taskDelegator';
 
 require('dotenv').config();
+const remote = require('electron').remote
 
 import MenuBuilder from './menu';
 
@@ -60,7 +61,9 @@ const installExtensions = async () => {
 
 // start task delegator
 const stationName = process.env.VIRT_STATION_NAME || 'VIRT_DEFAULT_STATION';
-const collectionDefPath = (process.env.NODE_ENV === 'production') ? process.argv[1] : process.env.VIRTUIN_COLLECTION_LOCATION;
+//const collectionDefPath = (process.env.NODE_ENV === 'production') ? process.argv[1] : process.env.VIRTUIN_COLLECTION_LOCATION;
+//console.log(`ARG 1 IS ${process.argv[1]}`);
+const collectionDefPath = process.env.VIRTUIN_COLLECTION_LOCATION;
 const stackPath = process.env.STACK_PATH || app.getPath('appData');
 TaskDelegator.init(stationName, collectionDefPath, stackPath);
 TaskDelegator.up();
