@@ -3,7 +3,7 @@ import { Router }  from 'express';
 import debug from 'debug';
 import EventEmitter from 'events'
 const debugMessage = debug('vrs:producer');
-import type { ProduceRouterMessage, ProduceRouterProgress, ProduceRouterDelegate } from '../types/types'
+import type { ProduceRouterMessage, ProduceRouterProgress, ProduceRouterDelegate, ManageCommand } from '../types/types'
 
 export const promiseTimeout = function(ms: number, promise: Promise<any>) {
 
@@ -125,30 +125,26 @@ export default class ProduceRouter {
     }
   }
 
-  dispatchEnableTasks(req: $Request, res: $Response): void {
+  dispatchManageTasks(req: $Request, res: $Response): void {
     //"Content-Type: application/json"
-    const message : {} = req.body || {};
+    const commands : ManageCommand = req.body || {};
     const taskUUID = req.params.taskUUID;
-    const type = req.params.type;
     req.setTimeout(32000); //allow 32 seconds for response
-    debugMessage(`prompt ${type} with message ${JSON.stringify(message)}`);
-    if(typeof message !== 'object') {
+    debugMessage(`manage with commands ${JSON.stringify(commands)}`);
+    if(typeof commands !== 'object') {
       res.status(400).json({
         success: false,
         message: `Invalid body! Must be Content-Type: application/json`,
       });
       return;
     }
-    if(type !== 'confirmation' && type !== 'confirmCancel' && type !== 'text') {
-      res.status(400).json({
-        success: false,
-        message: `Invalid Prompt Type!`,
-      });
-      return;
-    }
+    res.status(200).json({
+      success: true,
+      message: `Success!`,
+    });
     if (ProduceRouter.delegate) {
       promiseTimeout(31000,
-        ProduceRouter.delegate.dispatchWithResponse({type: 'prompt', taskUUID, message, promptType: type}))
+        ProduceRouter.delegate.dispatchWithResponse({type: 'manage', commands}))
       .then(userData => {
         res.status(200).json({
           success: true,
@@ -175,7 +171,7 @@ export default class ProduceRouter {
     this.router.post('/progress/:taskUUID/:progress', this.dispatchProgress);
     this.router.post('/message/:taskUUID', this.dispatchMessages);
     this.router.post('/prompt/:taskUUID/:type', this.dispatchWithResponsePrompt);
-    this.router.post('/manageTasks', this.dispatchWithResponsePrompt);
+    this.router.post('/manageTasks', this.dispatchManageTasks);
   }
 }
 ProduceRouter.delegate = null;

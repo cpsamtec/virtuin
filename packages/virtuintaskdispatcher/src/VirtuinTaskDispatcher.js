@@ -730,7 +730,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
         // eslint-disable-line camelcase
         data: { ...sharedData, ...virt_stations[this.stationName] },
         taskUUID: newTaskUUID,
-        allStatuses: this.getStatus().groups.map(group => {
+        allTasksInfo: this.getStatus().groups.map(group => {
           return group.tasksStatus.map(task => {
             return {
               name: task.name,
