@@ -109,7 +109,7 @@ if (require.main === module) {
     dispatchWithResponse: (o): Promise<any> => {
       console.log(`called dispatchWithResponse: received ${o.type} for ${o.taskUUID}`);
       return new Promise((res, rej) => {
-        res(true);
+        res("Message from user!");
       });
     }
   }

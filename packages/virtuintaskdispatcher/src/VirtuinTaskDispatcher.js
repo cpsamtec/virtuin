@@ -182,7 +182,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
     return {
       name: task.name,
       description: task.description || '',
-      enabled: groups[taskIdent.groupIndex].mode === 'user' || taskIdent.taskIndex === 0 ? true : false, //if managed will require post to allow next task run
+      enabled: (typeof groups[taskIdent.groupIndex].mode === 'undefined' ||
+        groups[taskIdent.groupIndex].mode === 'user' || taskIdent.taskIndex === 0) ? true : false, //if managed will require post to allow next task run
       progress: 0,
       identifier: { groupIndex: taskIdent.groupIndex, taskIndex: taskIdent.taskIndex },
       state: 'IDLE',
@@ -728,7 +729,20 @@ class VirtuinTaskDispatcher extends EventEmitter {
       const taskData = ({
         // eslint-disable-line camelcase
         data: { ...sharedData, ...virt_stations[this.stationName] },
-        taskUUID: newTaskUUID
+        taskUUID: newTaskUUID,
+        allStatuses: this.getStatus().groups.map(group => {
+          return group.tasksStatus.map(task => {
+            return {
+              name: task.name,
+              enabled: task.enabled,
+              state: task.state,
+              taskUUID: task.taskUUID || null,
+              groupIndex: task.identifier.groupIndex,
+              taskIndex: task.identifier.taskIndex,
+              progress: task.progress
+            }
+            })
+        })
       });
       const taskStr = JSON.stringify(taskData);
       await fse.outputFile(taskSrcPath, taskStr);
@@ -738,8 +752,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
 
       // Perform docker-compose exec
       // eslint-disable-line no-unused-vars
-      let port = 0; let
-        ignore = '';
+      let port = 0;
+      let ignore = '';
       if (this.restServer) {
         ([ignore, port] = await this.restServer.getAddressAndPort());
       }
