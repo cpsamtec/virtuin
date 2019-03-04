@@ -3,7 +3,7 @@ import { Router }  from 'express';
 import debug from 'debug';
 import EventEmitter from 'events'
 const debugMessage = debug('vrs:producer');
-import type { ProduceRouterMessage, ProduceRouterProgress, ProduceRouterDelegate, ManageCommand } from '../types/types'
+import type { ProduceRouterMessage, ProduceRouterProgress, ProduceRouterDelegate, ManageGroupTasks } from '../types/types'
 
 export const promiseTimeout = function(ms: number, promise: Promise<any>) {
 
@@ -127,11 +127,14 @@ export default class ProduceRouter {
 
   dispatchManageTasks(req: $Request, res: $Response): void {
     //"Content-Type: application/json"
-    const commands : ManageCommand = req.body || {};
-    const taskUUID = req.params.taskUUID;
-    req.setTimeout(32000); //allow 32 seconds for response
-    debugMessage(`manage with commands ${JSON.stringify(commands)}`);
-    if(typeof commands !== 'object') {
+    const command : ManageGroupTasks = req.body || {};
+    let groupIndex = req.params.groupIndex;
+    if(typeof groupIndex === 'undefined') {
+      groupIndex = 0;
+    }
+    req.setTimeout(4000); //allow 32 seconds for response
+    debugMessage(`manage with commands ${JSON.stringify(command)}`);
+    if(typeof command !== 'object') {
       res.status(400).json({
         success: false,
         message: `Invalid body! Must be Content-Type: application/json`,
@@ -143,17 +146,16 @@ export default class ProduceRouter {
       message: `Success!`,
     });
     if (ProduceRouter.delegate) {
-      promiseTimeout(31000,
-        ProduceRouter.delegate.dispatchWithResponse({type: 'manage', commands}))
-      .then(userData => {
+      promiseTimeout(3000,
+        ProduceRouter.delegate.dispatchWithResponse({type: 'manage', groupIndex, command}))
+      .then(info => {
         res.status(200).json({
           success: true,
-          userResponse: userData,
         });
       }).catch(error => {
         res.status(400).json({
           success: false,
-          message: `Invalid response from user or they took to long!`,
+          message: `Invalid command object contents!`,
         });
       })
     } else {
@@ -171,7 +173,7 @@ export default class ProduceRouter {
     this.router.post('/progress/:taskUUID/:progress', this.dispatchProgress);
     this.router.post('/message/:taskUUID', this.dispatchMessages);
     this.router.post('/prompt/:taskUUID/:type', this.dispatchWithResponsePrompt);
-    this.router.post('/manageTasks', this.dispatchManageTasks);
+    this.router.post('/manageTasks/:groupIndex', this.dispatchManageTasks);
   }
 }
 ProduceRouter.delegate = null;

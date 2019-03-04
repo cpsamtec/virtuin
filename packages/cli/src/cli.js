@@ -280,6 +280,7 @@ const commandHandler: CommandHandler = new CommandHandler(dispatcher);
 if (inputCommand === 'run') {
   commandHandler.run(groupIndex, taskIndex).then(() => {
     //dispatcher.end();
+    console.log('Ctrl-c to quit');
     return true;
   }).catch(async (err) => {
     console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);

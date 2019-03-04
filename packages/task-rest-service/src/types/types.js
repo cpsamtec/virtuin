@@ -21,15 +21,16 @@ export type ProduceRouterPrompt = {| ...ProduceRouterDispatch,
   taskUUID : string
 |};
 
-export type ManageCommand = {
-  reset?: "all" | number | [{groupIdent: number, taskIdent: number}], // number is whole group,
-  disable?: "all" | number | [{groupIdent: number, taskIdent: number}], // number is whole group,
-  enable?: "all" | number | [{groupIdent: number, taskIdent: number}], // number is whole group, 
-}
+export type ManageGroupTasks = {|
+  reset?: "all" | [], // task indexes to disable of current group
+  disable?: "all" | [], // task indexes to disable of current group
+  enable?: "all" | [], //task indexes to enable of current group
+|}
 
-export type ProduceRouterManage = {| ...ProduceRouterDispatch,
+export type ProduceRouterManage = {|
   type: "manage",
-  commands: ManageCommand
+  command: ManageGroupTasks,
+  groupIndex: number
 |};
 
 export type PRDispatchInput = ProduceRouterProgress | ProduceRouterMessage

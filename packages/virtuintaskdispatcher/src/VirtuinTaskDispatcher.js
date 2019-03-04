@@ -1,6 +1,6 @@
 // @flow
 import type {
-  PRDispatchInput, PRDispatchWithResponseInput
+  PRDispatchInput, PRDispatchWithResponseInput, ManageGroupTasks
 } from 'virtuin-task-rest-service/build/types/types';
 import RestServer from 'virtuin-task-rest-service';
 import type {
@@ -175,6 +175,39 @@ class VirtuinTaskDispatcher extends EventEmitter {
     stderr: '',
     groups: []
   })
+
+  manageGroupTasks = async (groupIndex: number, command : ManageGroupTasks) : Promise<string> => {
+    let currStatus = this.getStatus();
+    if(groupIndex >= currStatus.groups.length) {
+      throw Error("Invalid group index");
+    }
+    if(command.reset && ((typeof command.reset === 'string' && command.reset === 'all') || Array.isArray(command.reset))) {
+      for(const i of currStatus.groups[groupIndex].tasksStatus.keys()) {
+        const taskIdent = {groupIndex, taskIndex: i};
+        if(command.reset === 'all' || command.reset.includes[i]) {
+          this.updateTaskStatus(taskIdent, VirtuinTaskDispatcher.genInitTaskStatusForTaskIdent(taskIdent, this.collectionDef));
+        }
+      }
+    }
+    if(command.disable && ((typeof command.disable === 'string' && command.disable === 'all') || Array.isArray(command.disable))) {
+      for(const i of currStatus.groups[groupIndex].tasksStatus.keys()) {
+        const taskIdent = {groupIndex, taskIndex: i};
+        if(command.disable === 'all' || command.disable.includes[i]) {
+          this.updateTaskStatus(taskIdent, {enabled: false});
+        }
+      }
+    }
+    if(command.enable && ((typeof command.enable === 'string' && command.enable === 'all') || Array.isArray(command.enable))) {
+      for(const i of currStatus.groups[groupIndex].tasksStatus.keys()) {
+        const taskIdent = {groupIndex, taskIndex: i};
+        if(command.enable === 'all' || command.enable.includes[i]) {
+          this.updateTaskStatus(taskIdent, {enabled: true});
+        }
+      }
+    }
+    return "success";
+
+  }
 
   static genInitTaskStatusForTaskIdent = (taskIdent: TaskIdentifier, collectionDef: RootInterface): TaskStatus => {
     const groups = collectionDef.taskGroups;
@@ -730,8 +763,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
         // eslint-disable-line camelcase
         data: { ...sharedData, ...virt_stations[this.stationName] },
         taskUUID: newTaskUUID,
-        allTasksInfo: this.getStatus().groups.map(group => {
-          return group.tasksStatus.map(task => {
+        groupIndex: taskIdent.groupIndex,
+        allTasksInfo: this.getStatus().groups[taskIdent.groupIndex].tasksStatus.map(task => {
             return {
               name: task.name,
               enabled: task.enabled,
@@ -741,8 +774,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
               taskIndex: task.identifier.taskIndex,
               progress: task.progress
             }
-            })
-        })
+          })
       });
       const taskStr = JSON.stringify(taskData);
       await fse.outputFile(taskSrcPath, taskStr);
