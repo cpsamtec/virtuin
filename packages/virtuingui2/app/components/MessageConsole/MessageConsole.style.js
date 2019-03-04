@@ -28,6 +28,7 @@ export const ConsoleText = styled.span`
 export const Console = styled(Resizable)`
   background: #ccc;
   max-height: 60vh;
+  overflow: hidden;
 `;
 
 export const ConsoleMessage = styled(Typography)`
