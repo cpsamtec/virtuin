@@ -1,6 +1,6 @@
 // @flow
 import type {
-  PRDispatchInput, PRDispatchWithResponseInput, ManageGroupTasks
+  PRDispatchInput, PRDispatchWithResponseInput, ManageGroupTasks, ProduceRouterPrompt
 } from 'virtuin-task-rest-service/build/types/types';
 import RestServer from 'virtuin-task-rest-service';
 import type {
@@ -94,6 +94,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
 
   collectionEnvs: ?Object;
 
+  promptHandler: ?((ProduceRouterPrompt) => Promise<string>)
 
   verbosity: number;
 
@@ -128,6 +129,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
     this.collectionEnvs = collectionEnvs;
     this.stationName = stationName;
     this.verbosity = verbosity;
+    this.promptHandler = null;
 
     this.collectionDef = collectionDef;
     this.currTaskHandles = [];
@@ -292,6 +294,13 @@ class VirtuinTaskDispatcher extends EventEmitter {
     console.log(`called dispatchWithResponse: received ${o.type}`);
     if (o.type === 'manage') {
       return this.manageGroupTasks(o.groupIndex, o.command);
+    }
+    if (o.type === 'prompt') {
+      if(this.promptHandler) {
+        return this.promptHandler(o);
+      } else {
+        throw Error("Internal Error - Cannot handle prompt");
+      }
     }
     return `received ${o.type}`;
   }

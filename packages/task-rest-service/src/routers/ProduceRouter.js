@@ -155,7 +155,7 @@ export default class ProduceRouter {
       }).catch(error => {
         res.status(400).json({
           success: false,
-          message: `Invalid command object contents!`,
+          message: `Invalid command object contents! ${error.message}`,
         });
       })
     } else {
