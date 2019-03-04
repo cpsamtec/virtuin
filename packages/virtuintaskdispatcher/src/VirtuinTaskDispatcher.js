@@ -289,7 +289,10 @@ class VirtuinTaskDispatcher extends EventEmitter {
    * Handles messages where a response is expected
   */
   dispatchWithResponse = async (o: PRDispatchWithResponseInput): Promise<any> => {
-    console.log(`called dispatchWithResponse: received ${o.type} for ${o.taskUUID}`);
+    console.log(`called dispatchWithResponse: received ${o.type}`);
+    if (o.type === 'manage') {
+      return this.manageGroupTasks(o.groupIndex, o.command);
+    }
     return `received ${o.type}`;
   }
   // End ProduceRouterDelegate
