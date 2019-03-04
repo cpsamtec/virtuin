@@ -1,13 +1,10 @@
-
-//import type { RootInterface, CollectionEnvs } from 'virtuintaskdispatcher/distribution/types';
-//import type { DispatchUpdatePrimaryStatus, DispatchStatus } from 'virtuintaskdispatcher';
-
+import { ipcMain, dialog } from 'electron';
+import prompt from 'electron-prompt';
+import { throws } from 'assert';
 import { ipcChannels } from '../sagas';
 import { VirtuinSagaResponseActions } from '../redux/Virtuin';
-import { throws } from 'assert';
 
 const { VirtuinTaskDispatcher } = require('virtuintaskdispatcher').VirtuinTaskDispatcher;
-const {ipcMain} = require('electron');
 
 class TaskDelegator {
   dispatcher = null;
@@ -61,9 +58,21 @@ class TaskDelegator {
     this.dispatcher.on('task-status', status => {
       this.client.send(ipcChannels.response, VirtuinSagaResponseActions.taskStatusResponse(status));
     });
+    this.dispatcher.promptHandler = this.promptHandler;
     console.log(this.dispatcher.getStatus());
     this.client.send(ipcChannels.response, VirtuinSagaResponseActions.taskStatusResponse(this.dispatcher.getStatus()))
   }
+
+  promptHandler = async ({promptType, message}) => {
+    if (promptType === 'confirmation') {
+      return dialog.showMessageBox({type: 'info', buttons: ['okay'], defaultId: 0, message})
+    } else if (promptType === 'confirmCancel') {
+      return dialog.showMessageBox({type: 'question', buttons: ['cancel', 'okay'], defaultId: 1})
+    } else if (promptType === 'text') {
+      return prompt({title: message, label: 'Response', inputAttrs: {type: 'text', required: true} });
+    }
+  }
+
   up = async () => {
     await this.dispatcher.up(false, (this.dispatcher.collectionDef.build === 'development'));
     this.client.send(ipcChannels.response, VirtuinSagaResponseActions.upResponse());

@@ -12,7 +12,8 @@ const { ipcRenderer } = require('electron');
 /* ------------- Types ------------- */
 export const ipcChannels = {
   action: 'VITUIN_DELEGATOR_ACTION',
-  response: 'VIRTUIN_DELEGATOR_RESPONSE'
+  response: 'VIRTUIN_DELEGATOR_RESPONSE',
+  prompt: 'VIRTUIN_DELEGATOR_PROMPT'
 }
 
 /* ------------- Sagas ------------- */
@@ -48,7 +49,7 @@ function* internalListener(ipcRenderer) {
 function* externalListener(ipcChannel) {
   while (true) {
     // take every ipc response action and dispatch
-    const {event, action} = yield take(ipcChannel);
+    const {channel, action} = yield take(ipcChannel);
     yield put(action);
   }
 }
@@ -56,9 +57,8 @@ function* externalListener(ipcChannel) {
 function watchMessages() {
   return eventChannel(emit => {
     // take every response and emit
-    const responseHandler = (event, arg) => {
-      console.log('Recieved from dispatcher', arg);
-      emit({event, action: arg});
+    const responseHandler = (_, action) => {
+      emit({ action, channel: ipcChannels.response });
     }
     const unsubscribe = () => {
        ipcRenderer.removeAllListeners();
