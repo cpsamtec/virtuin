@@ -17,7 +17,7 @@ class TaskDelegator {
       'DOWN': this.down,
     }
   }
-  
+
   init = (stationName, collectionDefPath, stackPath, verbosity = 0) => {
     debugger;
     // get collection and environment variables for the dispatcher
@@ -63,13 +63,15 @@ class TaskDelegator {
     this.client.send(ipcChannels.response, VirtuinSagaResponseActions.taskStatusResponse(this.dispatcher.getStatus()))
   }
 
-  promptHandler = async ({promptType, message}) => {
+  promptHandler = async ({promptType, message}): Promise<string> => {
     if (promptType === 'confirmation') {
       return dialog.showMessageBox({type: 'info', buttons: ['okay'], defaultId: 0, message})
     } else if (promptType === 'confirmCancel') {
       return dialog.showMessageBox({type: 'question', buttons: ['cancel', 'okay'], defaultId: 1})
     } else if (promptType === 'text') {
       return prompt({title: message, label: 'Response', inputAttrs: {type: 'text', required: true} });
+    } else {
+      throw Error(`Unsupported Prompt type`);
     }
   }
 
@@ -102,14 +104,14 @@ class TaskDelegator {
   }
   /**
    * Handles incoming action by mapping w/ actionHandlers and provides back a response
-   * @param {*} event 
-   * @param {*} arg 
+   * @param {*} event
+   * @param {*} arg
    */
   handleAction = async (event, arg) => {
     try {
       this.client = event.sender;
       await this.actionHandlers[arg.type](arg.payload);
-      
+
     } catch(err) {
       console.error(err);
     }
