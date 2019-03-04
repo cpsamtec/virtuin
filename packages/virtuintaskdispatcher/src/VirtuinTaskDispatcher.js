@@ -313,6 +313,9 @@ class VirtuinTaskDispatcher extends EventEmitter {
     if (this.vagrantDirectory) {
       vagrant.vagrantEmitter.removeAllListeners();
     }
+    if(this.promptHandler) {
+      this.promptHandler = null;
+    }
     RestServer.setProducerDelegate(null);
   }
 
