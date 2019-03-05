@@ -1,9 +1,9 @@
 import React from 'react';
-import ReactSVG from 'react-svg'
+import Typography from '@material-ui/core/Typography';
 import { SidebarDrawer, Header, Logo } from './Sidebar.style';
 import CircleButton from '../CircleButton';
 import Navigation from '../../assets/svgs/navigation.svg';
-import VirtuinLogo from '../../assets/images/virtuinLogo.png';
+import VirtuinLogo from '../../assets/images/virtuinLogoWhite.png';
 
 const SidebarComponent = ({ show, toggleSidebar, children }) => (
   <SidebarDrawer
