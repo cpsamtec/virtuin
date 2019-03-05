@@ -787,7 +787,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
               taskUUID: task.taskUUID || null,
               groupIndex: task.identifier.groupIndex,
               taskIndex: task.identifier.taskIndex,
-              progress: task.progress
+              progress: (typeof task.progress === 'number') ? task.progress : 0
             }
           })
       });
