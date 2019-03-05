@@ -45,22 +45,37 @@ class TaskDelegator {
 
     ipcMain.on(ipcChannels.action, this.handleAction);
   }
+  paritial_init = (stationName, stackPath) => {
+    this.stationName = stationName;
+    this.stackPath = stackPath;
+    ipcMain.on(ipcChannels.action, this.handleAction);
+  }
+
   reinit = async (collectionDefPath) => {
-    await this.down();
-    await this.dispatcher.end();
-    this.dispatcher.removeAllListeners();
-    this.dispatcher = null;
+    if (this.dispatcher != null) {
+      await this.down();
+      await this.dispatcher.end();
+      
+      this.dispatcher.removeAllListeners();
+      this.dispatcher = null;
+    }
+    ipcMain.removeListener(ipcChannels.action, this.handleAction);
+    console.log('reinit');
     this.init(this.stationName, collectionDefPath, this.stackPath);
     await this.connect();
     //may need to pass an additional argument to force reload, that will be sent as first argument as dispatcher.up(true)
     await this.up();
   }
   connect = async () => {
+    if (this.dispatcher == null) {
+      console.log('hello no dispatcher', this.dispatcher)
+      return;
+    }
+    console.log('there is a dispatcher', this.client);
     this.dispatcher.on('task-status', status => {
       this.client.send(ipcChannels.response, VirtuinSagaResponseActions.taskStatusResponse(status));
     });
     this.dispatcher.promptHandler = this.promptHandler;
-    console.log(this.dispatcher.getStatus());
     this.client.send(ipcChannels.response, VirtuinSagaResponseActions.taskStatusResponse(this.dispatcher.getStatus()))
   }
 
