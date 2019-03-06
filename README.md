@@ -41,11 +41,34 @@ consists of
   * Lists all of the system locations of each stations environment file (collection.env)
   for the current collection been run
 
+
+### Details of collection.env and collection.yml
 #### collection.env
 ```env
   VIRT_BROKER_ADDRESS=localhost
   VIRT_DOCKER_HOST=unix:///var/run/docker.sock
+  #VIRT_DOCKER_USER=XXXXX
+  #VIRT_DOCKER_PASSWORD=XXXXX
+  #Below environment variables to be set for your tasks
+  #AWS_SECRET_ACCESS_KEY=XXXXX
+  #AWS_ACCESS_KEY_ID=XXXXX
 ```
+
+Virtuin variables
+- VIRT_DOCKER_HOST - Tells Virtuin how to access your desired Docker server.
+Typically you would use **unix:///var/run/docker.sock** when docker is running on
+ the same machine as Virtuin. If you are running docker on a different machine
+ you can change accordingly.
+- VIRT_BROKER_ADDRESS - The ip address of the machine running Virtuin. You
+will most likely leave this localhost as you will most likely have the Virtuin
+Application and Docker running on the same machine.
+- VIRT_DOCKER_USER (optional) - Virtuin will pull your required docker images. If you need
+to login for private images, supply your Docker Hub username here.
+- VIRT_DOCKER_PASSWORD (optional) - Docker Hub password to match VIRT_DOCKER_USER
+
+You can specify additional environment variables that you would like to be passed
+to your Docker containers. Make sure they are also specified in the **environment**
+key of your compose.
 
 #### collection.yml
 ```yaml
