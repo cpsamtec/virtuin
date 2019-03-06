@@ -659,16 +659,36 @@ class VirtuinTaskDispatcher extends EventEmitter {
     });
 
     try {
+      //const newTaskUUID = this.generateUUID();
+      const newTaskUUID = '0000000';
       const runConfigs = task.dockerInfo || {};
       const runServiceName = runConfigs.serviceName;
+      const runCmd = runConfigs.command;
+      let runArgs = Array.isArray(runConfigs.args) ? runConfigs.args : [runConfigs.args];
+
       // Create task JSON file and copy to container
       const taskInputPath = path.join(this.composePath(), 'input');
       const taskSrcPath = path.join(taskInputPath, 'task.json');
-      const taskDstPath = '/virtuin_task.json';
+      const taskDstPath = `/virtuin_task-${taskIdent.groupIndex}-${taskIdent.taskIndex}.json`;
       // eslint-disable-line camelcase
       const { virt_stations, ...sharedData } = task.data;
-      // eslint-disable-line camelcase
-      const taskData = ({ data: { ...sharedData, ...virt_stations[this.stationName] }, taskUUID: '000000' });
+      const taskData = ({
+        // eslint-disable-line camelcase
+        data: { ...sharedData, ...virt_stations[this.stationName] },
+        taskUUID: newTaskUUID,
+        groupIndex: taskIdent.groupIndex,
+        allTasksInfo: this.getStatus().groups[taskIdent.groupIndex].tasksStatus.map(task => {
+            return {
+              name: task.name,
+              enabled: task.enabled,
+              state: task.state,
+              taskUUID: task.taskUUID || null,
+              groupIndex: task.identifier.groupIndex,
+              taskIndex: task.identifier.taskIndex,
+              progress: (typeof task.progress === 'number') ? task.progress : 0
+            }
+          })
+      });
       const taskStr = JSON.stringify(taskData);
       await fse.outputFile(taskSrcPath, taskStr);
       const containerId = await this.getServiceContainerId(runServiceName);
@@ -768,10 +788,9 @@ class VirtuinTaskDispatcher extends EventEmitter {
       let runArgs = Array.isArray(runConfigs.args) ? runConfigs.args : [runConfigs.args];
 
       // Create task JSON file and copy to container
-
       const taskInputPath = path.join(this.composePath(), 'input');
       const taskSrcPath = path.join(taskInputPath, 'task.json');
-      const taskDstPath = '/virtuin_task.json';
+      const taskDstPath = `/virtuin_task-${taskIdent.groupIndex}-${taskIdent.taskIndex}.json`;
       // eslint-disable-line camelcase
       const { virt_stations, ...sharedData } = task.data;
       const taskData = ({
@@ -787,7 +806,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
               taskUUID: task.taskUUID || null,
               groupIndex: task.identifier.groupIndex,
               taskIndex: task.identifier.taskIndex,
-              progress: task.progress
+              progress: (typeof task.progress === 'number') ? task.progress : 0
             }
           })
       });
@@ -804,7 +823,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
       if (this.restServer) {
         ([ignore, port] = await this.restServer.getAddressAndPort());
       }
-      const envVar = (port > 0) ? ['-e', `VIRT_REST_API_PORT=${port}`] : [];
+      let envVar = (port > 0) ? ['-e', `VIRT_REST_API_PORT=${port}`] : [];
+      envVar.push(['-e', `TASK_INPUT_FILE='${taskDstPath}'`])
       const args = [
         ...this.daemonArgs,
         'exec',

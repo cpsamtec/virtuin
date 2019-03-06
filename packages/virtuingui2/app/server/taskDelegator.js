@@ -62,6 +62,7 @@ class TaskDelegator {
     ipcMain.removeListener(ipcChannels.action, this.handleAction);
     this.init(this.stationName, collectionDefPath, this.stackPath);
     await this.connect();
+    //may need to pass an additional argument to force reload, that will be sent as first argument as dispatcher.up(true)
     await this.up();
   }
   connect = async () => {
@@ -87,8 +88,8 @@ class TaskDelegator {
     }
   }
 
-  up = async () => {
-    await this.dispatcher.up(false, (this.dispatcher.collectionDef.build === 'development'));
+  up = async (forceReload=false) => {
+    await this.dispatcher.up(forceReload, (this.dispatcher.collectionDef.build === 'development'));
     this.client.send(ipcChannels.response, VirtuinSagaResponseActions.upResponse());
     await this.dispatcher.beginTasksIfAutoStart();
   }
