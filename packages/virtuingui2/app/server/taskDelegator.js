@@ -60,17 +60,14 @@ class TaskDelegator {
       this.dispatcher = null;
     }
     ipcMain.removeListener(ipcChannels.action, this.handleAction);
-    console.log('reinit');
     this.init(this.stationName, collectionDefPath, this.stackPath);
     await this.connect();
     await this.up();
   }
   connect = async () => {
     if (this.dispatcher == null) {
-      console.log('hello no dispatcher', this.dispatcher)
       return;
     }
-    console.log('there is a dispatcher', this.client);
     this.dispatcher.on('task-status', status => {
       this.client.send(ipcChannels.response, VirtuinSagaResponseActions.taskStatusResponse(status));
     });
