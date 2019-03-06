@@ -1,23 +1,47 @@
 ### Virtuin
 
 
-Virtuin is a cross platform application that allows you to quickly setup a computer station.
-A station can load, update, run, stop, and monitor your code in an easy
-to use graphical interface. It is useful for areas such as
-production, testing, and research.
+Virtuin is a cross platform application that allows operators to load, update,
+run, stop, and monitor your programs in an easy to use graphical interface.
+It is useful for areas such as production, testing, and research.
 
-Tasks are your programs executables in a docker/docker-compose environment
-ready to be run with unique arguments and environment variables. Virtuin
-is language and platform agnostic. You can use whatever languages and tools you like
-as long as they are supported by docker.
+Virtuin is language and platform agnostic. You can use whatever languages, platforms,
+ and tools you like as long as they are supported by docker.
 
-Virtuin will
+In short, you will provide a docker compose file and a list of tasks to be executed.
+**Tasks** are your programs executables contained in a running container
+ready to be run with specified arguments and environment variables. Virtuin will
+handle ensuring the appropriate containers are running. It will then display
+the list of tasks and information to an operator who can run them.
 
--
+To begin a new Virtuin project make sure you have the following installed
+- [Docker](https://docs.docker.com/install/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+- Virtuin Application
+- A global environment variable on your system VIRT_STATION_NAME. You can
+  just set this to VIRT_DEFAULT_STATION to begin with.
+  ```bash
+  export VIRT_STATION_NAME=VIRT_DEFAULT_STATION
+  ```
 
-In general you create a collection.yml which contains your docker-compose file
+It is also recommended you clone the following boilerplate to get started. It
+consists of
+- collection.env
+  * Contains environment variables specific to the current station and project
+   you are working on
+  * For example you could store Docker or AWS credentials to be used by your tasks.  
+- src directory for your code recommended for developement.
+  * This will contain subdirectories for various
+  docker services each containing a Dockerfile
+  * When released these will be pushed as docker images.
+- collection.yml
+  * The heart of a project.
+  * Contains the docker-compose file
+  * Describes all of your tasks and how to run them
+  * Lists all of the system locations of each stations environment file (collection.env)
+  for the current collection been run
 
-#### station.env
+#### collection.env
 ```env
   VIRT_BROKER_ADDRESS=localhost
   VIRT_DOCKER_HOST=unix:///var/run/docker.sock
