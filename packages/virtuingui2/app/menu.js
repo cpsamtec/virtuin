@@ -52,17 +52,17 @@ export default class MenuBuilder {
 
   buildDarwinTemplate() {
     const subMenuAbout = {
-      label: 'Electron',
+      label: 'Virtuin',
       submenu: [
         {
-          label: 'About ElectronReact',
+          label: 'About Virtuin',
           selector: 'orderFrontStandardAboutPanel:'
         },
         { type: 'separator' },
         { label: 'Services', submenu: [] },
         { type: 'separator' },
         {
-          label: 'Hide ElectronReact',
+          label: 'Hide Virtuin',
           accelerator: 'Command+H',
           selector: 'hide:'
         },
@@ -158,7 +158,11 @@ export default class MenuBuilder {
           accelerator: 'Command+B', 
           click: () => {
             if (!TaskDelegator.isCollectionLoaded()) return;
-            dialog.showMessageBox({message: `cd ${TaskDelegator.stackPath}/${TaskDelegator.dispatcher.composeName()} \ndocker-compose exec [service-name] bash\nList of services: \n${Object.keys(TaskDelegator.dispatcher.collectionDef.dockerCompose.source.services).reduce((acc,key) => `${acc}\n${key}`)}`})
+
+            const message = `cd ${TaskDelegator.stackPath}/${TaskDelegator.dispatcher.composeName()} \ndocker-compose exec [service-name] bash`;
+            const detail = `List of services: \n${Object.keys(TaskDelegator.dispatcher.collectionDef.dockerCompose.source.services).reduce((acc,key) => `${acc}\n${key}`)}`;
+            dialog.showMessageBox({ title: 'Virtuin', message, detail })
+          
           } 
         },
       ]
