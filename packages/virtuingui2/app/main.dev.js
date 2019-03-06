@@ -14,7 +14,6 @@ import { app, BrowserWindow } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 
-
 import os from 'os';
 import path from 'path';
 import fs from 'fs';
@@ -59,21 +58,35 @@ const installExtensions = async () => {
 };
 
 
+// ensure process has only one instance
+const appLock = app.requestSingleInstanceLock();
+if (!appLock) {
+  app.quit();
+}
+
 // start task delegator
 const stationName = process.env.VIRT_STATION_NAME || 'VIRT_DEFAULT_STATION';
 //const collectionDefPath = (process.env.NODE_ENV === 'production') ? process.argv[1] : process.env.VIRTUIN_COLLECTION_LOCATION;
 //console.log(`ARG 1 IS ${process.argv[1]}`);
 const collectionDefPath = process.env.VIRTUIN_COLLECTION_LOCATION;
 // const stackPath = process.env.STACK_PATH || app.getPath('appData');
-const stackPath = app.getPath('appData');
+// create stack path
 
-console.log('STACK_PATH', stackPath)
+const appDataPath = app.getPath('appData');
+
+const stackPath = path.join(app.getPath('appData'), 'Virtuin');
+if (!fs.existsSync(stackPath)){
+  fs.mkdirSync(stackPath);
+}
+
 if (collectionDefPath) {
   TaskDelegator.init(stationName, collectionDefPath, stackPath);
   TaskDelegator.up();
 } else {
   TaskDelegator.paritial_init(stationName, stackPath);
 }
+
+
 
 /**
  * Add event listeners...

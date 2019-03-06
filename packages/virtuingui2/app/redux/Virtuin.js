@@ -21,7 +21,8 @@ export const VirtuinSagaResponseActions = createActions({
 })
 
 const reducer = handleActions({
-  [VirtuinSagaResponseActions.taskStatusResponse]: (state, { payload: { taskStatus } }) => ({...state, ...taskStatus})
+  [VirtuinSagaResponseActions.taskStatusResponse]: (state, { payload: { taskStatus } }) => ({...state, ...taskStatus}),
+  [VirtuinSagaResponseActions.downResponse]: (state, _) => ({})
 }, defaultState);
 
 export default reducer;

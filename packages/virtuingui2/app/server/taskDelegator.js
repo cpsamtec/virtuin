@@ -8,6 +8,7 @@ const { VirtuinTaskDispatcher } = require('virtuintaskdispatcher').VirtuinTaskDi
 
 class TaskDelegator {
   dispatcher = null;
+  isLoaded = false;
   constructor() {
     this.actionHandlers = {
       'CONNECT': this.connect,
@@ -31,8 +32,10 @@ class TaskDelegator {
       console.error('Invalid collection def or environment variables provided');
       process.exit(1);
     }
+
     this.stationName = stationName;
     this.stackPath = stackPath;
+    this.collectionDefPath = collectionDefPath;
 
     this.dispatcher = new VirtuinTaskDispatcher(
       stationName,
@@ -42,7 +45,7 @@ class TaskDelegator {
       stackPath,
       verbosity,
     );
-
+    this.isLoaded = true
     ipcMain.on(ipcChannels.action, this.handleAction);
   }
   paritial_init = (stationName, stackPath) => {
@@ -51,7 +54,7 @@ class TaskDelegator {
     ipcMain.on(ipcChannels.action, this.handleAction);
   }
 
-  reinit = async (collectionDefPath) => {
+  reinit = async (collectionDefPath, reload=false) => {
     if (this.dispatcher != null) {
       await this.down();
       await this.dispatcher.end();
@@ -62,8 +65,9 @@ class TaskDelegator {
     ipcMain.removeListener(ipcChannels.action, this.handleAction);
     this.init(this.stationName, collectionDefPath, this.stackPath);
     await this.connect();
+    this.isLoaded = true
     //may need to pass an additional argument to force reload, that will be sent as first argument as dispatcher.up(true)
-    await this.up();
+    await this.up(reload);
   }
   connect = async () => {
     if (this.dispatcher == null) {
@@ -103,6 +107,7 @@ class TaskDelegator {
     this.client.send(ipcChannels.response, VirtuinSagaResponseActions.runResponse(groupIndex, taskIndex, 'GOOD'))
   }
   down = async () => {
+    this.isLoaded = false;
     await this.dispatcher.down();
     this.client.send(ipcChannels.response, VirtuinSagaResponseActions.downResponse());
   }
@@ -112,14 +117,20 @@ class TaskDelegator {
     } catch (err) {
       throw new Error('[VIRT] Task invalid group/task index')
     }
-    await dispatcher.sendTaskInputDataFile({groupIndex, taskIndex});
+    await this.dispatcher.sendTaskInputDataFile({groupIndex, taskIndex});
     this.client.send(ipcChannels.response, VirtuinSagaResponseActions.sendDataResponse(groupIndex, taskIndex, 'GOOD'));
   }
+  isCollectionLoaded = () => this.isLoaded;
   /**
    * Handles incoming action by mapping w/ actionHandlers and provides back a response
    * @param {*} event
    * @param {*} arg
    */
+  reloadCollection = async () => {
+    if (!this.isCollectionLoaded()) return;
+    await this.dispatcher.down();
+    await this.reinit(this.collectionDefPath, true);
+  }
   handleAction = async (event, arg) => {
     try {
       this.client = event.sender;
