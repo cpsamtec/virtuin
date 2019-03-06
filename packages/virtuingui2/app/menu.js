@@ -117,7 +117,21 @@ export default class MenuBuilder {
             })
             .catch(console.error);
           }
-        }
+        }, {
+          label: 'Reload Collection',
+          accelerator: 'Command+L+R',
+          click: () => {
+            if (!TaskDelegator.isCollectionLoaded()) return;
+            TaskDelegator.reloadCollection();
+          }
+        }, {
+          label: 'Down Collection',
+          accelerator: 'Command+D',
+          click: () => {
+            if (!TaskDelegator.isCollectionLoaded()) return;
+            TaskDelegator.down();
+          }
+        },
       ]
     };
     const subMenuEdit = {
@@ -134,6 +148,19 @@ export default class MenuBuilder {
           accelerator: 'Command+A',
           selector: 'selectAll:'
         }
+      ]
+    };
+    const subMenuDev = {
+      label: 'Dev',
+      submenu: [
+        { 
+          label: 'Bash Shell', 
+          accelerator: 'Command+B', 
+          click: () => {
+            if (!TaskDelegator.isCollectionLoaded()) return;
+            dialog.showMessageBox({message: `cd ${TaskDelegator.stackPath}/${TaskDelegator.dispatcher.composeName()} \ndocker-compose exec [service-name] bash\nList of services: \n${Object.keys(TaskDelegator.dispatcher.collectionDef.dockerCompose.source.services).reduce((acc,key) => `${acc}\n${key}`)}`})
+          } 
+        },
       ]
     };
     const subMenuViewDev = {
@@ -222,7 +249,7 @@ export default class MenuBuilder {
     const subMenuView =
       process.env.NODE_ENV === 'development' ? subMenuViewDev : subMenuViewProd;
 
-    return [subMenuAbout, subMenuFile, subMenuEdit, subMenuView, subMenuWindow, subMenuHelp];
+    return [subMenuAbout, subMenuFile, subMenuEdit, subMenuDev ,subMenuView, subMenuWindow, subMenuHelp];
   }
 
   buildDefaultTemplate() {
