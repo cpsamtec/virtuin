@@ -9,10 +9,10 @@ Virtuin is language and platform agnostic. You can use whatever languages, platf
  and tools you like as long as they are supported by docker.
 
 In short, you will provide a docker compose file and a list of tasks to be executed.
-**Tasks** are your programs executables contained in a running container
+**Tasks** are your programs executables in a running container,
 ready to be run with specified arguments and environment variables. Virtuin will
 handle ensuring the appropriate containers are running. It will then display
-the list of tasks and information to an operator who can run them.
+the list of tasks and information for an operator to utilize.
 
 To begin a new Virtuin project make sure you have the following installed
 - [Docker](https://docs.docker.com/install/)
@@ -30,6 +30,7 @@ consists of
   * Contains environment variables specific to the current station and project
    you are working on
   * For example you could store Docker or AWS credentials to be used by your tasks.  
+  * The file must be exactly named collection.env
 - src directory for your code recommended for developement.
   * This will contain subdirectories for various
   docker services each containing a Dockerfile
@@ -53,6 +54,9 @@ consists of
   #AWS_SECRET_ACCESS_KEY=XXXXX
   #AWS_ACCESS_KEY_ID=XXXXX
 ```
+There needs to be a collection.env stored on every computer that will be running
+a specific project/collection.yml. The collection.yml will also need to specify
+they location of this file for each machine.
 
 Virtuin variables
 - VIRT_DOCKER_HOST - Tells Virtuin how to access your desired Docker server.
@@ -66,7 +70,7 @@ Application and Docker running on the same machine.
 to login for private images, supply your Docker Hub username here.
 - VIRT_DOCKER_PASSWORD (optional) - Docker Hub password to match VIRT_DOCKER_USER
 
-You can specify additional environment variables that you would like to be passed
+You can specify additional environment variables that you would like to be available
 to your Docker containers. Make sure they are also specified in the **environment**
 key of your compose.
 
