@@ -8,6 +8,7 @@ import type {
 } from './types';
 
 const os = require('os');
+const ospath = require('ospath');
 const fs = require('fs');
 const path = require('path');
 const { EventEmitter } = require('events');
@@ -86,7 +87,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
 
   vagrantDirectory: ?string;
 
-  collectionEnvPath: string;
+  collectionEnvPath: ?string;
 
   collectionPath: string;
 
@@ -115,11 +116,11 @@ class VirtuinTaskDispatcher extends EventEmitter {
 
   constructor(
     stationName: string,
-    collectionEnvPath: string,
     collectionEnvs: CollectionEnvs,
     collectionDef: RootInterface,
     stackBasePath: ?string = null,
     verbosity: number = 0,
+    collectionEnvPath: ?string = null,
   ) {
     super();
     this.dockerCredentials = null;
@@ -146,7 +147,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
       COMPOSE_CONVERT_WINDOW_PATHS: 1,
       COMPOSE_FORCE_WINDOWS_HOST: 0,
       DOCKER_HOST: this.daemonAddress,
-      VIRT_COLLECTION_ENV_PATH: collectionEnvPath,
+      VIRT_PROJECT_PATH: (process.env.VIRT_PROJECT_PATH) ? collectionEnvPath: undefined,
+      VIRT_COLLECTION_ENV_PATH: (this.collectionDef) ? collectionEnvPath: undefined,
       ...collectionEnvs
     };
     if (collectionEnvs && collectionEnvs.VIRT_DOCKER_USER && collectionEnvs.VIRT_DOCKER_PASSWORD) {
@@ -329,18 +331,25 @@ class VirtuinTaskDispatcher extends EventEmitter {
     return collectionObject;
   }
 
-  static collectionEnvFromPath(collectionEnvPath: string): ?CollectionEnvs {
-    let envData = '';
-    try {
-      // fse.statSync(collectionEnvPath);
-      envData = fse.readFileSync(path.join(collectionEnvPath, 'collection.env'), 'utf8');
-    } catch (error) {
-      console.error('Could not access the Collections collection.env file.');
-      return null;
+  static collectionEnvFromPath(collectionEnvPath: ?string): CollectionEnvs {
+    const defaultEnvs = {
+      VIRT_BROKER_ADDRESS: "localhost",
+      VIRT_DOCKER_HOST: "unix:///var/run/docker.sock"
     }
-    const buf = Buffer.from(envData, 'utf8');
-    const collectionEnvs: CollectionEnvs = (dotenv.parse(buf): any); // will return an object
-    return collectionEnvs;
+    let envData = '';
+    if(collectionEnvPath) {
+      try {
+        // fse.statSync(collectionEnvPath);
+        envData = fse.readFileSync(path.join(collectionEnvPath, 'collection.env'), 'utf8');
+        const buf = Buffer.from(envData, 'utf8');
+        const collectionEnvs: CollectionEnvs = (dotenv.parse(buf): any); // will return an object
+        return {...defaultEnvs, ...collectionEnvs};
+      } catch (error) {
+        console.error('Could not access the Collections collection.env file.');
+      }
+    }
+
+    return defaultEnvs;
   }
 
   composeName = () => `virt${this.collectionDef.collectionName}`.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
@@ -435,10 +444,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
    */
   up = async (fullReload: boolean = false): Promise<void> => {
     try {
-      const stat = await fse.lstat(this.collectionEnvPath);
-      if (stat.isDirectory() === false) {
-        throw new Error(`collectionEnvPath must be a directory (${this.collectionEnvPath})`);
-      }
       const fullRebuild = this.collectionDef.build === 'development';
       this.updateDispatchPrimaryStatus({ logMessage: 'Starting up task environment.' });
       let objStr = '';

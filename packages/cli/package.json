@@ -43,6 +43,7 @@
     "deep-diff": "^1.0.2",
     "dotenv": "^6.0.0",
     "fs-extra": "^7.0.0",
+    "ospath": "^1.2.2",
     "virtuintaskdispatcher": "^0.0.24"
   },
   "devDependencies": {

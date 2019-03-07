@@ -242,39 +242,37 @@ class CommandHandler {
 }
 // Read task sdefinitions file args[2]
 if (!process.env.VIRT_STATION_NAME) {
-  console.error('VIRT_STATION_NAME environment variable must be globally set on your system');
-  process.exit(1);
+  console.log('It is recommended to have VIRT_STATION_NAME environment variable set globally on your system');
+  console.log('Will default to VIRT_DEFAULT_STATION')
 }
-const stationName: string = (process.env.VIRT_STATION_NAME: any);
+const stationName: string = process.env.VIRT_STATION_NAME || "VIRT_DEFAULT_STATION";
 console.log(`[VIRT] running in ${stationName}`);
 const tmpCollectionDef: ?RootInterface = VirtuinTaskDispatcher.collectionObjectFromPath((collectionDefPath: any));
 
+if (!tmpCollectionDef) {
+  console.error('Could not open the collection file');
+  process.exit(1);
+}
+let collectionEnvPath = null;
 if (!tmpCollectionDef || !tmpCollectionDef.stationCollectionEnvPaths
   || !tmpCollectionDef.stationCollectionEnvPaths[stationName]) {
-  console.error('The variable stationCollectionEnvPaths is not set for this station in the collection.');
-  console.error(`Please add ${stationName} key with the full path to the .env of this collection`);
-  process.exit(1);
+  console.log('The variable stationCollectionEnvPaths is not set for this station in the collection.');
+  console.log(`You may want to add ${stationName} key with the full path to the .env of this collection`);
+} else {
+  const collectionDef: RootInterface = (tmpCollectionDef: any);
+  collectionEnvPath = collectionDef.stationCollectionEnvPaths[stationName];
 }
 const collectionDef: RootInterface = (tmpCollectionDef: any);
-const collectionEnvPath = collectionDef.stationCollectionEnvPaths[stationName];
-if (!collectionEnvPath) {
-  console.error(`The path for the collection path collection.env file was not specified for ${stationName}.`);
-  process.exit(1);
-}
-
 const collectionEnvs: ?CollectionEnvs = VirtuinTaskDispatcher.collectionEnvFromPath(collectionEnvPath);
-if (!collectionEnvs) {
-  process.exit(1);
-}
 
 const stackPath = path.join(os.tmpdir(), 'stacks');
 const dispatcher: VirtuinTaskDispatcher = new VirtuinTaskDispatcher(
     stationName,
-    collectionEnvPath,
     (collectionEnvs: any),
     collectionDef,
     stackPath,
     verbosity,
+    collectionEnvPath
   );
 const commandHandler: CommandHandler = new CommandHandler(dispatcher);
 if (inputCommand === 'run') {

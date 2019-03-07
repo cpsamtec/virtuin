@@ -48,6 +48,7 @@
     "express": "^4.16.3",
     "fs-extra": "^7.0.0",
     "js-yaml": "^3.12.0",
+    "ospath": "^1.2.2",
     "uuid": "^3.3.2",
     "virtuin-task-rest-service": "^1.0.5"
   },
