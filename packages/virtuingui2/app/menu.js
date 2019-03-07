@@ -153,17 +153,17 @@ export default class MenuBuilder {
     const subMenuDev = {
       label: 'Dev',
       submenu: [
-        { 
-          label: 'Bash Shell', 
-          accelerator: 'Command+B', 
+        {
+          label: 'Bash Shell',
+          accelerator: 'Command+B',
           click: () => {
             if (!TaskDelegator.isCollectionLoaded()) return;
 
             const message = `cd ${TaskDelegator.stackPath}/${TaskDelegator.dispatcher.composeName()} \ndocker-compose exec [service-name] bash`;
-            const detail = `List of services: \n${Object.keys(TaskDelegator.dispatcher.collectionDef.dockerCompose.source.services).reduce((acc,key) => `${acc}\n${key}`)}`;
-            dialog.showMessageBox({ title: 'Virtuin', message, detail })
-          
-          } 
+            const detail = `${message}\nList of services: \n${Object.keys(TaskDelegator.dispatcher.collectionDef.dockerCompose.source.services).reduce((acc,key) => `${acc}\n${key}`)}`;
+            dialog.showMessageBox({ title: 'Virtuin', message:'To run bash in your services', detail })
+
+          }
         },
       ]
     };
