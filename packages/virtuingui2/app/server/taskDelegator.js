@@ -1,12 +1,17 @@
+//@flow
 import { ipcMain, dialog } from 'electron';
 import prompt from 'electron-prompt';
 import { throws } from 'assert';
 import { ipcChannels } from '../sagas';
 import { VirtuinSagaResponseActions } from '../redux/Virtuin';
+import type { RootInterface, CollectionEnvs } from 'virtuintaskdispatcher/distribution/types';
 
 const { VirtuinTaskDispatcher } = require('virtuintaskdispatcher').VirtuinTaskDispatcher;
 
 class TaskDelegator {
+  collectionDefPath: string
+  stationName: string
+  stackPath: string
   dispatcher = null;
   isLoaded = false;
   constructor() {
@@ -19,49 +24,60 @@ class TaskDelegator {
     }
   }
 
-  init = (stationName, collectionDefPath, stackPath, verbosity = 0) => {
+  init = (stationName: string, collectionDefPath: string, stackPath: string, verbosity: number = 0) => {
     debugger;
     // get collection and environment variables for the dispatcher
-    let collectionDef, collectionEnvPath, collectionEnvs;
-    try {
-      collectionDef = VirtuinTaskDispatcher.collectionObjectFromPath(collectionDefPath);
-      collectionEnvPath = collectionDef.stationCollectionEnvPaths[stationName];
-      collectionEnvs = VirtuinTaskDispatcher.collectionEnvFromPath(collectionEnvPath);
-    } catch (error) {
-      console.log(error);
-      console.error('Invalid collection def or environment variables provided');
-      process.exit(1);
-    }
 
+    const tmpCollectionDef: ?RootInterface = VirtuinTaskDispatcher.collectionObjectFromPath((collectionDefPath: any));
+    if (!tmpCollectionDef) {
+      //Nathan this should create some sort of alert
+      console.error('Could not open the collection file');
+      return;
+    }
+    let collectionEnvPath = null;
+    if (!tmpCollectionDef || !tmpCollectionDef.stationCollectionEnvPaths
+      || !tmpCollectionDef.stationCollectionEnvPaths[stationName]) {
+      console.log('The variable stationCollectionEnvPaths is not set for this station in the collection.');
+      console.log(`You may want to add ${stationName} key with the full path to the .env of this collection`);
+    } else {
+      const collectionDef: RootInterface = (tmpCollectionDef: any);
+      collectionEnvPath = collectionDef.stationCollectionEnvPaths[stationName];
+    }
+    const collectionDef: RootInterface = (tmpCollectionDef: any);
+    const collectionEnvs: ?CollectionEnvs = VirtuinTaskDispatcher.collectionEnvFromPath(collectionEnvPath);
+    //
     this.stationName = stationName;
     this.stackPath = stackPath;
     this.collectionDefPath = collectionDefPath;
 
     this.dispatcher = new VirtuinTaskDispatcher(
       stationName,
-      collectionEnvPath,
       collectionEnvs,
       collectionDef,
       stackPath,
       verbosity,
+      collectionEnvPath
     );
     this.isLoaded = true
     ipcMain.on(ipcChannels.action, this.handleAction);
   }
-  paritial_init = (stationName, stackPath) => {
+  paritial_init = (stationName: string, stackPath: string) => {
     this.stationName = stationName;
     this.stackPath = stackPath;
     ipcMain.on(ipcChannels.action, this.handleAction);
   }
 
-  reinit = async (collectionDefPath, reload=false) => {
+  stop = async() => {
     if (this.dispatcher != null) {
       await this.down();
       await this.dispatcher.end();
-      
+
       this.dispatcher.removeAllListeners();
       this.dispatcher = null;
     }
+  }
+  reinit = async (collectionDefPath, reload=false) => {
+    await this.stop();
     ipcMain.removeListener(ipcChannels.action, this.handleAction);
     this.init(this.stationName, collectionDefPath, this.stackPath);
     await this.connect();
@@ -107,8 +123,8 @@ class TaskDelegator {
     this.client.send(ipcChannels.response, VirtuinSagaResponseActions.runResponse(groupIndex, taskIndex, 'GOOD'))
   }
   down = async () => {
-    this.isLoaded = false;
     await this.dispatcher.down();
+    this.isLoaded = false;
     this.client.send(ipcChannels.response, VirtuinSagaResponseActions.downResponse());
   }
   sendData = async ({groupIndex, taskIndex}) => {

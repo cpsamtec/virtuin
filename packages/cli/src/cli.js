@@ -11,6 +11,7 @@ const os = require('os');
 const path = require('path');
 const fs = require('fs');
 const program = require('commander');
+const ospath = require('ospath');
 const { VirtuinTaskDispatcher } = require('virtuintaskdispatcher').VirtuinTaskDispatcher;
 
 type InputCommandType = 'run' | 'up' | 'down' | 'upVM' | 'downVM' | 'sendData'
@@ -44,7 +45,11 @@ program
 program
   .command('getRunningLocation')
   .action((options) => {
-    const stackPath = path.join(os.tmpdir(), 'stacks');
+    const appDataPath = ospath.data();
+    const stackPath = path.join(appDataPath, 'Virtuin');
+    if (!fs.existsSync(stackPath)){
+      fs.mkdirSync(stackPath);
+    }
     console.log(`Running docker location of collections can be found at ${stackPath}`);
     process.exit(0)
   });
@@ -265,7 +270,11 @@ if (!tmpCollectionDef || !tmpCollectionDef.stationCollectionEnvPaths
 const collectionDef: RootInterface = (tmpCollectionDef: any);
 const collectionEnvs: ?CollectionEnvs = VirtuinTaskDispatcher.collectionEnvFromPath(collectionEnvPath);
 
-const stackPath = path.join(os.tmpdir(), 'stacks');
+const appDataPath = ospath.data();
+const stackPath = path.join(appDataPath, 'Virtuin');
+if (!fs.existsSync(stackPath)){
+  fs.mkdirSync(stackPath);
+}
 const dispatcher: VirtuinTaskDispatcher = new VirtuinTaskDispatcher(
     stationName,
     (collectionEnvs: any),

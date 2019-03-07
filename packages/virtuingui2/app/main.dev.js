@@ -69,9 +69,6 @@ const stationName = process.env.VIRT_STATION_NAME || 'VIRT_DEFAULT_STATION';
 //const collectionDefPath = (process.env.NODE_ENV === 'production') ? process.argv[1] : process.env.VIRTUIN_COLLECTION_LOCATION;
 //console.log(`ARG 1 IS ${process.argv[1]}`);
 const collectionDefPath = process.env.VIRTUIN_COLLECTION_LOCATION;
-// const stackPath = process.env.STACK_PATH || app.getPath('appData');
-// create stack path
-
 const appDataPath = app.getPath('appData');
 
 const stackPath = path.join(app.getPath('appData'), 'Virtuin');
@@ -132,6 +129,13 @@ app.on('ready', async () => {
     }
   });
 
+  mainWindow.on('close', (e) => {
+    //if(TaskDelegator.isCollectionLoaded()) {
+    TaskDelegator.stop().then(() =>
+      {
+      }).catch(e => {
+      })
+  });
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
