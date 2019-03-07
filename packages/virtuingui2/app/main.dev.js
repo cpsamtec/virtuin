@@ -92,9 +92,14 @@ if (collectionDefPath) {
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+  //if (process.platform !== 'darwin') {
+    TaskDelegator.stop().then(() =>
+      {
+        app.quit();
+      }).catch(e => {
+        app.quit();
+      })
+  //}
 });
 
 app.on('ready', async () => {
@@ -130,11 +135,6 @@ app.on('ready', async () => {
   });
 
   mainWindow.on('close', (e) => {
-    //if(TaskDelegator.isCollectionLoaded()) {
-    TaskDelegator.stop().then(() =>
-      {
-      }).catch(e => {
-      })
   });
   mainWindow.on('closed', () => {
     mainWindow = null;
