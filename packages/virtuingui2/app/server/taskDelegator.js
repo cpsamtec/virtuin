@@ -69,10 +69,9 @@ class TaskDelegator {
 
   stop = async() => {
     if (this.dispatcher != null) {
+      this.dispatcher.removeAllListeners();
       await this.down();
       await this.dispatcher.end();
-
-      this.dispatcher.removeAllListeners();
       this.dispatcher = null;
     }
   }
