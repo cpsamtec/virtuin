@@ -7,11 +7,8 @@ export const MessageConsoleWrapper = styled.div`
   position: relative;
 `;
 
-export const ConsoleButton = styled(Button, {shouldForwardProp: prop => prop !== 'open'})`
-  position: absolute;
-  top: ${props => props.open ? 0 : '-36px'};
-  transition: top 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  background: #ccc;
+export const ConsoleButton = styled(Button, {shouldForwardProp: prop => !prop.match(/active/)})`
+  background: ${props => props.active ? '#ccc' : 'none'};
   border-radius: 0;
   padding-left: 15px;
   padding-right: 15px;
@@ -20,6 +17,12 @@ export const ConsoleButton = styled(Button, {shouldForwardProp: prop => prop !==
     background: #ccc;
   }
 `;
+
+export const ConsoleButtonList = styled.div`
+  width: 100%;
+  background: #bbb;
+  height: 36px;
+`
 export const ConsoleText = styled.span`
   margin-right: 10px;
   color: #444;
@@ -38,13 +41,8 @@ export const ConsoleMessage = styled(Typography)`
   border-bottom: solid 1px #bbb;
 `;
 
-export const DividerLine = styled.div`
-  width: 100%;
-  background: #bbb;
-  height: 36px;
-`;
-
 export const ConsoleTextArea = styled.div`
+  display: ${props => props.visible ? 'block' : 'none'};
   height: 100%;
   padding: 15px;
   padding-top: 5px;
