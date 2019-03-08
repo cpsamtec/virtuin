@@ -713,7 +713,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
     const groups = this.collectionDef.taskGroups;
     let anyError = null;
     for (const index of groups.keys()) {
-      if (groups[index].autoStart) {
+      if (groups[index].autoStart === true) {
         const { success, error } = await this.startTask({ groupIndex: index, taskIndex: 0 }, rebuildService);
         if (error) {
           anyError = error;
@@ -828,7 +828,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
         ([ignore, port] = await this.restServer.getAddressAndPort());
       }
       let envVar = (port > 0) ? ['-e', `VIRT_REST_API_PORT=${port}`] : [];
-      envVar.push(['-e', `TASK_INPUT_FILE='${taskDstPath}'`])
+      envVar.push(['-e', `VIRT_TASK_INPUT_FILE='${taskDstPath}'`])
       const args = [
         ...this.daemonArgs,
         'exec',
@@ -1147,7 +1147,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
     const bufStr = buffer.toString('utf8');
     const currStatus = this.statusFromIdentifier(taskIdentifier);
     this.updateTaskStatus(taskIdentifier, {
-      stdout: (currStatus.stdout + bufStr).slice(-200)
+      //stdout: (currStatus.stdout + bufStr).slice(-200)
+      stdout: currStatus.stdout + bufStr
     });
   }
 
@@ -1162,7 +1163,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
     const bufStr = buffer.toString();
     const currStatus = this.statusFromIdentifier(taskIdentifier);
     this.updateTaskStatus(taskIdentifier, {
-      stderr: (currStatus.stderr + bufStr).slice(-200)
+      //stderr: (currStatus.stderr + bufStr).slice(-200)
+      stderr: currStatus.stderr + bufStr
     });
   }
 
@@ -1188,31 +1190,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
     if (activeTask.stderr != null) {
       activeTask.stderr.removeAllListeners('data');
     }
-    /*
-    This code would autostart next task when mode is sequential and group set to autoStart
-    if (!stopRequest && code === 0) {
-      const group = this.collectionDef.taskGroups[taskIdent.groupIndex];
-      if (group.autoStart && group.mode && group.mode === 'sequential' && taskIdent.taskIndex < (group.tasks.length - 1)) {
-        this.startTask({ groupIndex: taskIdent.groupIndex, taskIndex: taskIdent.taskIndex + 1 }, false).then(({ success, error }) => {
-          if (success) {
-            this.updateDispatchPrimaryStatus({
-              logMessage:
-              `Successfully started next sequential task - group: ${taskIdent.groupIndex}, task: ${taskIdent.taskIndex + 1}`
-            });
-          } else if (error && error.description) {
-            this.updateDispatchPrimaryStatus({
-              logMessage:
-              `Error starting next sequential task - $group: ${taskIdent.groupIndex}, task: ${taskIdent.taskIndex + 1} ${error.description}`
-            });
-          }
-        }).catch((error) => {
-          this.updateDispatchPrimaryStatus({
-            logMessage:
-              `Error starting next sequential task - $group: ${taskIdent.groupIndex}, task: ${taskIdent.taskIndex + 1} ${error.description}`
-          });
-        });
-      }
-    }*/
     const errMsg = (code === 0)
       ? null
       : `Task prematurely exited (code:${code || ''}, signal:${signal || ''}).\n`;
