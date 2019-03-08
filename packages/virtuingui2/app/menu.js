@@ -7,6 +7,7 @@ import fs from 'fs';
 
 import TaskDelegator from './server/taskDelegator';
 
+import { toggleDeveloper} from './redux/Sidebar';
 
 export default class MenuBuilder {
   mainWindow: BrowserWindow;
@@ -119,7 +120,7 @@ export default class MenuBuilder {
           }
         }, {
           label: 'Reload Collection',
-          accelerator: 'Command+L+R',
+          accelerator: 'Command+Shift+R',
           click: () => {
             if (!TaskDelegator.isCollectionLoaded()) return;
             TaskDelegator.reloadCollection();
@@ -162,6 +163,13 @@ export default class MenuBuilder {
             const message = `cd ${TaskDelegator.stackPath}/${TaskDelegator.dispatcher.composeName()} \ndocker-compose exec [service-name] bash`;
             const detail = `${message}\nList of services: \n${Object.keys(TaskDelegator.dispatcher.collectionDef.dockerCompose.source.services).reduce((acc,key) => `${acc}\n${key}`)}`;
             dialog.showMessageBox({ title: 'Virtuin', message:'To run bash in your services', detail })
+
+          }
+        }, {
+          label: 'Toggle Developer Mode',
+          accelerator: 'Command+Shift+D',
+          click: () => {
+            TaskDelegator.sendAction(toggleDeveloper());
 
           }
         },

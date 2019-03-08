@@ -12,6 +12,7 @@ const mapStateToProps = (state, ownProps) => {
     messages: currentTask != null ? currentTask.messages : null,
     stdout: currentTask != null ? currentTask.stdout : null,
     stderr: currentTask != null ? currentTask.stderr : null,
+    developerMode: state.sidebar.developerMode
   });
 }
 

@@ -7,10 +7,9 @@ const hashCode = (s) => {
 }
 
 import { MessageConsoleWrapper, ConsoleButtonList, ConsoleButton, ConsoleText, Console, DividerLine, ConsoleTextArea, ConsoleMessage } from './MessageConsole.style';
-const MessageConsole = ({messages, stdout, stderr}) => {
+const MessageConsole = ({messages, stdout, stderr, developerMode}) => {
   const [open, setOpen] = useState(true);
   const [openIdx, setIdx] = useState(0);
-
   const buttonClick = (idx) => {
     if (open && idx === openIdx) {
       setOpen(!open);
@@ -29,14 +28,18 @@ const MessageConsole = ({messages, stdout, stderr}) => {
             <ConsoleText>Messages</ConsoleText>
             <Chip label={messages ? messages.length : 0} />
         </ConsoleButton>
-        <ConsoleButton onClick={buttonClick.bind(null, 1)} active={openIdx === 1}>
+        {developerMode && 
+          <>
+          <ConsoleButton onClick={buttonClick.bind(null, 1)} active={openIdx === 1}>
             <ConsoleText>Std. Out</ConsoleText>
             <Chip label={stdout ? 1 : 0} />
-        </ConsoleButton>
-        <ConsoleButton onClick={buttonClick.bind(null, 2)} active={openIdx === 2}>
-            <ConsoleText>Std. Err</ConsoleText>
-            <Chip label={stderr ? 1 : 0} />
-        </ConsoleButton>
+            </ConsoleButton>
+            <ConsoleButton onClick={buttonClick.bind(null, 2)} active={openIdx === 2}>
+                <ConsoleText>Std. Err</ConsoleText>
+                <Chip label={stderr ? 1 : 0} />
+            </ConsoleButton>
+          </>
+        }
       </ConsoleButtonList>
       
     
@@ -49,12 +52,15 @@ const MessageConsole = ({messages, stdout, stderr}) => {
           <ConsoleTextArea visible={openIdx === 0}>
             {messages && messages.map((message, idx) => <ConsoleMessage key={`${hashCode(message.substring(Math.min(message.length, 20)))}${idx}`}>{message}</ConsoleMessage>)}
           </ConsoleTextArea>
-          <ConsoleTextArea visible={openIdx === 1}>
-            {stdout && <ConsoleMessage>{stdout}</ConsoleMessage>}
-          </ConsoleTextArea>
-          <ConsoleTextArea visible={openIdx === 2}>
-            {stderr && <ConsoleMessage>{stderr}</ConsoleMessage>}
-          </ConsoleTextArea>
+          {developerMode && <>
+            <ConsoleTextArea visible={openIdx === 1}>
+              {stdout && <ConsoleMessage>{stdout}</ConsoleMessage>}
+            </ConsoleTextArea>
+            <ConsoleTextArea visible={openIdx === 2}>
+              {stderr && <ConsoleMessage>{stderr}</ConsoleMessage>}
+            </ConsoleTextArea>
+          </>}
+          
         </Console>
       </Collapse>
     </MessageConsoleWrapper>

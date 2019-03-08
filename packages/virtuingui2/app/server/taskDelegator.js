@@ -156,6 +156,9 @@ class TaskDelegator {
       console.error(err);
     }
   }
+  sendAction = (action) => {
+    this.client.send(ipcChannels.response, action);
+  }
 }
 
 const TaskDelegatorSingleton = new TaskDelegator();
