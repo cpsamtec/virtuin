@@ -12,7 +12,9 @@ class TaskDelegator {
   collectionDefPath: string
   stationName: string
   stackPath: string
-  dispatcher = null;
+  actionHandlers: Object
+  client: any
+  dispatcher: any = null;
   isLoaded = false;
   constructor() {
     this.actionHandlers = {
@@ -25,12 +27,11 @@ class TaskDelegator {
   }
 
   init = (stationName: string, collectionDefPath: string, stackPath: string, verbosity: number = 0) => {
-    debugger;
     // get collection and environment variables for the dispatcher
 
-    const tmpCollectionDef: ?RootInterface = VirtuinTaskDispatcher.collectionObjectFromPath((collectionDefPath: any));
+    const tmpCollectionDef: ?RootInterface = VirtuinTaskDispatcher.collectionObjectFromPath(collectionDefPath);
     if (!tmpCollectionDef) {
-      //Nathan this should create some sort of alert
+      // TODO: this should create some sort of alert
       console.error('Could not open the collection file');
       return;
     }
@@ -75,7 +76,7 @@ class TaskDelegator {
       this.dispatcher = null;
     }
   }
-  reinit = async (collectionDefPath, reload=false) => {
+  reinit = async (collectionDefPath: string, reload: boolean=false) => {
     await this.stop();
     ipcMain.removeListener(ipcChannels.action, this.handleAction);
     this.init(this.stationName, collectionDefPath, this.stackPath);
@@ -95,7 +96,7 @@ class TaskDelegator {
     this.client.send(ipcChannels.response, VirtuinSagaResponseActions.taskStatusResponse(this.dispatcher.getStatus()))
   }
 
-  promptHandler = async ({promptType, message}): Promise<string> => {
+  promptHandler = async ({ promptType, message } : {promptType: string, message: string}): Promise<string> => {
     if (promptType === 'confirmation') {
       return dialog.showMessageBox({type: 'info', buttons: ['okay'], defaultId: 0, message})
     } else if (promptType === 'confirmCancel') {
@@ -107,12 +108,12 @@ class TaskDelegator {
     }
   }
 
-  up = async (forceReload=false) => {
+  up = async (forceReload: boolean=false) => {
     await this.dispatcher.up(forceReload, (this.dispatcher.collectionDef.build === 'development'));
     this.client.send(ipcChannels.response, VirtuinSagaResponseActions.upResponse());
     await this.dispatcher.beginTasksIfAutoStart();
   }
-  run = async ({ groupIndex, taskIndex }) => {
+  run = async ({ groupIndex, taskIndex } : {groupIndex: number, taskIndex: number}) => {
     try {
       const task = this.dispatcher.collectionDef.taskGroups[groupIndex].tasks[taskIndex];
     } catch (err) {
@@ -126,7 +127,7 @@ class TaskDelegator {
     this.isLoaded = false;
     this.client.send(ipcChannels.response, VirtuinSagaResponseActions.downResponse());
   }
-  sendData = async ({groupIndex, taskIndex}) => {
+  sendData = async ({ groupIndex, taskIndex } : {groupIndex: number, taskIndex: number}) => {
     try {
       const task = this.dispatcher.collectionDef.taskGroups[groupIndex].tasks[taskIndex];
     } catch (err) {
@@ -146,7 +147,7 @@ class TaskDelegator {
     await this.dispatcher.down();
     await this.reinit(this.collectionDefPath, true);
   }
-  handleAction = async (event, arg) => {
+  handleAction = async (event: Object, arg: Object) => {
     try {
       this.client = event.sender;
       await this.actionHandlers[arg.type](arg.payload);
