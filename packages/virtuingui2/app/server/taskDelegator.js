@@ -4,17 +4,20 @@ import prompt from 'electron-prompt';
 import { throws } from 'assert';
 import { ipcChannels } from '../sagas';
 import { VirtuinSagaResponseActions } from '../redux/Virtuin';
+import { setCollectionDef } from '../redux/Collection';
 import type { RootInterface, CollectionEnvs } from 'virtuintaskdispatcher/distribution/types';
 
 const { VirtuinTaskDispatcher } = require('virtuintaskdispatcher').VirtuinTaskDispatcher;
 
 class TaskDelegator {
   collectionDefPath: string
+  collectionDef: ?Object
   stationName: string
   stackPath: string
   actionHandlers: Object
   client: any
   dispatcher: any = null;
+  connect_commands: Array<any> = [];
   isLoaded = false;
   constructor() {
     this.actionHandlers = {
@@ -23,6 +26,8 @@ class TaskDelegator {
       'UP': this.up,
       'RUN': this.run,
       'DOWN': this.down,
+      'RESET_GROUP': this.resetGroup,
+      'RESET_TASK': this.resetTask
     }
   }
 
@@ -49,6 +54,7 @@ class TaskDelegator {
     //
     this.stationName = stationName;
     this.stackPath = stackPath;
+    this.collectionDef = collectionDef;
     this.collectionDefPath = collectionDefPath;
 
     this.dispatcher = new VirtuinTaskDispatcher(
@@ -59,8 +65,10 @@ class TaskDelegator {
       verbosity,
       collectionEnvPath
     );
-    this.isLoaded = true
+    this.isLoaded = true;
     ipcMain.on(ipcChannels.action, this.handleAction);
+
+    this.connect_commands = [setCollectionDef(collectionDef)];
   }
   paritial_init = (stationName: string, stackPath: string) => {
     this.stationName = stationName;
@@ -81,7 +89,7 @@ class TaskDelegator {
     ipcMain.removeListener(ipcChannels.action, this.handleAction);
     this.init(this.stationName, collectionDefPath, this.stackPath);
     await this.connect();
-    this.isLoaded = true
+    this.isLoaded = true;
     //may need to pass an additional argument to force reload, that will be sent as first argument as dispatcher.up(true)
     await this.up(reload);
   }
@@ -89,6 +97,9 @@ class TaskDelegator {
     if (this.dispatcher == null) {
       return;
     }
+    this.connect_commands.forEach((command) => {
+      this.sendAction(command);
+    });
     this.dispatcher.on('task-status', status => {
       this.client.send(ipcChannels.response, VirtuinSagaResponseActions.taskStatusResponse(status));
     });
@@ -127,6 +138,13 @@ class TaskDelegator {
     this.isLoaded = false;
     this.client.send(ipcChannels.response, VirtuinSagaResponseActions.downResponse());
   }
+  resetGroup = async ({ groupIndex }) => {
+    await this.dispatcher.manageGroupTasks(groupIndex, {reset: 'all'});
+  }
+  resetTask = async ({ groupIndex, taskIndex }) => {
+    console.log('resetting task', groupIndex, taskIndex);
+    await this.dispatcher.manageGroupTasks(groupIndex, {reset: [taskIndex]});
+  }
   sendData = async ({ groupIndex, taskIndex } : {groupIndex: number, taskIndex: number}) => {
     try {
       const task = this.dispatcher.collectionDef.taskGroups[groupIndex].tasks[taskIndex];
@@ -151,7 +169,6 @@ class TaskDelegator {
     try {
       this.client = event.sender;
       await this.actionHandlers[arg.type](arg.payload);
-
     } catch(err) {
       console.error(err);
     }

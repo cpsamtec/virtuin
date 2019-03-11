@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import Button from '@material-ui/core/Button';
 import MuiListItem from '@material-ui/core/ListItem';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
@@ -12,7 +13,8 @@ export const ListItemPrimary = styled.span`
 
 export const ListItemSecondary = styled(Typography)`
   color: #ccc;
-  margin-top: 8px;
+  margin-top: 5px;
+  margin-bottom: 8px;
   line-height: 1.4;
 `;
 
@@ -40,4 +42,8 @@ export const ToggleButton = styled(IconButton)`
   height: 18px;
   margin-right: 5px;
   padding: 0;
+`
+
+export const TaskButton = styled(Button)`
+  background: rgba(255,255,255, 0.1);
 `

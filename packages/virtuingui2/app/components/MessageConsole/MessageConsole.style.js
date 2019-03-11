@@ -3,10 +3,10 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import Resizable from 're-resizable';
 
-export const MessageConsoleWrapper = styled.div`
+
+export const ConsoleArea = styled.div`
   position: relative;
 `;
-
 export const ConsoleButton = styled(Button, {shouldForwardProp: prop => !prop.match(/active/)})`
   background: ${props => props.active ? '#ccc' : 'none'};
   border-radius: 0;

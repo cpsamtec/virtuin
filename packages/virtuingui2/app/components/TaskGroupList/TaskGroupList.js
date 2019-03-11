@@ -3,13 +3,14 @@ import React from 'react';
 import List from '@material-ui/core/List';
 import TaskGroup from './TaskGroup';
 
-const TaskGroupList = ({groups}) => {
+const TaskGroupList = ({groups, resetGroup}) => {
   if (!groups) return null;
   return (
     <List>
-      {groups.map(taskGroup => (
+      {groups.map((taskGroup, groupIndex) => (
         <TaskGroup 
-          taskGroup={taskGroup} 
+          taskGroup={taskGroup}
+          resetGroup={resetGroup.bind(null, groupIndex)}
           key={taskGroup.name}
         />
       ))}
