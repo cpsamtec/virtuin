@@ -682,6 +682,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
         data: { ...sharedData, ...virt_stations[this.stationName] },
         taskUUID: newTaskUUID,
         groupIndex: taskIdent.groupIndex,
+        taskIndex: taskIdent.taskIndex,
         allTasksInfo: this.getStatus().groups[taskIdent.groupIndex].tasksStatus.map(task => {
             return {
               name: task.name,

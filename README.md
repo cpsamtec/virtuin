@@ -198,6 +198,59 @@ tasks can send and request information
 - **VIRT_GUI_SERVER_ADDRESS** : the address of the machine the GUI is running on.
 Will most likely be **localhost** if the GUI is running on the same machine as Docker
 and the network_mode is bridged or set to host.
-- **VIRT_COLLECTION_ENV_PATH** :
+- **VIRT_COLLECTION_ENV_PATH** : the system path to the collection.env on the station.
+You can also use this to create a relative path to your source files while you are
+developing your tasks.
+For example
+```yaml
+dockerCompose:
+  source:
+    version: '3'
+    services:
+      example-one:
+        build: ${VIRT_COLLECTION_ENV_PATH}/src/one
+```
+
+Directory __one__ exists in subdirectory __src__ where collection.env is located.
+The directory __one__ will contain source files and a Dockerfile to build.
 
 #### Data
+
+Data from your collection.yml will be placed in a file on a task's corresponding
+service. Check __VIRT_TASK_INPUT_FILE__ in your executable to get the full path.
+It should be located at the root directory
+/virtuin_task-[group index]-[task index].json. The
+indexes start at 0 based on their location in the collection.yml. First task of
+first group would be /virtuin_task-0-0.json. It will contain a json object with
+the following content
+
+  - data: (object) data from collection.yml
+  - taskUUID: (string) UUID for current running task. This will change for every run
+  - groupIndex: (number) group index of current task,
+  - taskIndex: (number) task index of current task,
+  - allTasksInfo: (array of objects) current status of all the tasks in the same group
+      - name: name of task,
+      - enabled: is task enabled,
+      - state: state of task
+        - 'IDLE'
+        - 'START_REQUEST'
+        - 'RUNNING'
+        - 'KILLED'
+        - 'STOP_REQUEST'
+        - 'FINISHED';
+      - taskUUID: UUID of task or null if has not run yet or status had been reset,
+      - groupIndex: group index of task (should be same as current),
+      - taskIndex: index of task
+      - progress: progress of task 0 - 100. Will be 0 if the Rest API is not used to
+      update the progress.
+
+
+
+### Rest API
+
+REST_SERVER=http://VIRT_GUI_SERVER_ADDRESS:VIRT_REST_API_PORT
+
+- POST REST_SERVER/api/v1/progress/:taskUUID/:progress
+- POST REST_SERVER/api/v1/message/:taskUUID
+- POST REST_SERVER/api/v1/prompt/:taskUUID/:type
+- POST REST_SERVER/api/v1/manageTasks/:groupIndex
