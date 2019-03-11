@@ -18,11 +18,13 @@ To begin a new Virtuin project make sure you have the following installed
 - [Docker](https://docs.docker.com/install/)
 - [Docker Compose](https://docs.docker.com/compose/install/)
 - Virtuin Application
-- A global environment variable on your system VIRT_STATION_NAME. You can
+- Recommended to add global environment variable on your system VIRT_STATION_NAME. You can
   just set this to VIRT_DEFAULT_STATION to begin with.
   ```bash
   export VIRT_STATION_NAME=VIRT_DEFAULT_STATION
   ```
+  It becomes important to have unique values for VIRT_STATION_NAME when you have
+  multiple stations.
 
 It is also recommended you clone the following boilerplate to get started. It
 consists of
@@ -44,7 +46,7 @@ consists of
 
 
 ### Details of collection.env and collection.yml
-#### collection.env
+#### collection.env [Optional]
 ```env
   VIRT_BROKER_ADDRESS=localhost
   VIRT_DOCKER_HOST=unix:///var/run/docker.sock
@@ -54,25 +56,27 @@ consists of
   #AWS_SECRET_ACCESS_KEY=XXXXX
   #AWS_ACCESS_KEY_ID=XXXXX
 ```
-There needs to be a collection.env stored on every computer that will be running
-a specific project/collection.yml. The collection.yml will also need to specify
-they location of this file for each machine.
+The collection.yml will also need to specify they location of it's corresponding
+collection.env for each machine. If one does not exist the default values are used.
+You will want to store any credentials for services your tasks will use in
+the collection.env.
 
-Virtuin variables
+Virtuin variables in collection.env
 - VIRT_DOCKER_HOST - Tells Virtuin how to access your desired Docker server.
-Typically you would use **unix:///var/run/docker.sock** when docker is running on
+ This is the machine the actual services are run on. Typically
+ unix:///var/run/docker.sock when docker is running on
  the same machine as Virtuin. If you are running docker on a different machine
- you can change accordingly.
+ you can change accordingly. Default **unix:///var/run/docker.sock**
 - VIRT_BROKER_ADDRESS - The ip address of the machine running Virtuin. You
 will most likely leave this localhost as you will most likely have the Virtuin
-Application and Docker running on the same machine.
+Application and Docker running on the same machine. Default **localhost**
 - VIRT_DOCKER_USER (optional) - Virtuin will pull your required docker images. If you need
 to login for private images, supply your Docker Hub username here.
 - VIRT_DOCKER_PASSWORD (optional) - Docker Hub password to match VIRT_DOCKER_USER
 
 You can specify additional environment variables that you would like to be available
 to your Docker containers. Make sure they are also specified in the **environment**
-key of your compose.
+key of your compose file.
 
 #### collection.yml
 ```yaml
@@ -137,3 +141,36 @@ dockerCompose:
       outputFiles:
 
 ```
+
+The collection.yml contains
+- **collectionName** : make sure this is unique among your other collections as
+it is used to identify them.
+- **collectionTag** : string version you assign to collection. When you update this
+Virtuin will try pulling and rebuilding images
+- **build** :  __development__ or __release__. In development mode GUI will display
+extra components to help such as stdout and stderr of your tasks.
+- **dockerCompose** : embedded docker compose file
+  - source : the actual source of the docker compose file. Please see Docker for
+  more information about docker and docker compose files.
+- **taskGroups** : describes all your your tasks arranged into groups. It consists of
+  - name : descriptive name of the group
+  - description: more information about the function of the group
+  - autoStart: if true when the collection is still loaded the first task
+  will be immediatly executed of this group. Default __false__
+  - mode: __user__ or __managed__. In __user__ mode the operator can run
+  any tasks in any order and reset the statuses of tasks in a group.
+  In __managed__ your task on completion will
+  inform the GUI via a rest service which tasks are able enabled and which
+  statuses should be reset. Default __user__
+  - **tasks** : list of Task objects. Only one task can execute at a time in a group.
+    - name : descriptive name of the task
+    - description: more information about the function of the task
+    - dockerInfo: how Virtuin is to execute your program in a running docker service.
+      - serviceName: The name of the docker service
+      - command: the command to run
+      - type: always set to exec for now
+      - args: list of arguments to pass to the command
+
+
+
+including how to execute them in your docker services.
