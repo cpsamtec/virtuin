@@ -7,6 +7,7 @@ export const VirtuinSagaActions = createActions({
   'RUN': (groupIndex, taskIndex) => ({groupIndex, taskIndex}),
   'DOWN': () => null,
   'SEND_DATA': (groupIndex, taskIndex) => ({groupIndex, taskIndex}),
+  'RESET_GROUP': (groupIndex) => ({groupIndex}),
   'BEGIN_TASKS_IF_AUTO_START': () => null
 });
 

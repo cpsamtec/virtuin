@@ -8,8 +8,14 @@ import ArrowDropDown from '@material-ui/icons/ArrowDropDown';
 import { FlexRow, Line, ToggleButton } from './TaskGroupList.style';
 import Task from './Task';
 
-const TaskGroup = ({taskGroup}) => {
+const inProgress = /(START_REQUEST|STOP_REQUEST|RUNNING)/;
+
+const isRunnable = taskGroup => taskGroup.tasksStatus.reduce((acc,task) => acc && !task.state.match(inProgress),  true)
+
+
+const TaskGroup = ({taskGroup, resetGroup}) => {
   const [open, setOpen] = useState(true);
+  const allowReset = taskGroup.mode == 'user' && isRunnable(taskGroup);
   return (
     <>
       <ListSubheader>
@@ -19,7 +25,7 @@ const TaskGroup = ({taskGroup}) => {
           </ToggleButton>
           {taskGroup.name}
           <Line />
-          <Button variant="outlined" size="small" color="secondary">
+          <Button onClick={resetGroup} variant="outlined" size="small" color="secondary" disabled={!allowReset}>
             Reset
           </Button>
           

@@ -1,10 +1,13 @@
 import React, { Component } from 'react';
+import { SnackbarProvider } from 'notistack';
 import styled from '@emotion/styled';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import MuiThemeProvider from '@material-ui/core/styles/MuiThemeProvider';
+import Button from '@material-ui/core/Button';
 import { Provider } from 'react-redux';
 import theme from './theme';
 
+import Notifier from './components/Notifier';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import TaskGroupList from './components/TaskGroupList';
@@ -40,16 +43,24 @@ class App extends Component {
         <>
           <CssBaseline />
           <MuiThemeProvider theme={theme}>
-            <AppContainer>
-              <Sidebar>
-                <TaskGroupList />
-              </Sidebar>
-              <View>
-                <Navbar />
-                <TaskView />
-                <MessageConsole />
-              </View>
-            </AppContainer>
+            <SnackbarProvider maxSnack={5} action={
+                <Button color="secondary" size="small">
+                  {'Dismiss'}
+                </Button>
+              }
+            >
+              <AppContainer>
+                <Notifier />
+                <Sidebar>
+                  <TaskGroupList />
+                </Sidebar>
+                <View>
+                  <Navbar />
+                  <TaskView />
+                  <MessageConsole />
+                </View>
+              </AppContainer>
+            </SnackbarProvider>
           </MuiThemeProvider>
         </>
       </Provider>

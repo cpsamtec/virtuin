@@ -75,6 +75,11 @@ const theme = createMuiTheme({
         fontSize: 10
       }
     },
+    MuiSnackbarContent: {
+      message: {
+        color: '#fff'
+      }
+    }
   },
 });
 

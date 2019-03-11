@@ -39,7 +39,7 @@ const stateMapper = (state) => {
 const stateNameMapper = (state) => {
   return stateMapNames[state] ? stateMapNames[state] : '???'
 }
-const Task = ({task, last, currentTask, setTaskView, runTask}) => {
+const Task = ({task, last, currentTask, isRunnable, setTaskView, runTask}) => {
   const showTaskProgress = task.state.match(inProgress);
   const {groupIndex, taskIndex} = task.identifier;
   const active = currentTask.groupIndex === groupIndex && currentTask.taskIndex === taskIndex;
@@ -57,7 +57,7 @@ const Task = ({task, last, currentTask, setTaskView, runTask}) => {
           <ListItemSecondaryAction>
             {showTaskProgress ? 
               <CircleProgress value={task.progress} /> :
-              <CircleButton onClick={runTask.bind(null, groupIndex, taskIndex)}>
+              <CircleButton onClick={runTask.bind(null, groupIndex, taskIndex)} disabled={!isRunnable}>
                 <PlayArrow />
               </CircleButton>
             }

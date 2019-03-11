@@ -1,8 +1,5 @@
 import React from 'react';
 import styled from '@emotion/styled';
-
-
-
 import ButtonBase from '@material-ui/core/ButtonBase';
 
 export const CircleButton = styled(ButtonBase, {shouldForwardProp: prop => prop !== 'fullWhite'})`
