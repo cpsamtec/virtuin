@@ -188,7 +188,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
     if(command.reset && ((typeof command.reset === 'string' && command.reset === 'all') || Array.isArray(command.reset))) {
       for(const i of currStatus.groups[groupIndex].tasksStatus.keys()) {
         const taskIdent = {groupIndex, taskIndex: i};
-        if(command.reset === 'all' || command.reset.includes[i]) {
+        if(command.reset === 'all' || (command.reset && command.reset.includes(i))) {
           this.updateTaskStatus(taskIdent, VirtuinTaskDispatcher.genInitTaskStatusForTaskIdent(taskIdent, this.collectionDef));
         }
       }
@@ -196,7 +196,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
     if(command.disable && ((typeof command.disable === 'string' && command.disable === 'all') || Array.isArray(command.disable))) {
       for(const i of currStatus.groups[groupIndex].tasksStatus.keys()) {
         const taskIdent = {groupIndex, taskIndex: i};
-        if(command.disable === 'all' || command.disable.includes[i]) {
+        if(command.disable === 'all' || (command.disable && command.disable.includes(i))) {
           this.updateTaskStatus(taskIdent, {enabled: false});
         }
       }
@@ -204,7 +204,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
     if(command.enable && ((typeof command.enable === 'string' && command.enable === 'all') || Array.isArray(command.enable))) {
       for(const i of currStatus.groups[groupIndex].tasksStatus.keys()) {
         const taskIdent = {groupIndex, taskIndex: i};
-        if(command.enable === 'all' || command.enable.includes[i]) {
+        if(command.enable === 'all' || (command.enable && command.enable.includes(i))) {
           this.updateTaskStatus(taskIdent, {enabled: true});
         }
       }
@@ -333,7 +333,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
 
   static collectionEnvFromPath(collectionEnvPath: ?string): CollectionEnvs {
     const defaultEnvs = {
-      VIRT_BROKER_ADDRESS: "localhost",
+      VIRT_GUI_SERVER_ADDRESS: "localhost",
       VIRT_DOCKER_HOST: "unix:///var/run/docker.sock"
     }
     let envData = '';

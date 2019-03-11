@@ -48,7 +48,7 @@ consists of
 ### Details of collection.env and collection.yml
 #### collection.env [Optional]
 ```env
-  VIRT_BROKER_ADDRESS=localhost
+  VIRT_GUI_SERVER_ADDRESS=localhost
   VIRT_DOCKER_HOST=unix:///var/run/docker.sock
   #VIRT_DOCKER_USER=XXXXX
   #VIRT_DOCKER_PASSWORD=XXXXX
@@ -67,9 +67,9 @@ Virtuin variables in collection.env
  unix:///var/run/docker.sock when docker is running on
  the same machine as Virtuin. If you are running docker on a different machine
  you can change accordingly. Default **unix:///var/run/docker.sock**
-- VIRT_BROKER_ADDRESS - The ip address of the machine running Virtuin. You
+- VIRT_GUI_SERVER_ADDRESS - The ip address of the machine running Virtuin. You
 will most likely leave this localhost as you will most likely have the Virtuin
-Application and Docker running on the same machine. Default **localhost**
+application and docker running on the same machine. Default **localhost**
 - VIRT_DOCKER_USER (optional) - Virtuin will pull your required docker images. If you need
 to login for private images, supply your Docker Hub username here.
 - VIRT_DOCKER_PASSWORD (optional) - Docker Hub password to match VIRT_DOCKER_USER
@@ -101,12 +101,12 @@ taskGroups:
       helloMessage: Hello from the first process of the Example Collection
       virt_stations:
         VIRT_DEFAULT_STATION:
-          hostOSName: posix
+          count: 5
           helloMessage: This is the new Hello Message from the Example Collection
     viewURL: http://localhost:3000
     autoStart: false
 stationCollectionEnvPaths:
-  VIRT_DEFAULT_STATION: /Users/cpage/Documents/Samtec/Virtuin/virtuinbasicexample
+  VIRT_DEFAULT_STATION: "/station's/full/path/to/collection.env/do/not/include/filename"
 dockerCompose:
   source:
     version: '3'
@@ -131,12 +131,11 @@ dockerCompose:
         - ${VIRT_COLLECTION_ENV_PATH}/src:/src
         - /tmp/outputFiles:/outputFiles
         environment:
+        - VIRT_STATION_NAME
+        - VIRT_GUI_SERVER_ADDRESS
+        - VIRT_REST_API_PORT
         - AWS_ACCESS_KEY_ID
         - AWS_SECRET_ACCESS_KEY
-        - VIRT_STATION_NAME
-        - VIRT_BROKER_ADDRESS
-        - VIRT_OUTPUT_FILE_PATH=/outputFiles
-        - VIRT_OUTPUT_FILE_URL=http://localhost:4962/
     volumes:
       outputFiles:
 
@@ -150,21 +149,31 @@ Virtuin will try pulling and rebuilding images
 - **build** :  __development__ or __release__. In development mode GUI will display
 extra components to help such as stdout and stderr of your tasks.
 - **dockerCompose** : embedded docker compose file
-  - source : the actual source of the docker compose file. Please see Docker for
-  more information about docker and docker compose files.
+  - source : the actual source of the docker compose file. Please see the [docker
+  website](https://docs.docker.com/compose/compose-file/) for more information about docker and docker compose files.
 - **taskGroups** : describes all your your tasks arranged into groups. It consists of
   - name : descriptive name of the group
   - description: more information about the function of the group
-  - autoStart: if true when the collection is still loaded the first task
-  will be immediatly executed of this group. Default __false__
+  - autoStart: if true when the collection is loaded for the first time the first task
+  will be immediatly executed. Default __false__
   - mode: __user__ or __managed__. In __user__ mode the operator can run
   any tasks in any order and reset the statuses of tasks in a group.
   In __managed__ your task on completion will
   inform the GUI via a rest service which tasks are able enabled and which
   statuses should be reset. Default __user__
+  - **stationCollectionEnvPaths** : an object where the keys are station names
+  (VIRT_STATION_NAME) and the values are a file path to a collection.env on a station.
+  If the current station name matches a key, the corresponding path will be used to read the
+  collection.env. The variable VIRT_COLLECTION_ENV_PATH will also be set
+  to this path which is useful to specify where your source files are while developing.
   - **tasks** : list of Task objects. Only one task can execute at a time in a group.
     - name : descriptive name of the task
     - description: more information about the function of the task
+    - data: key value pairs of data you would like passed to your task. The special key
+    virt_stations is an object with keys of station names (VIRT_STATION_NAME) with
+    the value been an object of data. If the current station name matches it will take the
+    corresponding data and merge it into the general data. Data from the general will be
+    overwritten if the are any duplicate keys.
     - dockerInfo: how Virtuin is to execute your program in a running docker service.
       - serviceName: The name of the docker service
       - command: the command to run
@@ -172,5 +181,23 @@ extra components to help such as stdout and stderr of your tasks.
       - args: list of arguments to pass to the command
 
 
+### Tasks
 
-including how to execute them in your docker services.
+#### Environment Variables
+
+All of the environment variables specified in collection.env and the environment
+key of your docker compose will be available to your tasks. There will also be
+additional variables prefixed with VIRT
+
+- **VIRT_TASK_INPUT_FILE** : Value will contain the file path to a json file
+with all of the data for the task. This file is generated and copied to your
+service and takes the form "/virtuin_task-[group index]-[task index].json" There
+is more information in the Data section below.
+- **VIRT_REST_API_PORT** : the port of the rest server running in the GUI where
+tasks can send and request information
+- **VIRT_GUI_SERVER_ADDRESS** : the address of the machine the GUI is running on.
+Will most likely be **localhost** if the GUI is running on the same machine as Docker
+and the network_mode is bridged or set to host.
+- **VIRT_COLLECTION_ENV_PATH** :
+
+#### Data
