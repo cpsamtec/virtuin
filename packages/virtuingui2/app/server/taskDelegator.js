@@ -27,6 +27,7 @@ class TaskDelegator {
       'RUN': this.run,
       'DOWN': this.down,
       'RESET_GROUP': this.resetGroup,
+      'RESET_TASK': this.resetTask
     }
   }
 
@@ -139,6 +140,10 @@ class TaskDelegator {
   }
   resetGroup = async ({ groupIndex }) => {
     await this.dispatcher.manageGroupTasks(groupIndex, {reset: 'all'});
+  }
+  resetTask = async ({ groupIndex, taskIndex }) => {
+    console.log('resetting task', groupIndex, taskIndex);
+    await this.dispatcher.manageGroupTasks(groupIndex, {reset: [taskIndex]});
   }
   sendData = async ({ groupIndex, taskIndex } : {groupIndex: number, taskIndex: number}) => {
     try {

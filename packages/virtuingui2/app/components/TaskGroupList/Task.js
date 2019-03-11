@@ -9,8 +9,9 @@ import ListItemText from '@material-ui/core/ListItemText';
 
 import { setTaskView } from '../../redux/TaskView';
 import { VirtuinSagaActions } from '../../redux/Virtuin';
+import { addNotification } from '../../redux/Notifier';
 
-import { ListItem, ListItemPrimary, ListItemSecondary } from './TaskGroupList.style';
+import { ListItem, ListItemPrimary, ListItemSecondary, FlexRow, TaskButton } from './TaskGroupList.style';
 import PlayArrow from '../../assets/svgs/playArrow.svg';
 import OutlinedChip from '../OutlinedChip';
 import CircleButton from '../CircleButton';
@@ -39,31 +40,55 @@ const stateMapper = (state) => {
 const stateNameMapper = (state) => {
   return stateMapNames[state] ? stateMapNames[state] : '???'
 }
-const Task = ({task, last, currentTask, isRunnable, setTaskView, runTask}) => {
-  const showTaskProgress = task.state.match(inProgress);
+const Task = ({task, last, currentTask, isRunnable, setTaskView, runTask, resetTask, addNotification}) => {
+  const isRunning = task.state.match(inProgress) != null;
   const {groupIndex, taskIndex} = task.identifier;
   const active = currentTask.groupIndex === groupIndex && currentTask.taskIndex === taskIndex;
   return (
     <>
       <ListItem button={!active} active={active} key={task.name} onClick={setTaskView.bind(null, task.identifier)}>
-        <ListItemText 
-          primary={
-            <>
-              <ListItemPrimary>{task.name}</ListItemPrimary>
-              <OutlinedChip label={stateNameMapper(task.state)} color={stateMapper(task.state)} />
-            </>
-          } 
-          secondary={<ListItemSecondary variant="caption">{task.description}</ListItemSecondary>} />
-          <ListItemSecondaryAction>
-            {showTaskProgress ? 
-              <CircleProgress value={task.progress} /> :
-              <CircleButton onClick={runTask.bind(null, groupIndex, taskIndex)} disabled={!isRunnable}>
-                <PlayArrow />
-              </CircleButton>
-            }
-          </ListItemSecondaryAction>
+        <div>
+          <ListItemText 
+            primary={
+              <>
+                <ListItemPrimary>{task.name}</ListItemPrimary>
+                <OutlinedChip label={stateNameMapper(task.state)} color={stateMapper(task.state)} />
+              </>
+            } 
+            secondary={
+              <>
+                <ListItemSecondary variant="caption">{task.description}</ListItemSecondary>
+                
+              </>
+            } 
+          />
+          <FlexRow style={{marginTop: 5}}>
+            <TaskButton disabled={isRunning} size="small" onClick={resetTask.bind(null, groupIndex, taskIndex)}>
+              Reset
+            </TaskButton>
+            <TaskButton disabled={task.error == null} size="small" onClick={() => {
+              addNotification({
+                message: task.error,
+                options: {
+                  persist: true,
+                  variant: 'error',
+                },
+              });
+            }}>
+              View Error
+            </TaskButton>
+          </FlexRow>
+        </div>
+        <ListItemSecondaryAction>
+          {isRunning ? 
+            <CircleProgress value={task.progress} /> :
+            <CircleButton onClick={runTask.bind(null, groupIndex, taskIndex)} disabled={!isRunnable}>
+              <PlayArrow />
+            </CircleButton>
+          }
+        </ListItemSecondaryAction>
       </ListItem>
-      {last ? null : <Divider key="divider" />}
+      {last ? null : <Divider />}
     </>
   )
 }
@@ -78,7 +103,9 @@ const isRunnable = createSelector(
 )
 const mapDispatchToProps = (dispatch) => ({
   setTaskView: (identifier) => dispatch(setTaskView(identifier)),
-  runTask: (groupIndex, taskIndex) => dispatch(VirtuinSagaActions.run(groupIndex, taskIndex))
+  addNotification: notification => dispatch(addNotification(notification)),
+  runTask: (groupIndex, taskIndex) => dispatch(VirtuinSagaActions.run(groupIndex, taskIndex)),
+  resetTask: (groupIndex, taskIndex) => dispatch(VirtuinSagaActions.resetTask(groupIndex, taskIndex))
 })
 
 const mapStateToProps = (state, ownProps) => {
