@@ -1,7 +1,7 @@
 ### Virtuin
 
 
-Virtuin is a cross platform application that allows operators to load, update,
+Virtuin is a cross platform application that allows an operator to load, update,
 run, stop, and monitor your programs in an easy to use graphical interface.
 It is useful for areas such as production, testing, and research.
 
@@ -9,7 +9,7 @@ Virtuin is language and platform agnostic. You can use whatever languages, platf
  and tools you like as long as they are supported by docker.
 
 In short, you will provide a docker compose file and a list of tasks to be executed.
-**Tasks** are your programs executables in a running container,
+*Tasks* are your programs executables in a running container,
 ready to be run with specified arguments and environment variables. Virtuin will
 handle ensuring the appropriate containers are running. It will then display
 the list of tasks and information for an operator to utilize.
@@ -67,8 +67,8 @@ Virtuin variables in collection.env
  unix:///var/run/docker.sock when docker is running on
  the same machine as Virtuin. If you are running docker on a different machine
  you can change accordingly. Default **unix:///var/run/docker.sock**
-- VIRT_GUI_SERVER_ADDRESS - The ip address of the machine running Virtuin. You
-will most likely leave this localhost as you will most likely have the Virtuin
+- VIRT_GUI_SERVER_ADDRESS - The ip address of the machine running Virtuin GUI. You
+will most likely leave this localhost as you will have the Virtuin
 application and docker running on the same machine. Default **localhost**
 - VIRT_DOCKER_USER (optional) - Virtuin will pull your required docker images. If you need
 to login for private images, supply your Docker Hub username here.
@@ -151,6 +151,20 @@ extra components to help such as stdout and stderr of your tasks.
 - **dockerCompose** : embedded docker compose file
   - source : the actual source of the docker compose file. Please see the [docker
   website](https://docs.docker.com/compose/compose-file/) for more information about docker and docker compose files.
+  - not all of you services will have tasks to run. Some of them may be helpers to
+  display a custom web interface or serve static files, for example.
+  - services with tasks should run the following command so that it
+   waits for Virtuin to execute programs  
+  ```
+    command:
+    - bash
+    - -c
+    - 'trap : TERM INT; sleep infinity & wait'
+  ```
+  - services with tasks should have following in environment keys
+      + VIRT_STATION_NAME
+      + VIRT_GUI_SERVER_ADDRESS
+      + VIRT_REST_API_PORT
 - **taskGroups** : describes all your your tasks arranged into groups. It consists of
   - name : descriptive name of the group
   - description: more information about the function of the group
@@ -198,6 +212,150 @@ tasks can send and request information
 - **VIRT_GUI_SERVER_ADDRESS** : the address of the machine the GUI is running on.
 Will most likely be **localhost** if the GUI is running on the same machine as Docker
 and the network_mode is bridged or set to host.
-- **VIRT_COLLECTION_ENV_PATH** :
+- **VIRT_COLLECTION_ENV_PATH** : the system path to the collection.env on the station.
+You can also use this to create a relative path to your source files while you are
+developing your tasks.
+For example
+```yaml
+dockerCompose:
+  source:
+    version: '3'
+    services:
+      example-one:
+        build: ${VIRT_COLLECTION_ENV_PATH}/src/one
+```
+
+Directory __one__ exists in subdirectory __src__ where collection.env is located.
+The directory __one__ will contain source files and a Dockerfile to build.
 
 #### Data
+
+Data from your collection.yml will be placed in a file on a task's corresponding
+service. Check __VIRT_TASK_INPUT_FILE__ in your executable to get the full path.
+It should be located at the root directory
+/virtuin_task-[group index]-[task index].json. The
+indexes start at 0 based on their location in the collection.yml. First task of
+first group would be /virtuin_task-0-0.json. It will contain a json object with
+the following content
+
+  - data: (object) data from collection.yml
+  - taskUUID: (string) UUID for current running task. This will change for every run.
+    This will be needed for the rest api to identify the requesting task.
+  - groupIndex: (number) group index of current task,
+  - taskIndex: (number) task index of current task,
+  - allTasksInfo: (array of objects) current status of all the tasks in the same group
+      - name: name of task,
+      - enabled: is task enabled,
+      - state: state of task
+        - 'IDLE'
+        - 'START_REQUEST'
+        - 'RUNNING'
+        - 'KILLED'
+        - 'STOP_REQUEST'
+        - 'FINISHED';
+      - taskUUID: UUID of task or null if has not run yet or status had been reset,
+      - groupIndex: group index of task (should be same as current),
+      - taskIndex: index of task
+      - progress: progress of task 0 - 100. Will be 0 if the Rest API is not used to
+      update the progress.
+
+##### Example
+
+```json
+{
+  "data": {
+    "helloMessage": "This is the new Hello Message from the Example Collection",
+    "hostOSName": "posix"
+  },
+  "taskUUID": "60ac1733-1346-4732-9197-f72a1ebb1181",
+  "groupIndex": 0,
+  "allTasksInfo": [
+    {
+      "name": "First in Sequence",
+      "enabled": true,
+      "state": "START_REQUEST",
+      "taskUUID": "60ac1733-1346-4732-9197-f72a1ebb1181",
+      "groupIndex": 0,
+      "taskIndex": 0,
+      "progress": 0
+    }
+  ]
+}
+```
+
+
+### Rest API
+
+
+In order to communicate with the GUI you can make requests to it's
+rest server over http. To get the host and port use the environment variables
+__VIRT_GUI_SERVER_ADDRESS__ and __VIRT_REST_API_PORT__ respectively. Make sure these
+variables are exposed in your docker compose environment key.
+The urls will require the **taskUUID** which can be found in the current Virtuin
+task input file. Use the environment variable __VIRT_TASK_INPUT_FILE__
+the get the location (*/virtuin_task-[group index]-[task index].json*).
+
+Each route will respond with
+- status code 200 success
+- status code 400+ error
+```
+Content-Type: application/json
+{
+  "success": boolean,
+  "message": string,
+}
+```
+
+
+```
+REST_SERVER=VIRT_GUI_SERVER_ADDRESS:VIRT_REST_API_PORT
+```
+- **POST http://REST_SERVER/api/v1/progress/:taskUUID/:progress**
+  * will update the task's progress bar in the GUI
+  * progress is a number 0 - 100
+  * no body is required
+
+
+- **POST http://REST_SERVER/api/v1/message/:taskUUID**
+
+  * will display a message for the operator in the corresponding section of the GUI
+  * use header *Content-Type: text/plain*
+  * body will contain the message to be output in the GUI
+
+
+- **POST http://REST_SERVER/api/v1/prompt/:taskUUID/:type**
+
+  * will display a prompt in the GUI where user can give a response
+  * use header *Content-Type: text/plain*
+  * the body will contain a title to be used for the prompt, instructing
+  the operator of something.
+  + operator has 60 seconds to respond. Timeout of 60 seconds will return status 400 and success will be false
+  * based on the type the remainder of the prompt will vary.
+  The type is one of *confirmation*, *text*, *confirmCancel*
+    + confirmation: an okay button is displayed. Response will contain
+    *message* with value *okay* when operator presses to confirm.
+    + confirmCancel: an okay and a cancel button are displayed. Response will contain
+    *message* with value *okay* or *cancel* based on operator's selection.
+    + text: a text input field will be displayed and a submit button.
+    On success *message* value will include operator's text.
+
+
+- **POST http://REST_SERVER/api/v1/manageTasks/:taskUUID**
+
+  * when the group mode is set to  *managed* use this to handle all of the
+  tasks in the same group as the current.
+  * use header *Content-Type: application/json*
+  * body will consist of following json object
+    ```javascript
+    {
+     reset?: "all" | [], // task indexes to disable of current group
+     disable?: "all" | [], // task indexes to disable of current group
+     enable?: "all" | [], //task indexes to enable of current group
+    }
+    ```
+    - reset: reset that statuses of tasks (progress, state, etc.)
+    - disable: disable a user from running a task
+    - enable: enable a user to run a task
+    - each key is optional
+    - values can be *all* which refers to every task in the group.
+    Alternatively the value can be an array to specify each task index starting from 0 in the same group.

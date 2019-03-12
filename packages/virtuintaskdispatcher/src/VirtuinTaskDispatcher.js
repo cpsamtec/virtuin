@@ -295,7 +295,12 @@ class VirtuinTaskDispatcher extends EventEmitter {
   dispatchWithResponse = async (o: PRDispatchWithResponseInput): Promise<any> => {
     console.log(`called dispatchWithResponse: received ${o.type}`);
     if (o.type === 'manage') {
-      return this.manageGroupTasks(o.groupIndex, o.command);
+      const t = this.getTaskIdentifierFromUUID(o.taskUUID);
+      if(t) {
+        return this.manageGroupTasks(t.groupIndex, o.command);
+      } else {
+        throw Error("Error - Invalid taskUUID");
+      }
     }
     if (o.type === 'prompt') {
       if(this.promptHandler) {
@@ -682,6 +687,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
         data: { ...sharedData, ...virt_stations[this.stationName] },
         taskUUID: newTaskUUID,
         groupIndex: taskIdent.groupIndex,
+        taskIndex: taskIdent.taskIndex,
         allTasksInfo: this.getStatus().groups[taskIdent.groupIndex].tasksStatus.map(task => {
             return {
               name: task.name,
