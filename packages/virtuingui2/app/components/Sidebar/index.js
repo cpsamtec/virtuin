@@ -5,8 +5,7 @@ import Sidebar from './Sidebar';
 
 const mapDispatchToProps = (dispatch) => ({
   toggleSidebar: () => dispatch(toggleSidebar()),
-  addNotification: (notification) => dispatch(addNotification(notification))
-})
+});
 
 const mapStateToProps = (state, ownProps) => {
   return ({
