@@ -30,7 +30,7 @@ export type ManageGroupTasks = {|
 export type ProduceRouterManage = {|
   type: "manage",
   command: ManageGroupTasks,
-  groupIndex: number
+  taskUUID : string
 |};
 
 export type PRDispatchInput = ProduceRouterProgress | ProduceRouterMessage

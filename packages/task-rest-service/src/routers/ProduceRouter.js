@@ -87,7 +87,7 @@ export default class ProduceRouter {
     const message = req.body || "";
     const taskUUID = req.params.taskUUID;
     const type = req.params.type;
-    req.setTimeout(32000); //allow 32 seconds for response
+    req.setTimeout(62000); //allow 32 seconds for response
     debugMessage(`prompt ${type} with message ${message}`);
     if(typeof message !== 'string') {
       res.status(400).json({
@@ -104,7 +104,7 @@ export default class ProduceRouter {
       return;
     }
     if (ProduceRouter.delegate) {
-      promiseTimeout(31000,
+      promiseTimeout(61000,
         ProduceRouter.delegate.dispatchWithResponse({type: 'prompt', taskUUID, message, promptType: type}))
       .then(userData => {
         res.status(200).json({
@@ -128,9 +128,13 @@ export default class ProduceRouter {
   dispatchManageTasks(req: $Request, res: $Response): void {
     //"Content-Type: application/json"
     const command : ManageGroupTasks = req.body || {};
-    let groupIndex = req.params.groupIndex;
-    if(typeof groupIndex === 'undefined') {
-      groupIndex = 0;
+    let taskUUID = req.params.taskUUID;
+    if(typeof taskUUID === 'undefined') {
+      res.status(400).json({
+        success: false,
+        message: `Invalid taskUUID`,
+      });
+      return;
     }
     req.setTimeout(4000); //allow 32 seconds for response
     debugMessage(`manage with commands ${JSON.stringify(command)}`);
@@ -147,7 +151,7 @@ export default class ProduceRouter {
     });
     if (ProduceRouter.delegate) {
       promiseTimeout(3000,
-        ProduceRouter.delegate.dispatchWithResponse({type: 'manage', groupIndex, command}))
+        ProduceRouter.delegate.dispatchWithResponse({type: 'manage', taskUUID, command}))
       .then(info => {
         res.status(200).json({
           success: true,
@@ -173,7 +177,7 @@ export default class ProduceRouter {
     this.router.post('/progress/:taskUUID/:progress', this.dispatchProgress);
     this.router.post('/message/:taskUUID', this.dispatchMessages);
     this.router.post('/prompt/:taskUUID/:type', this.dispatchWithResponsePrompt);
-    this.router.post('/manageTasks/:groupIndex', this.dispatchManageTasks);
+    this.router.post('/manageTasks/:taskUUID', this.dispatchManageTasks);
   }
 }
 ProduceRouter.delegate = null;

@@ -295,7 +295,12 @@ class VirtuinTaskDispatcher extends EventEmitter {
   dispatchWithResponse = async (o: PRDispatchWithResponseInput): Promise<any> => {
     console.log(`called dispatchWithResponse: received ${o.type}`);
     if (o.type === 'manage') {
-      return this.manageGroupTasks(o.groupIndex, o.command);
+      const t = this.getTaskIdentifierFromUUID(o.taskUUID);
+      if(t) {
+        return this.manageGroupTasks(t.groupIndex, o.command);
+      } else {
+        throw Error("Error - Invalid taskUUID");
+      }
     }
     if (o.type === 'prompt') {
       if(this.promptHandler) {
