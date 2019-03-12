@@ -9,9 +9,9 @@ Virtuin is language and platform agnostic. You can use whatever languages, platf
  and tools you like as long as they are supported by docker.
 
 In short, you will provide a docker compose file and a list of tasks to be executed.
-*Tasks* are your programs executables in a running container,
+*Tasks* are your programs executables in a running service,
 ready to be run with specified arguments and environment variables. Virtuin will
-handle ensuring the appropriate containers are running. It will then display
+handle ensuring the appropriate docker services are running. It will then display
 the list of tasks and information for an operator to utilize.
 
 To begin a new Virtuin project make sure you have the following installed
@@ -78,7 +78,7 @@ You can specify additional environment variables that you would like to be avail
 to your Docker containers. Make sure they are also specified in the **environment**
 key of your compose file.
 
-#### collection.yml
+#### collection.yml [Required]
 ```yaml
 collectionName: Virtuin_Example_Collection
 collectionTag: v0.0.1
@@ -161,7 +161,7 @@ extra components to help such as stdout and stderr of your tasks.
     - -c
     - 'trap : TERM INT; sleep infinity & wait'
   ```
-  - services with tasks should have following in environment keys
+  - services with tasks should have the following in environment keys
       + VIRT_STATION_NAME
       + VIRT_GUI_SERVER_ADDRESS
       + VIRT_REST_API_PORT
@@ -173,7 +173,7 @@ extra components to help such as stdout and stderr of your tasks.
   - mode: __user__ or __managed__. In __user__ mode the operator can run
   any tasks in any order and reset the statuses of tasks in a group.
   In __managed__ your task on completion will
-  inform the GUI via a rest service which tasks are able enabled and which
+  inform the GUI via a rest api, which tasks are able enabled and which
   statuses should be reset. Default __user__
   - **stationCollectionEnvPaths** : an object where the keys are station names
   (VIRT_STATION_NAME) and the values are a file path to a collection.env on a station.
@@ -227,11 +227,14 @@ dockerCompose:
 
 Directory __one__ exists in subdirectory __src__ where collection.env is located.
 The directory __one__ will contain source files and a Dockerfile to build.
+Also the volumes section of *example-one* uses this variable so that the
+src directory will be mounted inside of the service.
+
 
 #### Data
 
 Data from your collection.yml will be placed in a file on a task's corresponding
-service. Check __VIRT_TASK_INPUT_FILE__ in your executable to get the full path.
+service filesystem. Check __VIRT_TASK_INPUT_FILE__ in your executable to get the full path.
 It should be located at the root directory
 /virtuin_task-[group index]-[task index].json. The
 indexes start at 0 based on their location in the collection.yml. First task of
@@ -342,7 +345,7 @@ REST_SERVER=VIRT_GUI_SERVER_ADDRESS:VIRT_REST_API_PORT
 
 - **POST http://REST_SERVER/api/v1/manageTasks/:taskUUID**
 
-  * when the group mode is set to  *managed* use this to handle all of the
+  * when the group mode is set to  *managed*, use this to handle all of the
   tasks in the same group as the current.
   * use header *Content-Type: application/json*
   * body will consist of following json object
@@ -356,6 +359,8 @@ REST_SERVER=VIRT_GUI_SERVER_ADDRESS:VIRT_REST_API_PORT
     - reset: reset that statuses of tasks (progress, state, etc.)
     - disable: disable a user from running a task
     - enable: enable a user to run a task
-    - each key is optional
+    - each of the preceding keys are optional
     - values can be *all* which refers to every task in the group.
-    Alternatively the value can be an array to specify each task index starting from 0 in the same group.
+    Alternatively the value can be an array to specify each task by index starting
+    from 0 in the same group.
+    - the commands are processed in the order reset, disable, enable.
