@@ -314,11 +314,17 @@ REST_SERVER=VIRT_GUI_SERVER_ADDRESS:VIRT_REST_API_PORT
   * will update the task's progress bar in the GUI
   * progress is a number 0 - 100
   * no body is required
+
+
 - **POST http://REST_SERVER/api/v1/message/:taskUUID**
+
   * will display a message for the operator in the corresponding section of the GUI
   * use header *Content-Type: text/plain*
   * body will contain the message to be output in the GUI
+
+
 - **POST http://REST_SERVER/api/v1/prompt/:taskUUID/:type**
+
   * will display a prompt in the GUI where user can give a response
   * use header *Content-Type: text/plain*
   * the body will contain a title to be used for the prompt, instructing
@@ -333,7 +339,9 @@ REST_SERVER=VIRT_GUI_SERVER_ADDRESS:VIRT_REST_API_PORT
     + text: a text input field will be displayed and a submit button.
     On success *message* value will include operator's text.
 
+
 - **POST http://REST_SERVER/api/v1/manageTasks/:taskUUID**
+
   * when the group mode is set to  *managed* use this to handle all of the
   tasks in the same group as the current.
   * use header *Content-Type: application/json*
@@ -345,6 +353,9 @@ REST_SERVER=VIRT_GUI_SERVER_ADDRESS:VIRT_REST_API_PORT
      enable?: "all" | [], //task indexes to enable of current group
     }
     ```
+    - reset: reset that statuses of tasks (progress, state, etc.)
+    - disable: disable a user from running a task
+    - enable: enable a user to run a task
     - each key is optional
-    - *all* refers to every task in the group
-    - use an array to specify each task index starting from 0 in the same group.
+    - values can be *all* which refers to every task in the group.
+    Alternatively the value can be an array to specify each task index starting from 0 in the same group.
