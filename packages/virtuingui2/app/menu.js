@@ -128,7 +128,7 @@ export default class MenuBuilder {
           accelerator: 'Command+D',
           click: () => {
             if (!TaskDelegator.isCollectionLoaded()) return;
-            TaskDelegator.down();
+            TaskDelegator.stop();
           }
         },
       ]

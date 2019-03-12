@@ -76,11 +76,13 @@ if (!fs.existsSync(stackPath)){
   fs.mkdirSync(stackPath);
 }
 
+// if collection definition provided then do a full initialization
 if (collectionDefPath) {
   TaskDelegator.init(stationName, collectionDefPath, stackPath);
   TaskDelegator.up();
 } else {
-  TaskDelegator.paritial_init(stationName, stackPath);
+  // otherwise just give station name and stack path
+  TaskDelegator.partialInit(stationName, stackPath);
 }
 
 
