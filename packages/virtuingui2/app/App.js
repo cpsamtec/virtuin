@@ -11,7 +11,7 @@ import Notifier from './components/Notifier';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import TaskGroupList from './components/TaskGroupList';
-import MessageConsole from './components/MessageConsole';
+import Console from './components/Console';
 
 import createStore from './redux';
 import { VirtuinSagaActions } from './redux/Virtuin';
@@ -57,7 +57,7 @@ class App extends Component {
                 <View>
                   <Navbar />
                   <TaskView />
-                  <MessageConsole />
+                  <Console />
                 </View>
               </AppContainer>
             </SnackbarProvider>

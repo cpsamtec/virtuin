@@ -6,11 +6,10 @@ const hashCode = (s) => {
   return s.split("").reduce(function(a,b){a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);              
 }
 
-import { ConsoleArea, ConsoleButtonList, ConsoleButton, ConsoleText, Console, DividerLine, ConsoleTextArea, ConsoleMessage } from './MessageConsole.style';
-const MessageConsole = ({messages, stdout, stderr, developerMode}) => {
+import { ConsoleArea, ConsoleButtonList, ConsoleButton, ConsoleText, Console, DividerLine, ConsoleTextArea, ConsoleMessage } from './Console.style';
+const ConsoleComponent = ({messages, stdout, stderr, developerMode}) => {
   const [open, setOpen] = useState(true);
   const [openIdx, setIdx] = useState(0);
-  console.log(developerMode);
   const buttonClick = (idx) => {
     if (open && idx === openIdx) {
       setOpen(!open);
@@ -66,4 +65,4 @@ const MessageConsole = ({messages, stdout, stderr, developerMode}) => {
   )
 }
 
-export default MessageConsole;
+export default ConsoleComponent;

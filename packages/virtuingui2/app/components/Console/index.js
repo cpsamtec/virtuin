@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 import getCurrentTask from '../../selectors/currentTask';
-import MessageConsole from './MessageConsole';
+import Console from './Console';
 
 
 const mapDispatchToProps = (dispatch) => ({
@@ -8,7 +8,6 @@ const mapDispatchToProps = (dispatch) => ({
 
 const mapStateToProps = (state, ownProps) => {
   const currentTask = getCurrentTask(state);
-  console.log(state);
   return ({
     messages: currentTask != null ? currentTask.messages : null,
     stdout: currentTask != null ? currentTask.stdout : null,
@@ -18,4 +17,4 @@ const mapStateToProps = (state, ownProps) => {
   });
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(MessageConsole);
+export default connect(mapStateToProps, mapDispatchToProps)(Console);
