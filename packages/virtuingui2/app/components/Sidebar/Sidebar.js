@@ -20,14 +20,6 @@ const SidebarComponent = ({ show, toggleSidebar, children }) => (
     </Header>
     {children}
   </SidebarDrawer>
-)
-
-/* <CircleButton onClick={() => {addNotification({
-        message: 'Failed fetching data.',
-        options: {
-          persist: true,
-          variant: 'error',
-        },
-      })}}></CircleButton> */
+);
 
 export default SidebarComponent;
