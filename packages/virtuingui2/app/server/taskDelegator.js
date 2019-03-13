@@ -161,10 +161,7 @@ class TaskDelegator {
     await this.up(reload);
   }
   connect = async () => {
-    // ignore if no dispatcher
-    if (this.dispatcher == null) {
-      return;
-    }
+    
     
     this.isConnected = true;
     // send all command actions
@@ -172,6 +169,10 @@ class TaskDelegator {
       this.sendAction(command);
     });
     this.connectActions = []; // clear them as to not be called on reconnection
+    // ignore if no dispatcher
+    if (this.dispatcher == null) {
+      return;
+    }
     // on task status send response action
     this.dispatcher.on('task-status', status => {
       this.sendAction(VirtuinSagaResponseActions.taskStatusResponse(status));
