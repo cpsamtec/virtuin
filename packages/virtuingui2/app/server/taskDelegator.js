@@ -28,7 +28,6 @@ class TaskDelegator {
   dispatcher: any = null;
   connectActions: Array<Object> = [];
   isLoaded = false;
-  isConnected = false;
   
   /**
    * Creates an instance of TaskDelegator.
@@ -58,7 +57,7 @@ class TaskDelegator {
    */
   init = (stationName: string, collectionDefPath: string, stackPath: string, verbosity: number = 0) => {
     // these are
-    this.connectActions = []
+    this.connectActions = [];
     // get collection and environment variables for the dispatcher
     const tmpCollectionDef: ?RootInterface = VirtuinTaskDispatcher.collectionObjectFromPath(collectionDefPath);
     if (!tmpCollectionDef) {
@@ -118,6 +117,16 @@ class TaskDelegator {
         variant: 'info',
       }
     }));
+    // on task status send response action
+    this.dispatcher.on('task-status', status => {
+      this.sendAction(VirtuinSagaResponseActions.taskStatusResponse(status));
+    });
+    // provide a prompt handler to get user input
+    this.dispatcher.promptHandler = this.promptHandler;
+    // send an initial task status
+    this.sendAction(VirtuinSagaResponseActions.taskStatusResponse(this.dispatcher.getStatus()));
+    // send collection definition
+    this.sendAction(setCollectionDef(this.collectionDef));
   }
 
   /**
@@ -130,6 +139,22 @@ class TaskDelegator {
     this.stackPath = stackPath; 
   }
   
+  /**
+   * Send connect actions
+   */
+  connect = async () => {
+    if (this.connectActions.length > 0) {
+      this.connectActions.forEach((connectAction) => {
+        this.client.send(ipcChannels.response, connectAction);
+      });
+      this.connectActions = []; // clear them as to not be called on reconnection
+    } else if (this.dispatcher != null){
+      // send an initial task status
+      this.sendAction(VirtuinSagaResponseActions.taskStatusResponse(this.dispatcher.getStatus()));
+      // send collection definition
+      this.sendAction(setCollectionDef(this.collectionDef));
+    }
+  }
 
   /**
    * Stops the dispatcher if it is running
@@ -144,7 +169,6 @@ class TaskDelegator {
     await this.down();
     await this.dispatcher.end();
     this.dispatcher = null;
-    this.isConnected = false;
   }
 
   /**
@@ -153,36 +177,24 @@ class TaskDelegator {
    * @param {boolean} [reload=false] indicates that it is reloading the collection
    */
   reinit = async (collectionDefPath: string, reload: boolean=false) => {
-    await this.stop();
-    this.init(this.stationName, collectionDefPath, this.stackPath);
-    await this.connect(); // this is called to resend connecting data
-    this.isLoaded = true;
-    //may need to pass an additional argument to force reload, that will be sent as first argument as dispatcher.up(true)
-    await this.up(reload);
-  }
-  connect = async () => {
-    
-    
-    this.isConnected = true;
-    // send all command actions
-    this.connectActions.forEach((command) => {
-      this.sendAction(command);
-    });
-    this.connectActions = []; // clear them as to not be called on reconnection
-    // ignore if no dispatcher
-    if (this.dispatcher == null) {
-      return;
+    try {
+      await this.stop();
+      this.init(this.stationName, collectionDefPath, this.stackPath);
+      await this.connect(); // this is called to resend connecting data
+      this.isLoaded = true;
+      //may need to pass an additional argument to force reload, that will be sent as first argument as dispatcher.up(true)
+      await this.up(reload);
+    } catch(err) {
+      
+      this.sendAction(addNotification({ 
+        message: `error upping: ${err}`,
+        options: {
+          variant: 'error',
+          persist: true
+        }
+      }));
     }
-    // on task status send response action
-    this.dispatcher.on('task-status', status => {
-      this.sendAction(VirtuinSagaResponseActions.taskStatusResponse(status));
-    });
-    // provide a prompt handler to get user input
-    this.dispatcher.promptHandler = this.promptHandler;
-    // send an initial task status
-    this.sendAction(VirtuinSagaResponseActions.taskStatusResponse(this.dispatcher.getStatus()));
-    // send collection definition
-    this.sendAction(setCollectionDef(this.collectionDef));
+    
   }
 
   /**
@@ -233,7 +245,7 @@ class TaskDelegator {
       }));
       return;
     }
-    await this.dispatcher.startTask({ groupIndex, taskIndex });
+    const response = await this.dispatcher.startTask({ groupIndex, taskIndex });
     this.sendAction(VirtuinSagaResponseActions.runResponse(groupIndex, taskIndex, 'GOOD'))
   }
 
@@ -320,10 +332,10 @@ class TaskDelegator {
    */
   sendAction = (action: Object) => {
     // if user is not connected, add to list of actions to perform onConnect
-    if (!this.isConnected) {
+    if (this.client == null) {
       this.connectActions.push(action);
       return;
-    }
+    } 
     // send action
     this.client.send(ipcChannels.response, action);
   }
