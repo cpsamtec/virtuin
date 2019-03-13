@@ -147,7 +147,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
       COMPOSE_CONVERT_WINDOW_PATHS: 1,
       COMPOSE_FORCE_WINDOWS_HOST: 0,
       DOCKER_HOST: this.daemonAddress,
-      VIRT_PROJECT_PATH: (process.env.VIRT_PROJECT_PATH) ? collectionEnvPath: undefined,
       VIRT_COLLECTION_ENV_PATH: (this.collectionDef) ? collectionEnvPath: undefined,
       ...collectionEnvs
     };
@@ -383,7 +382,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
       }
       const options = {
         cwd: this.composePath(),
-        env: { ...process.env, ...this.envs },
+        env: { /*...process.env,*/ ...this.envs },
         shell: false
       };
       const code = await this.spawnAsync(cmd, args, options,
@@ -519,7 +518,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
       }
       const options = {
         cwd: this.composePath(),
-        env: { ...process.env, ...this.envs },
+        env: { /*...process.env,*/ ...this.envs },
         shell: false
       };
       const code = await this.spawnAsync(cmd, args, options,
@@ -560,7 +559,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
       const args = [...this.daemonArgs, rm ? 'down' : 'stop'];
       const options = {
         cwd: this.composePath(),
-        env: { ...process.env, ...this.envs },
+        env: { /*...process.env,*/ ...this.envs },
         shell: false
       };
       const code = await this.spawnAsync(cmd, args, options,
@@ -636,7 +635,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
     const args = [...this.daemonArgs, 'pull'];
     const options = {
       cwd: this.composePath(),
-      env: { ...process.env, ...this.envs },
+      env: { /*...process.env,*/ ...this.envs },
       shell: false
     };
     try {
@@ -756,7 +755,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
       ];
       const options = {
         cwd: this.composePath(),
-        env: { ...process.env, ...this.envs },
+        env: { /*...process.env,*/ ...this.envs },
         shell: false
       };
       try {
@@ -850,7 +849,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
       });
       const options = {
         cwd: this.composePath(),
-        env: { ...process.env, ...this.envs },
+        env: { /*...process.env,*/ ...this.envs },
         shell: false
       };
 
@@ -1063,7 +1062,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
     const args = [...this.daemonArgs, 'restart', '-t', timeout, serviceName];
     const options = {
       cwd: this.composePath(),
-      env: { ...process.env, ...this.envs },
+      env: { /*...process.env,*/ ...this.envs },
       shell: false
     };
     const code = await this.spawnAsync(cmd, args, options,
@@ -1088,7 +1087,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
     const args = ['-H', this.daemonAddress, 'ps', '-q', serviceName];
     const options = {
       cwd: this.composePath(),
-      env: { ...process.env, ...this.envs },
+      env: { /*...process.env,*/ ...this.envs },
       shell: false
     };
     let containerId = '';
@@ -1116,7 +1115,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
   spawnAsync = async (
     cmd: string,
     args: Array<string> = [],
-    options: Object = { env: { ...process.env, ...this.envs }, shell: false },
+    options: Object = { env: { /*...process.env,*/ ...this.envs }, shell: false },
     stdout: ?(data: Buffer)=>void = null,
     stderr: ?(data: Buffer)=>void = null): Promise<?number> => {
     const proc = spawn(cmd, args, options);
