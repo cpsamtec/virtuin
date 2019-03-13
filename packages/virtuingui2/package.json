@@ -284,7 +284,7 @@
     "redux-thunk": "^2.3.0",
     "reselect": "^4.0.0",
     "source-map-support": "^0.5.9",
-    "virtuintaskdispatcher": "^0.0.24"
+    "virtuintaskdispatcher": "^0.6.6"
   },
   "devEngines": {
     "node": ">=7.x",

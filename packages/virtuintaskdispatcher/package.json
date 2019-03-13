@@ -38,20 +38,17 @@
   "license": "MIT",
   "homepage": "https://bitbucket.org/samteccmd/virtuintaskdispatcher#readme",
   "dependencies": {
-    "@samtec-ash/virtuinlogging": "0.9.15",
-    "amqplib": "^0.5.1",
     "babel-runtime": "^6.26.0",
     "commander": "^2.16.0",
     "dateformat": "^3.0.3",
     "deep-diff": "^1.0.2",
     "dotenv": "^6.0.0",
-    "express": "^4.16.3",
     "fs-extra": "^7.0.0",
     "js-yaml": "^3.12.0",
     "ospath": "^1.2.2",
     "shell-env": "^2.2.0",
     "uuid": "^3.3.2",
-    "virtuin-task-rest-service": "^1.0.5"
+    "virtuin-task-rest-service": "^1.0.10"
   },
   "devDependencies": {
     "babel-cli": "^6.24.1",
