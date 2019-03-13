@@ -6146,6 +6146,11 @@ default-require-extensions@^1.0.0:
   dependencies:
     strip-bom "^2.0.0"
 
+default-shell@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/default-shell/-/default-shell-1.0.1.tgz#752304bddc6174f49eb29cb988feea0b8813c8bc"
+  integrity sha1-dSMEvdxhdPSespy5iP7qC4gTyLw=
+
 defaults@^1.0.0, defaults@^1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/defaults/-/defaults-1.0.3.tgz#c656051e9817d9ff08ed881477f3fe4019f3ef7d"
@@ -16247,6 +16252,15 @@ shebang-regex@^1.0.0:
   resolved "https://registry.yarnpkg.com/shebang-regex/-/shebang-regex-1.0.0.tgz#da42f49740c0b42db2ca9728571cb190c98efea3"
   integrity sha1-2kL0l0DAtC2yypcoVxyxkMmO/qM=
 
+shell-env@^2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/shell-env/-/shell-env-2.2.0.tgz#4725c730c63eae3132e67ffcb60a279c23717033"
+  integrity sha512-C66xSe0P7PexRwbXHqwqf31o6JgMzk4S1Mc5yPULpSK3cUn1WoWrGM1OV0qUA1ec3QZvSqTaQgOqsONCB9F/3w==
+  dependencies:
+    default-shell "^1.0.1"
+    execa "^1.0.0"
+    strip-ansi "^5.0.0"
+
 shell-quote@^1.6.1:
   version "1.6.1"
   resolved "https://registry.yarnpkg.com/shell-quote/-/shell-quote-1.6.1.tgz#f4781949cce402697127430ea3b3c5476f481767"
@@ -18731,6 +18745,38 @@ vinyl@^2.0.0, vinyl@^2.1.0:
     cloneable-readable "^1.0.0"
     remove-trailing-separator "^1.0.1"
     replace-ext "^1.0.0"
+
+virtuin-rest-service@^1.0.5:
+  version "1.0.9"
+  resolved "https://registry.yarnpkg.com/virtuin-rest-service/-/virtuin-rest-service-1.0.9.tgz#603758a2489e960011404fbde923006fd0d214c5"
+  integrity sha512-5pQFcYCArUZIrn2RB/QxDNMbol9j6Xr660TTGGnaVcQBDzZGjAVKBFkD5sixwxNtY8ORcrlWu4q5Y6f5PVWhGg==
+  dependencies:
+    babel-plugin-transform-flow-strip-types "6.22.0"
+    babel-polyfill "6.26.0"
+    babel-preset-latest "6.24.1"
+    body-parser "1.18.3"
+    debug "^3.1.0"
+    express "4.16.3"
+    gulp "3.9.1"
+    gulp-babel "7.0.1"
+    gulp-sourcemaps "2.6.4"
+    morgan "1.9.0"
+
+virtuintaskdispatcher@^0.0.24:
+  version "0.0.24"
+  resolved "https://registry.yarnpkg.com/virtuintaskdispatcher/-/virtuintaskdispatcher-0.0.24.tgz#3974af02966aa6e88e814077d0e9aee468b3e128"
+  integrity sha512-qjVcnhvI7heJwUKtNkCWhbq6LUk1MlCMRd7fGIkU5ZcrLAXQVlOYrBftzMj7H10iQ1S2sSD6oyHfVtYEk3Wx3w==
+  dependencies:
+    "@samtec-ash/virtuinlogging" "0.9.15"
+    amqplib "^0.5.1"
+    babel-runtime "^6.26.0"
+    commander "^2.16.0"
+    dotenv "^6.0.0"
+    express "^4.16.3"
+    fs-extra "^7.0.0"
+    js-yaml "^3.12.0"
+    uuid "^3.3.2"
+    virtuin-rest-service "^1.0.5"
 
 vlq@^0.2.1:
   version "0.2.3"

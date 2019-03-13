@@ -1,6 +1,6 @@
 {
   "name": "virtuintaskdispatcher",
-  "version": "0.0.24",
+  "version": "0.6.6",
   "description": "Virtuin Task Dispatcher is used to dispatch tasks.",
   "main": "./distribution/index.js",
   "scripts": {
@@ -49,6 +49,7 @@
     "fs-extra": "^7.0.0",
     "js-yaml": "^3.12.0",
     "ospath": "^1.2.2",
+    "shell-env": "^2.2.0",
     "uuid": "^3.3.2",
     "virtuin-task-rest-service": "^1.0.5"
   },
