@@ -96,22 +96,6 @@ if (collectionDefPath) {
   TaskDelegator.partialInit(stationName, stackPath);
 }
 
-TaskDelegator.sendAction(addNotification({ 
-  message: appDataPath + '',
-  options: {
-    variant: 'info',
-    persist: true,
-  }
-}));
-
-TaskDelegator.sendAction(addNotification({ 
-  message: JSON.stringify(process.env) + '',
-  options: {
-    variant: 'info',
-    persist: true,
-  }
-}));
-
 /**
  * Add event listeners...
  */

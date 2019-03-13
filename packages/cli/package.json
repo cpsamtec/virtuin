@@ -1,6 +1,6 @@
 {
   "name": "virtuin-cli",
-  "version": "0.0.24",
+  "version": "0.4.2",
   "description": "Virtuin Task Dispatcher is used to dispatch tasks.",
   "main": "./distribution/index.js",
   "bin": {
@@ -44,7 +44,7 @@
     "dotenv": "^6.0.0",
     "fs-extra": "^7.0.0",
     "ospath": "^1.2.2",
-    "virtuintaskdispatcher": "^0.0.24"
+    "virtuintaskdispatcher": "^0.6.6"
   },
   "devDependencies": {
     "babel-cli": "^6.24.1",
