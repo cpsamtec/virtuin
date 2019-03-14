@@ -22,7 +22,8 @@ const { diff } = require('deep-diff');
 
 // const RestServer = require('virtuin-rest-service');
 const shellEnv = require('shell-env');
-const processEnvs = shellEnv.sync()
+const shellEnvs = shellEnv.sync()
+const useShell = false;
 
 
 type TaskState = 'IDLE' | 'START_REQUEST' | 'RUNNING' | 'KILLED' | 'STOP_REQUEST' | 'FINISHED';
@@ -56,15 +57,10 @@ export type TaskStatus = {|
   stdout: string,
   stderr: string
 |};
-export type DispatchCallbacks = {|
-  uuid: string,
-  message: string
-|}
 export type DispatchPrimaryStatus = {|
   collectionState: 'Not Loaded' | 'Loaded',
   statusMessage: string,
   logMessage: string,
-  callbacks: {string?: DispatchCallbacks},
   stdout: string,
   stderr: string
 |}
@@ -175,7 +171,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
     collectionState: 'Not Loaded',
     statusMessage: '',
     logMessage: '',
-    callbacks: {},
     stdout: '',
     stderr: '',
     groups: []
@@ -242,7 +237,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
       collectionState: 'Not Loaded',
       statusMessage: '',
       logMessage: '',
-      callbacks: {},
       stdout: '',
       stderr: '',
       groups: Array(groups.length).fill().map((ignore, i) => ({
@@ -384,8 +378,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
       }
       const options = {
         cwd: this.composePath(),
-        env: { ...processEnvs, ...this.envs },
-        shell: false
+        env: { ...shellEnvs, ...this.envs },
+        shell: useShell
       };
       const code = await this.spawnAsync(cmd, args, options,
         (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stdout: buffer.toString() }); },
@@ -507,7 +501,11 @@ class VirtuinTaskDispatcher extends EventEmitter {
 
       // Perform pull if reload or tags dont match
       if (removeAll) {
-        await this.pull();
+        try {
+          await this.pull();
+        } catch(error) {
+          throw error;
+        }
       }
       // Perform up
       const cmd = 'docker-compose';
@@ -520,8 +518,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
       }
       const options = {
         cwd: this.composePath(),
-        env: { ...processEnvs, ...this.envs },
-        shell: false
+        env: { ...shellEnvs, ...this.envs },
+        shell: useShell
       };
       const code = await this.spawnAsync(cmd, args, options,
         (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stdout: buffer.toString() }); },
@@ -561,8 +559,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
       const args = [...this.daemonArgs, rm ? 'down' : 'stop'];
       const options = {
         cwd: this.composePath(),
-        env: { ...processEnvs, ...this.envs },
-        shell: false
+        env: { ...shellEnvs, ...this.envs },
+        shell: useShell
       };
       const code = await this.spawnAsync(cmd, args, options,
         (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stdout: buffer.toString() }); },
@@ -637,8 +635,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
     const args = [...this.daemonArgs, 'pull'];
     const options = {
       cwd: this.composePath(),
-      env: { ...processEnvs, ...this.envs },
-      shell: false
+      env: { ...shellEnvs, ...this.envs },
+      shell: useShell
     };
     try {
       const code = await this.spawnAsync(cmd, args, options,
@@ -649,7 +647,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
         throw new Error(`Failed pulling service's images: ${code || 'unknown'}`);
       }
     } catch (error) {
-      console.log(`Caught error ${error}`);
+      throw new Error(`Caught error ${error}`);
     }
     this.updateDispatchPrimaryStatus({
       logMessage:
@@ -757,8 +755,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
       ];
       const options = {
         cwd: this.composePath(),
-        env: { ...processEnvs, ...this.envs },
-        shell: false
+        env: { ...shellEnvs, ...this.envs },
+        shell: useShell
       };
       try {
         const code = await this.spawnAsync(cmd, args, options,
@@ -851,8 +849,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
       });
       const options = {
         cwd: this.composePath(),
-        env: { ...processEnvs, ...this.envs },
-        shell: false
+        env: { ...shellEnvs, ...this.envs },
+        shell: useShell
       };
 
       const activeTask = spawn(cmd, args, options);
@@ -1064,8 +1062,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
     const args = [...this.daemonArgs, 'restart', '-t', timeout, serviceName];
     const options = {
       cwd: this.composePath(),
-      env: { ...processEnvs, ...this.envs },
-      shell: false
+      env: { ...shellEnvs, ...this.envs },
+      shell: useShell
     };
     const code = await this.spawnAsync(cmd, args, options,
       (buffer: Buffer) => { this.updateDispatchPrimaryStatus({ stdout: buffer.toString() }); },
@@ -1089,8 +1087,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
     const args = ['-H', this.daemonAddress, 'ps', '-q', serviceName];
     const options = {
       cwd: this.composePath(),
-      env: { ...processEnvs, ...this.envs },
-      shell: false
+      env: { ...shellEnvs, ...this.envs },
+      shell: useShell
     };
     let containerId = '';
     const code = await this.spawnAsync(cmd, args, options, (data) => {
@@ -1117,7 +1115,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
   spawnAsync = async (
     cmd: string,
     args: Array<string> = [],
-    options: Object = { env: { ...processEnvs, ...this.envs }, shell: false },
+    options: Object = { env: { ...shellEnvs, ...this.envs }, shell: useShell },
     stdout: ?(data: Buffer)=>void = null,
     stderr: ?(data: Buffer)=>void = null): Promise<?number> => {
     const proc = spawn(cmd, args, options);

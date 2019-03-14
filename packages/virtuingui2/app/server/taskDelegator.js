@@ -29,7 +29,7 @@ class TaskDelegator {
   connectActions: Array<Object> = [];
   isLoaded = false;
   isConnected = false;
-  
+
   /**
    * Creates an instance of TaskDelegator.
    * Sets the action handlers to corresponding functions
@@ -47,7 +47,7 @@ class TaskDelegator {
     }
     ipcMain.on(ipcChannels.action, this.handleAction);
   }
-  
+
   /**
    * Initializes the dispatcher
    * @param {string} stationName Name of the station
@@ -63,7 +63,7 @@ class TaskDelegator {
     const tmpCollectionDef: ?RootInterface = VirtuinTaskDispatcher.collectionObjectFromPath(collectionDefPath);
     if (!tmpCollectionDef) {
       // Unable to connect so send failed
-      this.sendAction(addNotification({ 
+      this.sendAction(addNotification({
         message: 'Failed Init: Invalid collection definition provided',
         options: {
           variant: 'error',
@@ -83,7 +83,7 @@ class TaskDelegator {
       collectionEnvPathWarn = true;
     }
     if (collectionEnvPathWarn) {
-      this.sendAction(addNotification({ 
+      this.sendAction(addNotification({
         message: `The variable stationCollectionEnvPaths is not set for this station in the collection.\n
                   You may want to add ${stationName} key with the full path to the .env of this collection`,
         options: {
@@ -112,7 +112,7 @@ class TaskDelegator {
     this.isLoaded = true;
 
     // indicate that collection is initialized
-    this.sendAction(addNotification({ 
+    this.sendAction(addNotification({
       message: `Initialized the Collection`,
       options: {
         variant: 'info',
@@ -127,9 +127,9 @@ class TaskDelegator {
    */
   partialInit = (stationName: string, stackPath: string) => {
     this.stationName = stationName;
-    this.stackPath = stackPath; 
+    this.stackPath = stackPath;
   }
-  
+
 
   /**
    * Stops the dispatcher if it is running
@@ -139,7 +139,7 @@ class TaskDelegator {
     if (!this.isLoaded) {
       return;
     }
-    
+
     this.dispatcher.removeAllListeners();
     await this.down();
     await this.dispatcher.end();
@@ -152,7 +152,7 @@ class TaskDelegator {
    * @param {string} collectionDefPath path of collection to initialize
    * @param {boolean} [reload=false] indicates that it is reloading the collection
    */
-  reinit = async (collectionDefPath: string, reload: boolean=false) => {
+  reinit = async (collectionDefPath: string, reload: boolean=true) => {
     await this.stop();
     this.init(this.stationName, collectionDefPath, this.stackPath);
     await this.connect(); // this is called to resend connecting data
@@ -165,7 +165,7 @@ class TaskDelegator {
     if (this.dispatcher == null) {
       return;
     }
-    
+
     this.isConnected = true;
     // send all command actions
     this.connectActions.forEach((command) => {
@@ -197,7 +197,7 @@ class TaskDelegator {
     } else if (promptType === 'text') {
       return prompt({title: message, label: 'Response', inputAttrs: {type: 'text', required: true} });
     } else {
-      this.sendAction(addNotification({ 
+      this.sendAction(addNotification({
         message: `PromptHandler: Unsupported Prompt Type`,
         options: {
           variant: 'error',
@@ -224,7 +224,7 @@ class TaskDelegator {
     try {
       const task = this.dispatcher.collectionDef.taskGroups[groupIndex].tasks[taskIndex];
     } catch (err) {
-      this.sendAction(addNotification({ 
+      this.sendAction(addNotification({
         message: 'Failed Run: Invalid group index and/or task index',
         options: {
           variant: 'error',
@@ -247,8 +247,8 @@ class TaskDelegator {
   }
 
   /**
-   * Reset task group 
-   * @param {{groupIndex: number}} { groupIndex: index of group to reset} 
+   * Reset task group
+   * @param {{groupIndex: number}} { groupIndex: index of group to reset}
    */
   resetGroup = async ({ groupIndex } : {groupIndex: number}) => {
     await this.dispatcher.manageGroupTasks(groupIndex, {reset: 'all'});
@@ -270,7 +270,7 @@ class TaskDelegator {
     try {
       const task = this.dispatcher.collectionDef.taskGroups[groupIndex].tasks[taskIndex];
     } catch (err) {
-      this.sendAction(addNotification({ 
+      this.sendAction(addNotification({
         message: 'Failed Send Data: Invalid group index and/or task index',
         options: {
           variant: 'error',
@@ -292,7 +292,7 @@ class TaskDelegator {
     await this.dispatcher.down();
     await this.reinit(this.collectionDefPath, true);
   }
-  
+
   /**
    * Takes every action dispatched by render saga and calls corresponding handler
    * @param {Object} event
@@ -303,7 +303,7 @@ class TaskDelegator {
       this.client = event.sender;
       await this.actionHandlers[arg.type](arg.payload);
     } catch(error) {
-      this.sendAction(addNotification({ 
+      this.sendAction(addNotification({
         message: `Failed Handling action: ${arg.type}\n Error: ${error}`,
         options: {
           variant: 'error',
@@ -311,7 +311,7 @@ class TaskDelegator {
       }));
     }
   }
-  
+
   /**
    * Send action back to client
    * @param {Object} action to be performed
