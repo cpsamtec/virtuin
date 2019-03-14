@@ -162,7 +162,7 @@ export default class MenuBuilder {
               return;
             }
 
-            const collpath = path.normalize(TaskDelegator.stackPath + "/" + TaskDelegator.dispatcher.composeName())
+            const collpath = path.normalize(TaskDelegator.stackPath + path.sep + TaskDelegator.dispatcher.composeName())
             const message = `cd "${collpath}"\ndocker-compose exec [service-name] bash`;
             const detail = `${message}\nList of services: \n${Object.keys(TaskDelegator.dispatcher.collectionDef.dockerCompose.source.services).reduce((acc,key) => `${acc}\n${key}`)}`;
             dialog.showMessageBox({ title: 'Virtuin', message:'To run bash in your services', detail })
