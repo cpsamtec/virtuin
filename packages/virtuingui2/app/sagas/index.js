@@ -24,9 +24,7 @@ function* ipcHandling() {
   while (true) {
     const data = yield take(IPCSagaActions.startIpc);
     const ipcChannel = yield call(watchMessages);
-    console.log('connecting');
     ipcRenderer.send(ipcChannels.action, VirtuinSagaActions.connect());
-    // ipcRenderer.send(ipcChannels.action, VirtuinSagaActions.up());
     const { cancel } = yield race({
       task: all([call(externalListener, ipcChannel), call(internalListener, ipcRenderer)]),
       cancel: take(IPCSagaActions.stopIpc)
