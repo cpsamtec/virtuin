@@ -2,9 +2,9 @@ module.exports = function (api) {
   api.cache(true);
 
   const presets = [["@babel/preset-env", {
-  "targets": { "node": "10.13.0" }
+  "targets": { "node": "10.11.0" }
   }], "@babel/preset-flow" ];
-  const plugins = [ 
+  const plugins = [
     "@babel/plugin-proposal-class-properties",
     "@babel/plugin-proposal-do-expressions",
     "@babel/plugin-proposal-export-default-from",

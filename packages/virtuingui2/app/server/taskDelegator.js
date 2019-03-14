@@ -13,6 +13,7 @@ import type { RootInterface, CollectionEnvs } from 'virtuintaskdispatcher/distri
 
 const { VirtuinTaskDispatcher } = require('virtuintaskdispatcher').VirtuinTaskDispatcher;
 
+console.log(process.version);
 /**
  *
  * Delegates actions to the task dispatcher
