@@ -82,7 +82,7 @@ export default class MenuBuilder {
       ]
     };
     const subMenuFile = {
-      label: 'File',
+      label: 'Collection',
       submenu: [
         {
           label: 'Load Collection File',
@@ -150,15 +150,20 @@ export default class MenuBuilder {
       ]
     };
     const subMenuDev = {
-      label: 'Dev',
+      label: 'Developer',
       submenu: [
         {
-          label: 'Bash Shell',
+          label: 'Bash in Service',
           accelerator: 'Command+B',
           click: () => {
-            if (!TaskDelegator.isCollectionLoaded()) return;
+            if (!TaskDelegator.isCollectionLoaded()) {
+              dialog.showMessageBox({ title: 'Virtuin', message:'No collection loaded',
+                detail: "Once a collection is running you can bash into one of your docker services using this menu item as a guide" })
+              return;
+            }
 
-            const message = `cd ${TaskDelegator.stackPath}/${TaskDelegator.dispatcher.composeName()} \ndocker-compose exec [service-name] bash`;
+            const collpath = path.normalize(TaskDelegator.stackPath + "/" + TaskDelegator.dispatcher.composeName())
+            const message = `cd "${collpath}"\ndocker-compose exec [service-name] bash`;
             const detail = `${message}\nList of services: \n${Object.keys(TaskDelegator.dispatcher.collectionDef.dockerCompose.source.services).reduce((acc,key) => `${acc}\n${key}`)}`;
             dialog.showMessageBox({ title: 'Virtuin', message:'To run bash in your services', detail })
 
