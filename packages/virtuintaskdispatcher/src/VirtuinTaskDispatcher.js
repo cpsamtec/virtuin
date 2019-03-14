@@ -501,11 +501,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
 
       // Perform pull if reload or tags dont match
       if (removeAll) {
-        try {
-          await this.pull();
-        } catch(error) {
-          throw error;
-        }
+        await this.pull();
       }
       // Perform up
       const cmd = 'docker-compose';
@@ -537,6 +533,11 @@ class VirtuinTaskDispatcher extends EventEmitter {
       });
       return;
     } catch (err) {
+      this.updateDispatchPrimaryStatus({
+        statusMessage:
+       `Failed bringing up task environment. ${err.message}`
+      });
+
       throw err;
     }
   }
