@@ -60,7 +60,6 @@ export type TaskStatus = {|
 export type DispatchPrimaryStatus = {|
   collectionState: 'Not Loaded' | 'Loaded',
   statusMessage: string,
-  logMessage: string,
   stdout: string,
   stderr: string
 |}
@@ -170,7 +169,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
   static genInitDispatchStatus = (): DispatchStatus => ({
     collectionState: 'Not Loaded',
     statusMessage: '',
-    logMessage: '',
     stdout: '',
     stderr: '',
     groups: []
@@ -236,7 +234,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
     return {
       collectionState: 'Not Loaded',
       statusMessage: '',
-      logMessage: '',
       stdout: '',
       stderr: '',
       groups: Array(groups.length).fill().map((ignore, i) => ({
@@ -412,14 +409,14 @@ class VirtuinTaskDispatcher extends EventEmitter {
    */
   upVM = async (fullReload: boolean = false): Promise<void> => {
     try {
-      this.updateDispatchPrimaryStatus({ logMessage: 'Ensuring VM Ready' });
+      this.updateDispatchPrimaryStatus({ statusMessage: 'Ensuring VM Ready' });
       if (this.vagrantDirectory) {
         const cb: ((string) => void) = (status) => {
-          this.updateDispatchPrimaryStatus({ logMessage: status });
+          this.updateDispatchPrimaryStatus({ statusMessage: status });
         };
         await vagrant.ensureOnlyMachineRunningAtDirectory(this.vagrantDirectory, fullReload, cb);
       } else {
-        this.updateDispatchPrimaryStatus({ logMessage: 'No VM specified' });
+        this.updateDispatchPrimaryStatus({ statusMessage: 'No VM specified' });
       }
     } catch (error) {
       throw error;
@@ -445,7 +442,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
   up = async (fullReload: boolean = false): Promise<void> => {
     try {
       const fullRebuild = this.collectionDef.build === 'development';
-      this.updateDispatchPrimaryStatus({ logMessage: 'Starting up task environment.' });
+      this.updateDispatchPrimaryStatus({ statusMessage: 'Starting up task environment.' });
       let objStr = '';
       switch (this.collectionDef.dockerCompose.type || 'RAW') {
         case 'RAW':
@@ -472,12 +469,12 @@ class VirtuinTaskDispatcher extends EventEmitter {
           || (changes && changes.length > 0)) {
           shouldRemoveContainers = true;
           this.updateDispatchPrimaryStatus({
-            logMessage:
+            statusMessage:
               'Using existing task collection environment.'
           });
         } else {
           this.updateDispatchPrimaryStatus({
-            logMessage:
+            statusMessage:
               'Creating new task collection environment.'
           });
         }
@@ -528,7 +525,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
       // On failure, we need to ensure we retry complete bring-up.
       await fse.outputFile(this.collectionPath, JSON.stringify(this.collectionDef));
       this.updateDispatchPrimaryStatus({
-        logMessage:
+        statusMessage:
        'Successfully started task environment.'
       });
       return;
@@ -552,7 +549,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
   down = async (rm: boolean = false): Promise<void> => {
     try {
       this.updateDispatchPrimaryStatus({
-        logMessage:
+        statusMessage:
         'Stopping task environment.'
       });
       // Perform docker-compose down or stop
@@ -570,11 +567,15 @@ class VirtuinTaskDispatcher extends EventEmitter {
         throw new Error(`Failed stopping task environment: ${code || 'unknown'}`);
       }
       this.updateDispatchPrimaryStatus({
-        logMessage:
+        statusMessage:
         'Successfully stopped task environment.'
       });
       return;
     } catch (err) {
+      this.updateDispatchPrimaryStatus({
+        statusMessage:
+        'Failed to stop task environment.'
+      });
       throw err;
     }
   }
@@ -589,26 +590,26 @@ class VirtuinTaskDispatcher extends EventEmitter {
   downVM = async (): Promise<boolean> => {
     try {
       this.updateDispatchPrimaryStatus({
-        logMessage:
+        statusMessage:
       'Bringing Vagrant VM Down'
       });
       if (this.vagrantDirectory) {
         const s = await vagrant.vagrantStopVMInDirectory(this.vagrantDirectory);
         if (s) {
           this.updateDispatchPrimaryStatus({
-            logMessage:
+            statusMessage:
             'Vagrant VM successfully brought down'
           });
           return true;
         }
         this.updateDispatchPrimaryStatus({
-          logMessage:
+          statusMessage:
             'Unable to bring Vagrant VM down'
         });
         return false;
       }
       this.updateDispatchPrimaryStatus({
-        logMessage:
+        statusMessage:
           'No Vagrant VM in specified collection'
       });
       return false;
@@ -626,7 +627,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
    */
   pull = async (): Promise<void> => {
     this.updateDispatchPrimaryStatus({
-      logMessage:
+      statusMessage:
       'Pulling collection service\'s images.'
     });
     if (this.dockerCredentials) {
@@ -651,7 +652,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
       throw new Error(`Caught error ${error}`);
     }
     this.updateDispatchPrimaryStatus({
-      logMessage:
+      statusMessage:
       'Successfully pulled collection service\'s images.'
     });
   }
@@ -1284,11 +1285,11 @@ class VirtuinTaskDispatcher extends EventEmitter {
     // Get container ids for removal and remove
     const removeContainerIds = prst.split('\n').filter(x => x && !excludeContainerIds.some(id => id === x));
     this.updateDispatchPrimaryStatus({
-      logMessage:
+      statusMessage:
       `Reusing previous service containers: ${excludeContainerIds.join(' ')}`
     });
     this.updateDispatchPrimaryStatus({
-      logMessage:
+      statusMessage:
       `Removing following containers: ${removeContainerIds.join(' ')}`
     });
     await this.spawnAsync('docker', ['-H', this.daemonAddress, 'rm', '--force', ...removeContainerIds], {},
