@@ -19,11 +19,14 @@ const uuidv4 = require('uuid/v4');
 const yaml = require('js-yaml');
 const vagrant = require('./vagrant');
 const { diff } = require('deep-diff');
+const fixPath = require('fix-path');
+
 
 // const RestServer = require('virtuin-rest-service');
 const shellEnv = require('shell-env');
 const shellEnvs = shellEnv.sync()
 const useShell = false;
+fixPath();
 
 
 type TaskState = 'IDLE' | 'START_REQUEST' | 'RUNNING' | 'KILLED' | 'STOP_REQUEST' | 'FINISHED';
@@ -1121,22 +1124,22 @@ class VirtuinTaskDispatcher extends EventEmitter {
     stdout: ?(data: Buffer)=>void = null,
     stderr: ?(data: Buffer)=>void = null): Promise<?number> => {
     const proc = spawn(cmd, args, options);
-    proc.on('error', err => {
-      console.log(`spawn error: ${err.message}`);
-    });
     if (stdout) {
       proc.stdout.on('data', stdout);
     }
     if (stderr) {
       proc.stderr.on('data', stderr);
     }
-    const p = new Promise((resolve) => {
+    const p = new Promise((resolve, reject) => {
       try {
-        proc.on('exit', (code: ?number) => {
+        proc.on('error', err => {
+          reject(err);
+        });
+        proc.on('close', (code: ?number) => {
           resolve(code);
         });
       } catch (error) {
-        resolve(-2);
+        reject(error);
       }
     });
     return p;
