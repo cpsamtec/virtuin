@@ -76,7 +76,12 @@ export default class MenuBuilder {
           label: 'Quit',
           accelerator: 'Command+Q',
           click: () => {
-            app.quit();
+            TaskDelegator.stop().then(() =>
+              {
+                app.quit();
+              }).catch(e => {
+                app.quit();
+              })
           }
         }
       ]
