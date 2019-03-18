@@ -2,14 +2,14 @@
 
 
 Virtuin is a cross platform application that allows an operator to load, update,
-run, stop, and monitor your programs in an easy to use graphical interface.
+run, stop, and monitor programs in an easy to use graphical interface.
 It is useful for areas such as production, testing, and research.
 
 Virtuin is language and platform agnostic. You can use whatever languages, platforms,
  and tools you like as long as they are supported by docker.
 
 In short, you will provide a docker compose file and a list of tasks to be executed.
-*Tasks* are your programs executables in a running service,
+*Tasks* are your program executables in a running service,
 ready to be run with specified arguments and environment variables. Virtuin will
 handle ensuring the appropriate docker services are running. It will then display
 the list of tasks and information for an operator to utilize.
@@ -19,7 +19,7 @@ To begin a new Virtuin project make sure you have the following installed
 - [Docker Compose](https://docs.docker.com/compose/install/)
 - Virtuin Application
 - Recommended to add global environment variable on your system VIRT_STATION_NAME. You can
-  just set this to VIRT_DEFAULT_STATION to begin with.
+  just set this to VIRT_DEFAULT_STATION default to begin with.
   ```bash
   export VIRT_STATION_NAME=VIRT_DEFAULT_STATION
   ```
@@ -30,10 +30,9 @@ It is also recommended you clone the following boilerplate to get started. It
 consists of
 - collection.env
   * Contains environment variables specific to the current station and project
-   you are working on
-  * For example you could store Docker or AWS credentials to be used by your tasks.  
+  * For example, store Docker or AWS credentials to be used by your tasks.  
   * The file must be exactly named collection.env
-- src directory for your code recommended for developement.
+- src directory for your code for developement.
   * This will contain subdirectories for various
   docker services each containing a Dockerfile
   * When released these will be pushed as docker images.
@@ -117,7 +116,6 @@ dockerCompose:
         ports:
         - 4962:11491
         volumes:
-        - ${VIRT_COLLECTION_ENV_PATH}/src
         - outputFiles:/usr/share/nginx/html:ro
       example-one:
         build: ${VIRT_COLLECTION_ENV_PATH}/src/one
@@ -152,7 +150,7 @@ extra components to help such as stdout and stderr of your tasks.
   - source : the actual source of the docker compose file. Please see the [docker
   website](https://docs.docker.com/compose/compose-file/) for more information about docker and docker compose files.
   - not all of you services will have tasks to run. Some of them may be helpers to
-  display a custom web interface or serve static files, for example.
+  display a custom web interface or serve static files.
   - services with tasks should run the following command so that it
    waits for Virtuin to execute programs  
   ```
@@ -224,10 +222,21 @@ dockerCompose:
       example-one:
         build: ${VIRT_COLLECTION_ENV_PATH}/src/one
 ```
-
-Directory __one__ exists in subdirectory __src__ where collection.env is located.
+Directory __one__ exists in directory __src__ a subdirectory to the location of collection.env.
 The directory __one__ will contain source files and a Dockerfile to build.
-Also the volumes section of *example-one* uses this variable so that the
+You can even mount your source files on a running service as followed
+```yaml
+dockerCompose:
+  source:
+    version: '3'
+    services:
+      example-one:
+        build: ${VIRT_COLLECTION_ENV_PATH}/src/one
+        volumes:
+        - ${VIRT_COLLECTION_ENV_PATH}/src:/src
+        - /tmp/outputFiles:/outputFiles
+```
+The volumes section of *example-one* uses VIRT_COLLECTION_ENV_PATH so the
 src directory will be mounted inside of the service.
 
 
@@ -237,7 +246,7 @@ Data from your collection.yml will be placed in a file on a task's corresponding
 service filesystem. Check __VIRT_TASK_INPUT_FILE__ in your executable to get the full path.
 It should be located at the root directory
 /virtuin_task-[group index]-[task index].json. The
-indexes start at 0 based on their location in the collection.yml. First task of
+indexes start at 0, based on their location in the collection.yml. First task of
 first group would be /virtuin_task-0-0.json. It will contain a json object with
 the following content
 
