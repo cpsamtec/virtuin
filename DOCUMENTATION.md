@@ -19,7 +19,7 @@ To begin a new Virtuin project make sure you have the following installed
 - [Docker Compose](https://docs.docker.com/compose/install/)
 - Virtuin Application
 - Recommended to add global environment variable on your system VIRT_STATION_NAME. You can
-  just set this to VIRT_DEFAULT_STATION default to begin with.
+  just set this to VIRT_DEFAULT_STATION to begin with.
   ```bash
   export VIRT_STATION_NAME=VIRT_DEFAULT_STATION
   ```

@@ -1,6 +1,7 @@
 {
   "name": "root",
-  "private": true,
+  "private": false,
+  "license": "MIT",
   "scripts": {
     "bootstrap": "lerna bootstrap",
     "build": "yarn run build:rest && yarn run build:cli && yarn build:dispatcher",
