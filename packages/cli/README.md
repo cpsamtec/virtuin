@@ -1,7 +1,7 @@
 ### Virtuin CLI
 
 This repo contains a cli where tasks can be run directly from the command line.
-Use the -h option for help. You may find it helpful while developing your project.
+Use the -h option for help. You may find this helpful while developing your project.
 Follow the instructions to build using lerna from the root of this mono repo.
 
 To run
@@ -21,4 +21,4 @@ node ./distribution/cli.js -h
 
 #### Limitations
 
-currently cannot handle prompts to get input from an operator
+Currently, cannot handle prompts to get input from an operator

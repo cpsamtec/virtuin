@@ -147,7 +147,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
       COMPOSE_CONVERT_WINDOW_PATHS: 1,
       COMPOSE_FORCE_WINDOWS_HOST: 0,
       DOCKER_HOST: this.daemonAddress,
-      VIRT_COLLECTION_ENV_PATH: (this.collectionDef) ? collectionEnvPath: undefined,
+      VIRT_COLLECTION_ENV_PATH: (collectionEnvPath) ? collectionEnvPath:
+        (process.env.VIRT_COLLECTION_ENV_PATH ? process.env.VIRT_COLLECTION_ENV_PATH : undefined),
       ...collectionEnvs
     };
     if (collectionEnvs && collectionEnvs.VIRT_DOCKER_USER && collectionEnvs.VIRT_DOCKER_PASSWORD) {
