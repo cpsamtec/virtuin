@@ -149,6 +149,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
       DOCKER_HOST: this.daemonAddress,
       VIRT_COLLECTION_ENV_PATH: (collectionEnvPath) ? collectionEnvPath:
         (process.env.VIRT_COLLECTION_ENV_PATH ? process.env.VIRT_COLLECTION_ENV_PATH : undefined),
+      VIRT_PROJECT_PATH: process.env.VIRT_PROJECT_PATH ? process.env.VIRT_PROJECT_PATH : undefined,
       ...collectionEnvs
     };
     if (collectionEnvs && collectionEnvs.VIRT_DOCKER_USER && collectionEnvs.VIRT_DOCKER_PASSWORD) {

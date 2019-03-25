@@ -14,7 +14,7 @@ import { app, BrowserWindow } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import * as Sentry from '@sentry/electron';
- 
+
 
 import os from 'os';
 import path from 'path';
@@ -29,9 +29,10 @@ const remote = require('electron').remote
 import MenuBuilder from './menu';
 
 // create instance of Sentry for debugging production main process
-if (process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV === 'production' && typeof process.env.VIRT_SENTRY_KEY
+    === 'string' && typeof process.env.VIRT_SENTRY_PROJECT === 'string') {
   Sentry.init({
-    dsn: 'https://aacfb54ed00040948edfd8b14951e080@sentry.io/1414651',
+    dsn: `https://${process.env.VIRT_SENTRY_KEY}@sentry.io/${process.env.VIRT_SENTRY_PROJECT}`,
     // ...
   });
 }
