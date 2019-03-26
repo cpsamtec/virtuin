@@ -14,7 +14,7 @@ node ./distribution/cli.js -h
 - up : bring collection environment up (docker compose up)
 - down : bring collection environment down (docker compose down)
 - run : run a task at group and task index. Make sure to run up first
-- sendData : send new /virtuin_task-[group index]-[task index].json to a running service
+- sendTaskInputFile : send new /virtuin_task-[group index]-[task index].json to a running service
 - getRunningLocation : get the full path to the running docker compose.
 - upVM : ignore
 - downVM : ignore

@@ -14,7 +14,7 @@ const program = require('commander');
 const ospath = require('ospath');
 const { VirtuinTaskDispatcher } = require('virtuintaskdispatcher').VirtuinTaskDispatcher;
 
-type InputCommandType = 'run' | 'up' | 'down' | 'upVM' | 'downVM' | 'sendData'
+type InputCommandType = 'run' | 'up' | 'down' | 'upVM' | 'downVM' | 'sendTaskInputFile'
 
 // import VirtuinTaskDispatcher from './VirtuinTaskDispatcher';
 // Define required arguments
@@ -55,14 +55,14 @@ program
   });
 
 program
-  .command('sendData <collectionPath> ')
+  .command('sendTaskInputFile <collectionPath> ')
   .option('-t, --task <index>', 'Task Index [0-N]', parseInt, 0)
   .option('-g, --group <index>', 'Group Index [0-M]', parseInt, 0)
   .option('-v, --verbose <level>', 'Verbosity [0-2]', parseInt, 0)
   .description('Sends the task data from the collection to an input file located at /virtuin_task.json in the service. Data for other stations will be stripped out.')
   .action((collectionPath, options) => {
-    console.log(`sendData ${collectionPath}`);
-    inputCommand = 'sendData';
+    console.log(`sendTaskInputFile ${collectionPath}`);
+    inputCommand = 'sendTaskInputFile';
     collectionDefPath = collectionPath;
     groupIndex = options.group;
     taskIndex = options.task;
@@ -200,7 +200,7 @@ class CommandHandler {
     }
   }
 
-  async sendData(group: number, index: number): Promise<void> {
+  async sendTaskInputFile(group: number, index: number): Promise<void> {
     const tasks = this.dispatcher.collectionDef.taskGroups[group].tasks || [];
     if (index >= 0 && index < tasks.length) {
       const currTask = tasks[index];
@@ -294,8 +294,8 @@ if (inputCommand === 'run') {
     dispatcher.end();
     process.exit(2);
   });
-} else if (inputCommand === 'sendData') {
-  commandHandler.sendData(groupIndex, taskIndex).then(() => {
+} else if (inputCommand === 'sendTaskInputFile') {
+  commandHandler.sendTaskInputFile(groupIndex, taskIndex).then(() => {
     dispatcher.end();
     return true;
   }).catch(async (err) => {

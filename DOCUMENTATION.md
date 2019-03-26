@@ -36,18 +36,30 @@ consists of
   * This will contain subdirectories for various
   docker services each containing a Dockerfile
   * When released these will be pushed as docker images.
+  * Structure
+  ```bash
+        src
+        ├── one
+        │   ├── Dockerfile
+        │   └── run.py
+        └── two
+            ├── Dockerfile
+            └── run.py
+  ```
 - collection.yml
   * The heart of a project.
   * Contains the docker-compose file
   * Describes all of your tasks and how to run them
   * Lists all of the system locations of each stations environment file (collection.env)
   for the current collection been run
+  * Will be loaded by the GUI to run your tasks
+  * Can be shared across multiple stations
 
 
 ### Details of collection.env and collection.yml
 #### collection.env [Optional]
 ```env
-  VIRT_GUI_SERVER_ADDRESS=localhost
+  VIRT_GUI_SERVER_ADDRESS=host.docker.internal
   VIRT_DOCKER_HOST=unix:///var/run/docker.sock
   #VIRT_DOCKER_USER=XXXXX
   #VIRT_DOCKER_PASSWORD=XXXXX
@@ -55,10 +67,15 @@ consists of
   #AWS_SECRET_ACCESS_KEY=XXXXX
   #AWS_ACCESS_KEY_ID=XXXXX
 ```
-The collection.yml will also need to specify they location of it's corresponding
+The collection.yml will need to specify the location of it's corresponding
 collection.env for each machine. If one does not exist the default values are used.
 You will want to store any credentials for services your tasks will use in
 the collection.env.
+
+__VIRT_COLLECTION_ENV_PATH__ will be exposed to your docker environment set to the
+path of your collection.env file. During development you can set it on your
+system, however it is recommended to store the paths to your collection.env files
+in the __stationCollectionEnvPaths__ of your collection.yml.
 
 Virtuin variables in collection.env
 - VIRT_DOCKER_HOST - Tells Virtuin how to access your desired Docker server.
@@ -67,14 +84,17 @@ Virtuin variables in collection.env
  the same machine as Virtuin. If you are running docker on a different machine
  you can change accordingly. Default **unix:///var/run/docker.sock**
 - VIRT_GUI_SERVER_ADDRESS - The ip address of the machine running Virtuin GUI. You
-will most likely leave this localhost as you will have the Virtuin
-application and docker running on the same machine. Default **localhost**
+will most likely set to or leave as host.docker.internal, as you will have the Virtuin
+application and docker running on the same machine. Note: localhost and 127.0.0.1
+will not reach your host from a docker container even when the network_mode is
+set to host. If host.docker.internal does not work enter the ip of your
+machine directly (ex. 192.168.x.x) Default **host.docker.internal**
 - VIRT_DOCKER_USER (optional) - Virtuin will pull your required docker images. If you need
 to login for private images, supply your Docker Hub username here.
 - VIRT_DOCKER_PASSWORD (optional) - Docker Hub password to match VIRT_DOCKER_USER
 
 You can specify additional environment variables that you would like to be available
-to your Docker containers. Make sure they are also specified in the **environment**
+to your Docker containers and environment. Make sure they are also specified in the **environment**
 key of your compose file.
 
 #### collection.yml [Required]
@@ -85,7 +105,7 @@ build: development
 taskGroups:
 - name: Group One
   description: Description of the first group of tasks
-  autoStart: true
+  autoStart: false
   mode: user
   tasks:
   - name: First in Sequence
@@ -103,7 +123,6 @@ taskGroups:
           count: 5
           helloMessage: This is the new Hello Message from the Example Collection
     viewURL: http://localhost:3000
-    autoStart: false
 stationCollectionEnvPaths:
   VIRT_DEFAULT_STATION: "/station's/full/path/to/collection.env/do/not/include/filename"
 dockerCompose:
@@ -111,7 +130,7 @@ dockerCompose:
     version: '3'
     services:
       output-server:
-        image: samtechub/debian-nginx-fs
+        image: nginx
         network_mode: bridge
         ports:
         - 4962:11491

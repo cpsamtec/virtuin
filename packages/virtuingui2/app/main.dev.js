@@ -114,6 +114,17 @@ app.on('window-all-closed', () => {
   //}
 });
 
+['SIGINT', 'SIGTERM', 'SIGQUIT']
+  .forEach(signal => process.on(signal, () => {
+    /** do your logic */
+    TaskDelegator.stop().then(() =>
+      {
+        app.quit();
+      }).catch(e => {
+        app.quit();
+      })
+  }));
+
 app.on('ready', async () => {
   if (
     process.env.NODE_ENV === 'development' ||

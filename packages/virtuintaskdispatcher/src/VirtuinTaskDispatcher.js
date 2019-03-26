@@ -149,7 +149,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
       DOCKER_HOST: this.daemonAddress,
       VIRT_COLLECTION_ENV_PATH: (collectionEnvPath) ? collectionEnvPath:
         (process.env.VIRT_COLLECTION_ENV_PATH ? process.env.VIRT_COLLECTION_ENV_PATH : undefined),
-      VIRT_PROJECT_PATH: process.env.VIRT_PROJECT_PATH ? process.env.VIRT_PROJECT_PATH : undefined,
       ...collectionEnvs
     };
     if (collectionEnvs && collectionEnvs.VIRT_DOCKER_USER && collectionEnvs.VIRT_DOCKER_PASSWORD) {
@@ -335,7 +334,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
 
   static collectionEnvFromPath(collectionEnvPath: ?string): CollectionEnvs {
     const defaultEnvs = {
-      VIRT_GUI_SERVER_ADDRESS: "localhost",
+      VIRT_GUI_SERVER_ADDRESS: "host.docker.internal",
       VIRT_DOCKER_HOST: "unix:///var/run/docker.sock"
     }
     let envData = '';
@@ -506,6 +505,12 @@ class VirtuinTaskDispatcher extends EventEmitter {
         await this.pull();
       }
       // Perform up
+      let port = 0;
+      let ignore = '';
+      if (this.restServer) {
+        ([ignore, port] = await this.restServer.getAddressAndPort());
+      }
+      let extraVars = (port > 0) ? {VIRT_REST_API_PORT: `${port}`} : {};
       const cmd = 'docker-compose';
       let args = [
         ...this.daemonArgs, 'up',
@@ -516,7 +521,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
       }
       const options = {
         cwd: this.composePath(),
-        env: { ...shellEnvs, ...this.envs },
+        env: { ...shellEnvs, ...this.envs, ...extraVars },
         shell: useShell
       };
       const code = await this.spawnAsync(cmd, args, options,
