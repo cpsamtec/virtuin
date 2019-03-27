@@ -832,7 +832,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
           })
       });
       const taskStr = JSON.stringify(taskData);
-      await fse.outputFile(taskSrcPath, taskStr);
+      await fse.outputFile(taskSrcPath, taskStr, {mode:0o666});
+      //fse.chmod(taskSrcPath, 0o666)
       const containerId = await this.getServiceContainerId(runServiceName);
       await this.copyContainer(containerId, taskSrcPath, taskDstPath);
       runArgs = runArgs.concat(['--filepath', taskDstPath]);
@@ -845,7 +846,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
         ([ignore, port] = await this.restServer.getAddressAndPort());
       }
       let envVar = (port > 0) ? ['-e', `VIRT_REST_API_PORT=${port}`] : [];
-      envVar.push(['-e', `VIRT_TASK_INPUT_FILE='${taskDstPath}'`])
+      envVar = envVar.concat(['-e', `VIRT_TASK_INPUT_FILE=${taskDstPath}`])
       const args = [
         ...this.daemonArgs,
         'exec',
