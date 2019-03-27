@@ -360,16 +360,27 @@ REST_SERVER=VIRT_GUI_SERVER_ADDRESS:VIRT_REST_API_PORT
   * use header *Content-Type: text/plain*
   * the body will contain a title to be used for the prompt, instructing
   the operator of something.
-  + operator has 60 seconds to respond. Timeout of 60 seconds will return status 400 and success will be false
+  * operator has 60 seconds to respond. Timeout of 60 seconds will return status 400 and success will be false
   * based on the type the remainder of the prompt will vary.
   The type is one of *confirmation*, *text*, *confirmCancel*
     + confirmation: an okay button is displayed. Response will contain
-    *message* with value *okay* when operator presses to confirm.
+    *userResponse* with value *okay* when operator presses to confirm.
     + confirmCancel: an okay and a cancel button are displayed. Response will contain
-    *message* with value *okay* or *cancel* based on operator's selection.
+    *userResponse* with value *okay* or *cancel* based on operator's selection.
     + text: a text input field will be displayed and a submit button.
-    On success *message* value will include operator's text.
+    On success *userResponse* value will include operator's text.
+  * each prompt type will respond with an json object with key *success* set to
+  true or false. If success is true, it will also contain key *userResponse*, else
+  will contain key *message* with some error information.
 
+  ```
+  #example response
+  {
+    "success": true
+    "userResponse": "okay"
+  }
+
+  ```
 
 - **POST http://REST_SERVER/api/v1/manageTasks/:taskUUID**
 

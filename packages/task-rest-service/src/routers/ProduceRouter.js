@@ -112,6 +112,7 @@ export default class ProduceRouter {
           userResponse: userData,
         });
       }).catch(error => {
+        console.error(`received prompt error ${error.message}`)
         res.status(400).json({
           success: false,
           message: `Invalid response from user or they took to long!`,

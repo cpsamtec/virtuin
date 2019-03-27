@@ -12,6 +12,8 @@ const path = require('path');
 const fs = require('fs');
 const program = require('commander');
 const ospath = require('ospath');
+const readline = require('readline-promise').default;
+
 const { VirtuinTaskDispatcher } = require('virtuintaskdispatcher').VirtuinTaskDispatcher;
 
 type InputCommandType = 'run' | 'up' | 'down' | 'upVM' | 'downVM' | 'sendTaskInputFile'
@@ -127,14 +129,15 @@ if (verbosity > 2 || verbosity < 0) {
 
 class CommandHandler {
   dispatcher: VirtuinTaskDispatcher;
-
   verbosity: number;
   finishedMessages: Array<string>
+  promptMessage: ?string
 
   constructor(dispatcher) {
     this.dispatcher = dispatcher;
     this.verbosity = dispatcher.verbosity;
     this.finishedMessages = [];
+    this.dispatcher.promptHandler = this.promptHandler;
     this.setupDispatcherLogging();
   }
 
@@ -166,7 +169,49 @@ class CommandHandler {
       return `${style}${match}\x1b[39m`;
     });
   }
+  promptHandler = async ({ promptType, message } : {promptType: string, message: string}): Promise<string> => {
+    this.promptMessage = message;
+    if (promptType === 'confirmation') {
+      this.promptMessage += "\nType okay then press enter\n"
+      const rlp = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        terminal: true
+      });
+      let value = await rlp.questionAsync('>');
+      this.promptMessage = null;
+      return "okay"
+    } else if (promptType === 'confirmCancel') {
+      this.promptMessage += "\nType okay|cancel then press enter\n"
+      const rlp = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        terminal: true
+      });
+      let value = await rlp.questionAsync('>');
+      value = value.toLowerCase();
+      this.promptMessage = null;
+      if(value.length > 0 && value[0] === 'o') {
+        return "okay"
+      }
+      return "cancel"
+    } else if (promptType === 'text') {
+      this.promptMessage += "\nInput text then press enter\n"
+      const rlp = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        terminal: true
+      });
+      let value = await rlp.questionAsync('>');
+      this.promptMessage = null;
+      return value
+    } else {
+      throw Error('Invalid prompt type');
+    }
+  }
+
   clearConsole = function (options : {toStart: boolean} = {toStart: false}) {
+    //process.stdout.write(process.platform === 'win32' ? '\x1B[2J\x1B[0f' : '\x1B[2J\x1B[3J\x1B[H');
     process.stdout.write('\u001b[2J')
     process.stdout.write('\u001b[1;1H')
     if (options && options.toStart) process.stdout.write('\u001b[3J')
@@ -175,6 +220,9 @@ class CommandHandler {
     this.clearConsole();
     const t = this.JSONstringify(JSON.stringify(status, undefined, 2));
     console.log(`[VIRT:status]\n\n${t}`);
+    if(this.promptMessage) {
+      console.log(this.promptMessage);
+    }
   }
   setupDispatcherLogging() {
     this.clearConsole();

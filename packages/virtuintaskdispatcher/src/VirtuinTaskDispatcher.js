@@ -280,8 +280,9 @@ class VirtuinTaskDispatcher extends EventEmitter {
         const c = this.statusFromIdentifier(t);
         this.updateTaskStatus(t, { messages: [...c.messages, o.message] });
       }
+    } else {
+      console.log(`called dispatch: received ${o.type} for ${o.taskUUID}`);
     }
-    console.log(`called dispatch: received ${o.type} for ${o.taskUUID}`);
   }
 
   /**
@@ -289,7 +290,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
    * Handles messages where a response is expected
   */
   dispatchWithResponse = async (o: PRDispatchWithResponseInput): Promise<any> => {
-    console.log(`called dispatchWithResponse: received ${o.type}`);
     if (o.type === 'manage') {
       const t = this.getTaskIdentifierFromUUID(o.taskUUID);
       if(t) {
@@ -300,10 +300,13 @@ class VirtuinTaskDispatcher extends EventEmitter {
     }
     if (o.type === 'prompt') {
       if(this.promptHandler) {
-        return this.promptHandler(o);
+        const v = await this.promptHandler(o);
+        return v;
       } else {
         throw Error("Internal Error - Cannot handle prompt");
       }
+    } else {
+      console.log(`called dispatchWithResponse: received ${o.type}`);
     }
     return `received ${o.type}`;
   }
