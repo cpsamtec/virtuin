@@ -178,7 +178,7 @@ class CommandHandler {
         output: process.stdout,
         terminal: true
       });
-      let value = await rlp.questionAsync('>');
+      let value = await rlp.questionAsync(this.promptMessage);
       this.promptMessage = null;
       return "okay"
     } else if (promptType === 'confirmCancel') {
@@ -188,7 +188,7 @@ class CommandHandler {
         output: process.stdout,
         terminal: true
       });
-      let value = await rlp.questionAsync('>');
+      let value = await rlp.questionAsync(this.promptMessage);
       value = value.toLowerCase();
       this.promptMessage = null;
       if(value.length > 0 && value[0] === 'o') {
@@ -202,7 +202,7 @@ class CommandHandler {
         output: process.stdout,
         terminal: true
       });
-      let value = await rlp.questionAsync('>');
+      let value = await rlp.questionAsync(this.promptMessage);
       this.promptMessage = null;
       return value
     } else {
@@ -278,7 +278,7 @@ class CommandHandler {
   async down(): Promise<void> {
     console.log('[VIRT] bringing Vagrant VM down');
     await this.dispatcher.down();
-    this.finishedMessages = ['[VIRT] finished Vagrant VM down'];
+    this.finishedMessages = ['[VIRT] finished dispatcher down'];
   }
 
   async upVM(reloadVM: boolean = false): Promise<void> {
