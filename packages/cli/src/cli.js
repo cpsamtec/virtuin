@@ -286,7 +286,6 @@ const dispatcher: VirtuinTaskDispatcher = new VirtuinTaskDispatcher(
 const commandHandler: CommandHandler = new CommandHandler(dispatcher);
 if (inputCommand === 'run') {
   commandHandler.run(groupIndex, taskIndex).then(() => {
-    dispatcher.end();
     console.log('When finished Ctrl-c to quit');
     return true;
   }).catch(async (err) => {
