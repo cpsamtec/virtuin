@@ -4,11 +4,13 @@ This is a monorepo containing all the source of Virtuin.
 
 Virtuin is a cross platform application that allows an operator to load, update,
 run, stop, and monitor programs in an easy to use graphical interface.
-It is useful for areas such as production, testing, and research.  
+It is useful for areas such as production, testing, and research. Under the hood
+Virtuin uses Docker, Docker Compose, and a simple REST API to accomplish this.   
 
 Please see
 [Virtuin Documentation](./DOCUMENTATION.MD)
 
+![GUI](./release.png)
 
 #### To build and run from source
 Required
