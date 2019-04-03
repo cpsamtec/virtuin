@@ -693,7 +693,13 @@ class VirtuinTaskDispatcher extends EventEmitter {
       const taskSrcPath = path.join(taskInputPath, 'task.json');
       const taskDstPath = `/virtuin_task-${taskIdent.groupIndex}-${taskIdent.taskIndex}.json`;
       // eslint-disable-line camelcase
-      const { virt_stations, ...sharedData } = task.data;
+      let virt_stations = {};
+      let sharedData = {};
+      if(task.data && task.data.virt_stations) {
+        ({ virt_stations, ...sharedData } = task.data);
+      } else if(task.data) {
+        sharedData = task.data;
+      }
       const taskData = ({
         // eslint-disable-line camelcase
         data: { ...sharedData, ...virt_stations[this.stationName] },
@@ -814,12 +820,19 @@ class VirtuinTaskDispatcher extends EventEmitter {
       const taskSrcPath = path.join(taskInputPath, 'task.json');
       const taskDstPath = `/virtuin_task-${taskIdent.groupIndex}-${taskIdent.taskIndex}.json`;
       // eslint-disable-line camelcase
-      const { virt_stations, ...sharedData } = task.data;
+      let virt_stations = {};
+      let sharedData = {};
+      if(task.data && task.data.virt_stations) {
+        ({ virt_stations, ...sharedData } = task.data);
+      } else if(task.data) {
+        sharedData = task.data;
+      }
       const taskData = ({
         // eslint-disable-line camelcase
         data: { ...sharedData, ...virt_stations[this.stationName] },
         taskUUID: newTaskUUID,
         groupIndex: taskIdent.groupIndex,
+        taskIndex: taskIdent.taskIndex,
         allTasksInfo: this.getStatus().groups[taskIdent.groupIndex].tasksStatus.map(task => {
             return {
               name: task.name,

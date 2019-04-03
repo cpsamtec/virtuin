@@ -48,22 +48,22 @@ const Task = ({task, last, currentTask, isRunnable, setTaskView, runTask, resetT
     <>
       <ListItem button={!active} active={active} key={task.name} onClick={setTaskView.bind(null, task.identifier)}>
         <div>
-          <ListItemText 
+          <ListItemText
             primary={
               <>
                 <ListItemPrimary>{task.name}</ListItemPrimary>
                 <OutlinedChip label={stateNameMapper(task.state)} color={stateMapper(task.state)} />
               </>
-            } 
+            }
             secondary={
               <>
                 <ListItemSecondary variant="caption">{task.description}</ListItemSecondary>
-                
+
               </>
-            } 
+            }
           />
           <FlexRow style={{marginTop: 5}}>
-            <TaskButton disabled={isRunning} size="small" onClick={resetTask.bind(null, groupIndex, taskIndex)}>
+            <TaskButton disabled={isRunning || task.enabled === false} size="small" onClick={resetTask.bind(null, groupIndex, taskIndex)}>
               Reset
             </TaskButton>
             <TaskButton disabled={task.error == null} size="small" onClick={() => {
@@ -80,7 +80,7 @@ const Task = ({task, last, currentTask, isRunnable, setTaskView, runTask, resetT
           </FlexRow>
         </div>
         <ListItemSecondaryAction>
-          {isRunning ? 
+          {isRunning ?
             <CircleProgress value={task.progress} /> :
             <CircleButton onClick={runTask.bind(null, groupIndex, taskIndex)} disabled={!isRunnable}>
               <PlayArrow />
@@ -94,12 +94,12 @@ const Task = ({task, last, currentTask, isRunnable, setTaskView, runTask, resetT
 }
 
 
-const getTaskGroup = (state, ownProps) => state.virtuin.groups[ownProps.task.identifier.groupIndex];
+const getTaskGroup = (state, ownProps) => ({ taskGroup: state.virtuin.groups[ownProps.task.identifier.groupIndex], currTask : ownProps.task });
 
 //is runnable if no task in the group is in progress
 const isRunnable = createSelector(
-  [getTaskGroup], 
-  taskGroup => taskGroup.tasksStatus.reduce((acc,task) => acc && !task.state.match(inProgress),  true)
+  [getTaskGroup],
+  ({ taskGroup, currTask }) => (taskGroup.tasksStatus.reduce((acc,task) => acc && !task.state.match(inProgress),  true) && (taskGroup.mode !== 'managed' || currTask.enabled))
 )
 const mapDispatchToProps = (dispatch) => ({
   setTaskView: (identifier) => dispatch(setTaskView(identifier)),
@@ -111,7 +111,7 @@ const mapDispatchToProps = (dispatch) => ({
 const mapStateToProps = (state, ownProps) => {
   return ({
     currentTask: state.taskView.identifier,
-    isRunnable: isRunnable(state, ownProps) 
+    isRunnable: isRunnable(state, ownProps)
   });
 }
 

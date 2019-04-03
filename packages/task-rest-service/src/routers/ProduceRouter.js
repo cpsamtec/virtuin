@@ -146,10 +146,6 @@ export default class ProduceRouter {
       });
       return;
     }
-    res.status(200).json({
-      success: true,
-      message: `Success!`,
-    });
     if (ProduceRouter.delegate) {
       promiseTimeout(3000,
         ProduceRouter.delegate.dispatchWithResponse({type: 'manage', taskUUID, command}))

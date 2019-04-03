@@ -99,8 +99,8 @@ key of your compose file.
 
 #### collection.yml [Required]
 ```yaml
-collectionName: Virtuin_Example_Collection
-collectionTag: v0.0.1
+collectionName: Virtuin_Example
+collectionTag: v0.0.2
 build: development
 taskGroups:
 - name: Group One
@@ -112,19 +112,19 @@ taskGroups:
     description: Description of the current example process
     dockerInfo:
       serviceName: example-one
-      command: python3.5
+      command: python3.7
       type: exec
       args:
       - /usr/src/app/run.py
     data:
-      helloMessage: Hello from the first process of the Example Collection
+      helloMessage: Hello from the first process of the starter
       virt_stations:
         VIRT_DEFAULT_STATION:
           count: 5
-          helloMessage: This is the new Hello Message from the Example Collection
+          helloMessage: This overrides the helloMessage in the default station
     viewURL: http://localhost:3000
 stationCollectionEnvPaths:
-  VIRT_DEFAULT_STATION: "/station's/full/path/to/collection.env/do/not/include/filename"
+  VIRT_DEFAULT_STATION: "/station's/full/path/to/this/directory"
 dockerCompose:
   source:
     version: '3'
@@ -133,12 +133,11 @@ dockerCompose:
         image: nginx
         network_mode: bridge
         ports:
-        - 4962:11491
+        - 8080:80
         volumes:
         - outputFiles:/usr/share/nginx/html:ro
       example-one:
         build: ${VIRT_COLLECTION_ENV_PATH}/src/one
-        env_file: .env
         network_mode: host
         command:
         - bash
@@ -146,7 +145,7 @@ dockerCompose:
         - 'trap : TERM INT; sleep infinity & wait'
         volumes:
         - ${VIRT_COLLECTION_ENV_PATH}/src:/src
-        - /tmp/outputFiles:/outputFiles
+        - outputFiles:/outputFiles
         environment:
         - VIRT_STATION_NAME
         - VIRT_GUI_SERVER_ADDRESS

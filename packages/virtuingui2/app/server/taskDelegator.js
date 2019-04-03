@@ -216,6 +216,7 @@ class TaskDelegator {
           variant: 'error',
         }
       }));
+      throw Error('Invalid prompt type');
     }
   }
 
