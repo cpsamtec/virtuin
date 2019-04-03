@@ -1,18 +1,18 @@
-### Virtuin
+## Virtuin Documentation
 
+### General process
 
-Virtuin is a cross platform application that allows an operator to load, update,
-run, stop, and monitor programs in an easy to use graphical interface.
-It is useful for areas such as production, testing, and research.
-
-Virtuin is language and platform agnostic. You can use whatever languages, platforms,
- and tools you like as long as they are supported by docker.
-
-In short, you will provide a docker compose file and a list of tasks to be executed.
-*Tasks* are your program executables in a running service,
+In a nutshell, a developer will provide a docker compose file, a list of tasks to be executed,
+and data for the tasks. This will be embedded in a **collection.yml** file recognized by Virtuin.
+*Tasks* are program executables in a docker service,
 ready to be run with specified arguments and environment variables. Virtuin will
 handle ensuring the appropriate docker services are running. It will then display
-the list of tasks and information for an operator to utilize.
+the list of tasks and information for an operator to utilize. When an operator
+presses run on a task, the GUI will exec the appropriate program in the correct
+docker service with all necessary information described in the collection.yml.
+
+
+### Installation
 
 To begin a new Virtuin project make sure you have the following installed
 - [Docker](https://docs.docker.com/install/)
@@ -25,8 +25,12 @@ To begin a new Virtuin project make sure you have the following installed
   ```
   It becomes important to have unique values for VIRT_STATION_NAME when you have
   multiple stations.
+- Build and install the GUI Application
 
-It is also recommended you clone the following boilerplate to get started. It
+#### Virtuin Starter (Boilerplate for development)
+
+It is also recommended you clone the following boilerplate to get started.
+[Virtuin Starter](https://github.com/cpsamtec/virtuin-starter) It
 consists of
 - collection.env
   * Contains environment variables specific to the current station and project
