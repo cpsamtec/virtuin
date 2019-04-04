@@ -2,14 +2,29 @@
 
 ### General process
 
-In a nutshell, a developer will provide a docker compose file, a list of tasks to be executed,
-and data for the tasks. This will be embedded in a **collection.yml** file recognized by Virtuin.
-*Tasks* are program executables in a docker service,
-ready to be run with specified arguments and environment variables. Virtuin will
-handle ensuring the appropriate docker services are running. It will then display
-the list of tasks and information for an operator to utilize. When an operator
-presses run on a task, the GUI will exec the appropriate program in the correct
-docker service with all necessary information described in the collection.yml.
+Each station (or computer with an operator) will have the Virtuin GUI, Docker, and Docker Compose installed.
+From the GUI the operator will load different **collection.yml**'s locally or from a server based
+on the application he/she is trying to perform. There may be a collection.env on
+a station associated with the **collection.yml**. It will contain environment variables for
+login and credentials to services, if needed. When a collection.yml is loaded into the
+ GUI Virtuin will
+
+- check to see if there is a corresponding collection.env and load.
+- ensure latest docker images are up to date.
+- bring the docker environment up.
+- make sure the environment variables are exposed to the docker services.
+
+Finally the operator will be able to see
+all of the tasks in the GUI and begin running appropriately. When a user runs
+a task
+
+- a program in a docker service is executed.
+- additional environment variables and data file will be passed to it.
+- the process will run giving updates to the operator through the simple REST API.
+- the GUI will display a web view to a web service running in the docker environment
+or remotely if one is specified by task. (optional *viewURL*)
+
+ When the process exit's the task will be complete.     
 
 
 ### Installation
@@ -25,22 +40,25 @@ To begin a new Virtuin project make sure you have the following installed
   ```
   It becomes important to have unique values for VIRT_STATION_NAME when you have
   multiple stations.
-- Build and install the GUI Application
+- Build and install the GUI Application. See [README](../README.md)
 
 #### Virtuin Starter (Boilerplate for development)
 
 It is also recommended you clone the following boilerplate to get started.
-[Virtuin Starter](https://github.com/cpsamtec/virtuin-starter) It
-consists of
+[Virtuin Starter](https://github.com/cpsamtec/virtuin-starter)
+
+#### Developing
+
+An application in development will generally contain
 - collection.env
   * Contains environment variables specific to the current station and project
   * For example, store Docker or AWS credentials to be used by your tasks.  
   * The file must be exactly named collection.env
-- src directory for your code for developement.
+- src directory for your code for development.
   * This will contain subdirectories for various
   docker services each containing a Dockerfile
   * When released these will be pushed as docker images.
-  * Structure
+  * Example structure
   ```bash
         src
         ├── one
@@ -58,7 +76,6 @@ consists of
   for the current collection been run
   * Will be loaded by the GUI to run your tasks
   * Can be shared across multiple stations
-
 
 ### Details of collection.env and collection.yml
 #### collection.env [Optional]
