@@ -1,3 +1,6 @@
+
+![Virtuin](logo.png)
+
 ### Virtuin
 
 This is a monorepo containing all the source of Virtuin.
@@ -26,6 +29,11 @@ display messages, prompts, and progress in the GUI. The rest server runs inside 
  the GUI. The GUI is not bound to just one collection. It can run any Virtuin collection
  and load and unload them as necessary.
 
+Please see
+[Virtuin Documentation](docs/documentation.md)
+
+![GUI](./release.png)
+
 This repo contains 2 applications
 - GUI *packages/virtuingui2* - use by operator or developer
 - CLI *packages/cli* - can be used by developer to help build application or test
@@ -34,10 +42,8 @@ Libraries used by the applications
 - Task Dispatcher *packages/virtuintaskdispatcher* - controls docker environment and maintains state of all tasks
 - Rest Service *packages/task-rest-service* - rest api where running tasks can update progress and display messages and prompts.
 
-Please see
-[Virtuin Documentation](docs/documentation.md)
 
-![GUI](./release.png)
+<p id="build"></p>
 
 #### Required to build
 - node 10.11+
@@ -58,7 +64,9 @@ Please see
  ```yarn run run:gui```
 
 <p id="package"></p>
+
 #### Package
+
 Make sure you have completed *Build* steps first. To package to create an installable executable run
 
 ``` yarn run package ```
