@@ -2,8 +2,8 @@
 
 ### General process
 
-Each station (or computer with an operator) will have the Virtuin GUI, Docker, and Docker Compose installed.
-From the GUI the operator will load different **collection.yml**'s locally or from a server based
+Each station (or computer with an operator) will have Virtuin GUI, Docker, and Docker Compose installed.
+From the GUI the operator will load different **collection.yml**'s locally or remotely, based
 on the application he/she is trying to perform. There may be a collection.env on
 a station associated with the **collection.yml**. It will contain environment variables for
 login and credentials to services, if needed. When a collection.yml is loaded into the
@@ -22,7 +22,7 @@ a task
 - additional environment variables and data file will be passed to it.
 - the process will run giving updates to the operator through the simple REST API.
 - the GUI will display a web view to a web service running in the docker environment
-or remotely if one is specified by task. (optional *viewURL*)
+or remotely if one is specified by a *Task*. (optional *viewURL*)
 
  When the process exit's the task will be complete.     
 
@@ -32,7 +32,6 @@ or remotely if one is specified by task. (optional *viewURL*)
 To begin a new Virtuin project make sure you have the following installed
 - [Docker](https://docs.docker.com/install/)
 - [Docker Compose](https://docs.docker.com/compose/install/)
-- Virtuin Application
 - Recommended to add global environment variable on your system VIRT_STATION_NAME. You can
   just set this to VIRT_DEFAULT_STATION to begin with.
   ```bash
@@ -73,7 +72,7 @@ An application in development will generally contain
   * Contains the docker-compose file
   * Describes all of your tasks and how to run them
   * Lists all of the system locations of each stations environment file (collection.env)
-  for the current collection been run
+  associated with this collection.yml
   * Will be loaded by the GUI to run your tasks
   * Can be shared across multiple stations
 
@@ -116,7 +115,7 @@ to login for private images, supply your Docker Hub username here.
 
 You can specify additional environment variables that you would like to be available
 to your Docker containers and environment. Make sure they are also specified in the **environment**
-key of your compose file.
+key of your collection.yml dockerCompose services.
 
 #### collection.yml [Required]
 ```yaml
@@ -220,9 +219,9 @@ extra components to help such as stdout and stderr of your tasks.
   - **tasks** : list of Task objects. Only one task can execute at a time in a group.
     - name : descriptive name of the task
     - description: more information about the function of the task
-    - data: key value pairs of data you would like passed to your task. The special key
-    virt_stations is an object with keys of station names (VIRT_STATION_NAME) with
-    the value been an object of data. If the current station name matches it will take the
+    - data: (optional) key value pairs of data you would like passed to your task. The special key
+    virt_stations is an object with keys of station names (VIRT_STATION_NAME).  
+    The value of each is an object of data. If the current station name matches it will take the
     corresponding data and merge it into the general data. Data from the general will be
     overwritten if the are any duplicate keys.
     - dockerInfo: how Virtuin is to execute your program in a running docker service.
@@ -230,7 +229,8 @@ extra components to help such as stdout and stderr of your tasks.
       - command: the command to run
       - type: always set to exec for now
       - args: list of arguments to pass to the command
-
+    - viewURL: (optional) if you would like to display a custom view in the GUI reference the
+    url of a web server running in a docker service or remotely.
 
 ### Tasks
 
@@ -249,7 +249,7 @@ tasks can send and request information
 - **VIRT_GUI_SERVER_ADDRESS** : the address of the machine the GUI is running on.
 Will most likely be **localhost** if the GUI is running on the same machine as Docker
 and the network_mode is bridged or set to host.
-- **VIRT_COLLECTION_ENV_PATH** : the system path to the collection.env on the station.
+- **VIRT_COLLECTION_ENV_PATH** : the system path to the directory of the collection.env on the station.
 You can also use this to create a relative path to your source files while you are
 developing your tasks.
 For example
