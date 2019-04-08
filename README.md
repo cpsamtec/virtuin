@@ -13,7 +13,7 @@ Virtuin is language and platform agnostic. You can use whatever languages, platf
  and tools you like as long as they are supported by docker.
 
 
-In a nutshell, a developer will provide a docker compose file, a list of tasks to be executed,
+In a nutshell, a developer will provide a docker compose file, a list of *Tasks* to be executed,
 and data for the tasks. This will be embedded in a **collection.yml** file recognized by Virtuin.
 
 *Tasks* are program executables in a docker service,
@@ -67,7 +67,7 @@ Libraries used by the applications
 
 #### Package
 
-Make sure you have completed *Build* steps first. To package to create an installable executable run
+Make sure you have completed *Build* steps first. To package and create an installable executable
 
 ``` yarn run package ```
 

@@ -92,10 +92,10 @@ collection.env for each machine. If one does not exist the default values are us
 You will want to store any credentials for services your tasks will use in
 the collection.env.
 
-__VIRT_COLLECTION_ENV_PATH__ will be exposed to your docker environment set to the
-path of your collection.env file. During development you can set it on your
-system, however it is recommended to store the paths to your collection.env files
-in the __stationCollectionEnvPaths__ of your collection.yml.
+__VIRT_COLLECTION_ENV_PATH__ will be exposed to your docker environment if it is set.
+It will be set to the directory of the station's collection.env, if it is required.
+ This can be set globally on the station, however it is recommended to store the path
+in the __stationCollectionEnvPaths__ of the collection.yml.
 
 Virtuin variables in collection.env
 - VIRT_DOCKER_HOST - Tells Virtuin how to access your desired Docker server.
@@ -247,7 +247,7 @@ is more information in the Data section below.
 - **VIRT_REST_API_PORT** : the port of the rest server running in the GUI where
 tasks can send and request information
 - **VIRT_GUI_SERVER_ADDRESS** : the address of the machine the GUI is running on.
-Will most likely be **localhost** if the GUI is running on the same machine as Docker
+Will most likely be **host.docker.internal** if the GUI is running on the same machine as Docker
 and the network_mode is bridged or set to host.
 - **VIRT_COLLECTION_ENV_PATH** : the system path to the directory of the collection.env on the station.
 You can also use this to create a relative path to your source files while you are
