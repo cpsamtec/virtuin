@@ -4,12 +4,12 @@
 
 Each station (or computer with an operator) will have Virtuin GUI, Docker, and Docker Compose installed.
 From the GUI the operator will load different **collection.yml**'s locally or remotely, based
-on the application he/she is trying to perform. There may be a collection.env on
-a station associated with the **collection.yml**. It will contain environment variables for
-login and credentials to services, if needed. When a collection.yml is loaded into the
+on the application he/she is trying to perform. When a **collection.yml** is loaded into the
  GUI Virtuin will
 
 - check to see if there is a corresponding collection.env and load.
+If required, the collection.env will contain environment variables for
+login and credentials to services like databases.
 - ensure latest docker images are up to date.
 - bring the docker environment up.
 - make sure the environment variables are exposed to the docker services.
@@ -24,7 +24,8 @@ a task
 - the GUI will display a web view to a web service running in the docker environment
 or remotely if one is specified by a *Task*. (optional *viewURL*)
 
- When the process exit's the task will be complete.     
+ When the process exit's the task will be complete. If the operator exits the GUI
+ or Virtuin will bring the docker compose environment down.
 
 
 ### Installation
@@ -59,13 +60,17 @@ An application in development will generally contain
   * When released these will be pushed as docker images.
   * Example structure
   ```bash
-        src
-        ├── one
-        │   ├── Dockerfile
-        │   └── run.py
-        └── two
-            ├── Dockerfile
-            └── run.py
+  ├── collection.env
+  ├── collection.yml
+  ├── release
+  │   └── collection.yml
+  └── src
+      ├── one
+      │   ├── Dockerfile
+      │   └── run.py
+      └── two
+          ├── Dockerfile
+          └── run.py
   ```
 - collection.yml
   * The heart of a project.
@@ -75,6 +80,9 @@ An application in development will generally contain
   associated with this collection.yml
   * Will be loaded by the GUI to run your tasks
   * Can be shared across multiple stations
+  * a release collection.yml is similar, however will specify docker images as opposed to builds,
+  specify mode as release, and a few more tweaks, when the application is ready
+   for production.
 
 ### Details of collection.env and collection.yml
 #### collection.env [Optional]
@@ -88,14 +96,10 @@ An application in development will generally contain
   #AWS_ACCESS_KEY_ID=XXXXX
 ```
 The collection.yml will need to specify the location of it's corresponding
-collection.env for each machine. If one does not exist the default values are used.
+collection.env for each station it will be run. If one does not exist the default values are used.
 You will want to store any credentials for services your tasks will use in
 the collection.env.
 
-__VIRT_COLLECTION_ENV_PATH__ will be exposed to your docker environment if it is set.
-It will be set to the directory of the station's collection.env, if it is required.
- This can be set globally on the station, however it is recommended to store the path
-in the __stationCollectionEnvPaths__ of the collection.yml.
 
 Virtuin variables in collection.env
 - VIRT_DOCKER_HOST - Tells Virtuin how to access your desired Docker server.
@@ -210,7 +214,8 @@ extra components to help such as stdout and stderr of your tasks.
   any tasks in any order and reset the statuses of tasks in a group.
   In __managed__ your task on completion will
   inform the GUI via a rest api, which tasks are able enabled and which
-  statuses should be reset. Default __user__
+  statuses should be reset. This can be used to ensure a task cannot run until
+  the previous finished successfully. Default __user__
   - **stationCollectionEnvPaths** : an object where the keys are station names
   (VIRT_STATION_NAME) and the values are a file path to a collection.env on a station.
   If the current station name matches a key, the corresponding path will be used to read the
@@ -229,7 +234,7 @@ extra components to help such as stdout and stderr of your tasks.
       - command: the command to run
       - type: always set to exec for now
       - args: list of arguments to pass to the command
-    - viewURL: (optional) if you would like to display a custom view in the GUI reference the
+    - viewURL: (optional) if you would like to display a custom view in the GUI, specify the
     url of a web server running in a docker service or remotely.
 
 ### Tasks

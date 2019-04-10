@@ -14,7 +14,9 @@ Virtuin is language and platform agnostic. You can use whatever languages, platf
 
 
 In a nutshell, a developer will provide a docker compose file, a list of *Tasks* to be executed,
-and data for the tasks. This will be embedded in a **collection.yml** file recognized by Virtuin.
+and data for the tasks. *Tasks* are program executables in a docker service,
+ready to be run with specified arguments and environment variables.
+This will be embedded in a **collection.yml** file recognized by Virtuin.
 
 *Tasks* are program executables in a docker service,
 ready to be run with specified arguments and environment variables.
