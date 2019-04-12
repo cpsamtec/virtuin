@@ -46,7 +46,7 @@ export default merge.smart(baseConfig, {
   target: 'electron-renderer',
 
   entry: [
-    'react-hot-loader/patch',
+    ...(process.env.PLAIN_HMR ? [] : ['react-hot-loader/patch']),
     `webpack-dev-server/client?http://localhost:${port}/`,
     'webpack/hot/only-dev-server',
     require.resolve('../app/index')
@@ -180,17 +180,13 @@ export default merge.smart(baseConfig, {
       // SVG Font
       {
         test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
-        use: [
-          {
-            loader: "babel-loader"
-          },
-          {
-            loader: "react-svg-loader",
-            options: {
-              jsx: true // true outputs JSX tags
-            }
+        use: {
+          loader: 'url-loader',
+          options: {
+            limit: 10000,
+            mimetype: 'image/svg+xml'
           }
-        ]
+        }
       },
       // Common Image Formats
       {
