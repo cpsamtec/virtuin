@@ -18,13 +18,13 @@ and data for the tasks. *Tasks* are program executables in a docker service,
 ready to be run with specified arguments and environment variables.
 This will be embedded in a **collection.yml** file recognized by Virtuin.
 
-*Tasks* are program executables in a docker service,
-ready to be run with specified arguments and environment variables.
 Virtuin will
  - ensure the appropriate docker services are up to date and running.
  - display the list of tasks and information for an operator to utilize.
- - when a task is run by the operator, execute the appropriate program in the correct
-docker service with all necessary information described in the collection.yml.
+ - execute the appropriate program in the correct docker service with all necessary information described in the collection.yml, when a *Task* is run by an operator.
+ - display progress, status, messgages, and prompts from a running *Task*
+ - bring the docker environment down when the collection.yml is unloaded or
+ the GUI is closed.
 
 Virtuin also provides a simple rest service so *Tasks* can
 display messages, prompts, and progress in the GUI. The rest server runs inside of
