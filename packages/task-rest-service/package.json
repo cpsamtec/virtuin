@@ -54,8 +54,8 @@
     "@babel/plugin-transform-react-constant-elements": "^7.2.0",
     "@babel/plugin-transform-react-inline-elements": "^7.2.0",
     "flow-copy-source": "^2.0.3",
-    "jest": "24.5.0",
-    "supertest": "4.0.0",
+    "jest": "24.7.1",
+    "supertest": "4.0.2",
     "supertest-as-promised": "4.0.2"
   }
 }

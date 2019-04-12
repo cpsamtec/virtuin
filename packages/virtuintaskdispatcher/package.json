@@ -46,7 +46,7 @@
     "fs-extra": "^7.0.1",
     "js-yaml": "^3.12.2",
     "ospath": "^1.2.2",
-    "shell-env": "^2.2.0",
+    "shell-env": "^3.0.0",
     "uuid": "^3.3.2",
     "virtuin-task-rest-service": "^1.0.10"
   },
@@ -83,7 +83,7 @@
     "eslint-plugin-jsx-a11y": "^6.2.1",
     "eslint-plugin-promise": "^4.0.1",
     "eslint-plugin-react": "^7.12.4",
-    "flow-bin": "^0.94.0",
+    "flow-bin": "^0.96.0",
     "flow-copy-source": "^2.0.3",
     "flow-remove-types": "^1.2.3",
     "flow-typed": "^2.5.1",

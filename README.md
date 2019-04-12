@@ -26,7 +26,7 @@ Virtuin will
  - bring the docker environment down when the collection.yml is unloaded or
  the GUI is closed.
 
-Virtuin also provides a simple rest service so *Tasks* can
+Virtuin provides a simple rest service so *Tasks* can
 display messages, prompts, and progress in the GUI. The rest server runs inside of
  the GUI. The GUI is not bound to just one collection. It can run any Virtuin collection
  and load and unload them as necessary.
