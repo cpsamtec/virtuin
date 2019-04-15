@@ -180,13 +180,17 @@ export default merge.smart(baseConfig, {
       // SVG Font
       {
         test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
-        use: {
-          loader: 'url-loader',
-          options: {
-            limit: 10000,
-            mimetype: 'image/svg+xml'
+        use: [
+          {
+            loader: 'babel-loader'
+          },
+          {
+            loader: "react-svg-loader",
+            options: {
+              jsx: true // true outputs JSX tags
+            }
           }
-        }
+        ]
       },
       // Common Image Formats
       {
