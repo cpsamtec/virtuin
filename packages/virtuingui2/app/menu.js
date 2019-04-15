@@ -271,16 +271,73 @@ export default class MenuBuilder {
         label: '&File',
         submenu: [
           {
-            label: '&Open',
-            accelerator: 'Ctrl+O'
+            label: 'Load Collection File',
+            accelerator: 'Ctrl+L',
+            click: () => {
+              const collectionPath = dialog.showOpenDialog({ properties: ['openFile'], filters: [{name: 'yaml', extensions: ['yml']}] })
+              if (collectionPath == null) return; // stop if cancelled selecting file
+              TaskDelegator.reinit(collectionPath[0]);
+            }
           },
           {
-            label: '&Close',
-            accelerator: 'Ctrl+W',
+            label: 'Load Collection URL',
+            accelerator: 'Ctrl+Alt+L',
             click: () => {
-              this.mainWindow.close();
+              prompt({
+                title: 'Load Collection from URL',
+                label: 'URL:',
+                value: 'http://example.org',
+                inputAttrs: {
+                    type: 'url'
+                }
+              })
+              .then(url => {
+                if (url == null) return;
+                const collectionPath =  path.resolve(app.getPath('appData'), 'tmpCollection.yml')
+                const file = fs.createWriteStream(collectionPath);
+                const request = http.get(url, (response) => {
+                  response.pipe(file);
+                  TaskDelegator.reinit(collectionPath);
+                });
+              })
+              .catch(console.error);
             }
-          }
+          }, {
+            label: 'Reload Collection',
+            accelerator: 'Ctrl+Alt+R',
+            click: () => {
+              if (!TaskDelegator.isCollectionLoaded()) return;
+              TaskDelegator.reloadCollection();
+            }
+          }, {
+            label: 'Down Collection',
+            accelerator: 'Ctrl+D',
+            click: () => {
+              if (!TaskDelegator.isCollectionLoaded()) return;
+              TaskDelegator.stop();
+            }
+          },
+        ]
+      }, {
+        label: 'Developer',
+        submenu: [
+          {
+            label: 'Bash in Service',
+            accelerator: 'Ctrl+B',
+            click: () => {
+              if (!TaskDelegator.isCollectionLoaded()) {
+                dialog.showMessageBox({ title: 'Virtuin', message:'No collection loaded',
+                  detail: "Once a collection is running you can bash into one of your docker services using this menu item as a guide" })
+                return;
+              }
+
+              const collpath = path.normalize(TaskDelegator.stackPath + path.sep + TaskDelegator.dispatcher.composeName())
+              const message = `cd "${collpath}"\ndocker-compose exec [service-name] bash`;
+              const detail = `${message}\nList of services: \n${Object.keys(TaskDelegator.dispatcher.collectionDef.dockerCompose.source.services).reduce((acc,key) => `${acc}\n${key}`)}`;
+              dialog.showMessageBox({ title: 'Virtuin', message:'To run bash in your services', detail })
+
+            }
+          },
         ]
       },
       {
@@ -356,7 +413,6 @@ export default class MenuBuilder {
         ]
       }
     ];
-
     return templateDefault;
   }
 }
