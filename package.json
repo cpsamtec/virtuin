@@ -16,7 +16,8 @@
     "package": "lerna run --scope virtuingui2 package --stream",
     "package:all": "lerna run --scope virtuingui2 package-all --stream",
     "package:win": "lerna run --scope virtuingui2 package-win --stream",
-    "package:linux": "lerna run --scope virtuingui2 package-linux --stream"
+    "package:linux": "lerna run --scope virtuingui2 package-linux --stream",
+    "package:mac": "lerna run --scope virtuingui2 package-mac --stream"
   },
   "devDependencies": {
     "lerna": "^3.3.1"
