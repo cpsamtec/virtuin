@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "virtuin-gui.exe", "use": "@now/static" },
+    { "src": "Virtuin*.zip", "use": "@now/static" },
+    { "src": "virtuingui2*.deb", "use": "@now/static" },
+    { "src": "virtuingui2*.rpm", "use": "@now/static" }
+  ]
+}

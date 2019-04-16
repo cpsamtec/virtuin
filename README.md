@@ -45,13 +45,37 @@ Libraries used by the applications
 - Rest Service *packages/task-rest-service* - rest api where running tasks can update progress and display messages and prompts.
 
 
+<p id="prebuilt-packages"></p>
+
+## Prebuilt packages
+
+Prebuilt packages and installers can be found at ***https://release.cpsamtec.now.sh***
+
+### Docker
+Prebuilt packages can be found in the docker image **cpsamtec/virtuin-gui:latest**.
+It contains packaged applications and installers for Mac, Linux, and Windows.
+
+- Get and run docker image ```docker run  --name gui-builder -dit cpsamtec/virtuin-gui:latest bash```
+- List available installers and packaged applications ```docker exec -it gui-builder ls /project/release```
+- Copy the desired application or installer to your computer ```docker cp gui-builder:/project/release/[Desired Item] /tmp/```
+
+View the *Dockerfile* in the repo to create your own packaged applications and
+ installers for Mac, Linux, and Windows from a docker container. This can be done
+ from any system with Docker installed.
+
+
 <p id="build"></p>
 
-#### Required to build
+## To build and package directly on Mac or Linux
+
+Cannot build the GUI directly on Windows at this moment in time. There is some issue with webpack and babel.
+
+##### Install
 - node 10.11+
   [download node](https://nodejs.org/en/download/)
 - yarn
   ```npm install -g yarn```
+
 
 #### Build
 
@@ -59,7 +83,7 @@ Libraries used by the applications
 2. ```yarn install```
 3. ```yarn run bootstrap ```
 4. ```yarn run build ```
-5. ```yarn run bootstrap ``` (run twice the first time)
+
 
 #### Run
 

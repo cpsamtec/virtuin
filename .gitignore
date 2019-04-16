@@ -62,3 +62,7 @@ main.js.map
 
 .idea
 npm-debug.log.*
+
+
+!release/.nowignore 
+!release/now.json 

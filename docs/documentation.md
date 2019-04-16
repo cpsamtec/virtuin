@@ -40,7 +40,10 @@ To begin a new Virtuin project make sure you have the following installed
   ```
   It becomes important to have unique values for VIRT_STATION_NAME when you have
   multiple stations.
-- Build and install the GUI Application. See [README](../README.md#build)
+- Install the GUI Application.
+  * Get it from a prebuilt installer/application for Mac, Linux, Windows.
+  Prebuilt packages and installers can be found at ***https://release.cpsamtec.now.sh***
+  * Build and package the GUI yourself. See [README - Build and Package](../README.md#build)
 
 #### Virtuin Starter (Boilerplate for development)
 
