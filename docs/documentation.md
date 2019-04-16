@@ -30,7 +30,7 @@ or remotely if one is specified by a *Task*. (optional *viewURL*)
 
 ### Installation
 
-To begin a new Virtuin project make sure you have the following installed
+To begin a new Virtuin project make sure the following are installed
 - [Docker](https://docs.docker.com/install/)
 - [Docker Compose](https://docs.docker.com/compose/install/)
 - Recommended to add global environment variable on your system VIRT_STATION_NAME. You can

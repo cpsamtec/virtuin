@@ -59,16 +59,20 @@ It contains packaged applications and installers for Mac, Linux, and Windows.
 - List available installers and packaged applications ```docker exec -it gui-builder ls /project/release```
 - Copy the desired application or installer to your computer ```docker cp gui-builder:/project/release/[Desired Item] /tmp/```
 
+
+<p id="build"></p>
+
+## Build and package yourself
+
+### Docker
 View the *Dockerfile* in the repo to create your own packaged applications and
  installers for Mac, Linux, and Windows from a docker container. This can be done
  from any system with Docker installed.
 
+### To build and package directly on Mac or Linux
 
-<p id="build"></p>
-
-## To build and package directly on Mac or Linux
-
-Cannot build the GUI directly on Windows at this moment in time. There is some issue with webpack and babel.
+It is not possible to directly build the GUI directly on Windows at this moment in time.
+There is some issue with webpack and babel. On a Mac or Linux machine
 
 ##### Install
 - node 10.11+
