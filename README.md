@@ -21,7 +21,8 @@ This will be embedded in a **collection.yml** file recognized by Virtuin.
 Virtuin will
  - ensure the appropriate docker services are up to date and running.
  - display the list of tasks and information for an operator to utilize.
- - execute the appropriate program in the correct docker service with all necessary information described in the collection.yml, when a *Task* is run by an operator.
+ - execute the appropriate program in the correct docker service, when a *Task* is run by an operator.
+ - ensure task has all necessary data and variables described in the collection.yml
  - display progress, status, messgages, and prompts from a running *Task*
  - bring the docker environment down when the collection.yml is unloaded or
  the GUI is closed.
