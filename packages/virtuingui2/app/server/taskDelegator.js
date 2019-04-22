@@ -19,7 +19,7 @@ const { VirtuinTaskDispatcher } = require('virtuintaskdispatcher').VirtuinTaskDi
  * @class TaskDelegator
  */
 class TaskDelegator {
-  collectionDefPath: string
+  collectionDefUrl: URL
   collectionDef: ?Object
   stationName: string
   stackPath: string
@@ -55,11 +55,11 @@ class TaskDelegator {
    * @param {number} [verbosity=0] Verbosity of logs
    * @returns Undefined
    */
-  init = (stationName: string, collectionDefPath: string, stackPath: string, verbosity: number = 0) => {
+  init = async (stationName: string, collectionDefUrl: URL, stackPath: string, verbosity: number = 0) => {
     // these are
     this.connectActions = [];
     // get collection and environment variables for the dispatcher
-    const tmpCollectionDef: ?RootInterface = VirtuinTaskDispatcher.collectionObjectFromPath(collectionDefPath);
+    const tmpCollectionDef: ?RootInterface = await VirtuinTaskDispatcher.collectionObjectFromUrl(collectionDefUrl);
     if (!tmpCollectionDef) {
       // Unable to connect so send failed
       this.sendAction(addNotification({
@@ -71,41 +71,22 @@ class TaskDelegator {
       return;
     }
     let collectionEnvPath = null;
-    let collectionEnvPathWarn = false;
-    try {
-      const collectionDef: RootInterface = (tmpCollectionDef: any);
-      collectionEnvPath = collectionDef.stationCollectionEnvPaths[stationName];
-      if (!collectionEnvPath) {
-        collectionEnvPathWarn = true;
-      }
-    } catch (error) {
-      collectionEnvPathWarn = true;
-    }
-    if (collectionEnvPathWarn) {
-      this.sendAction(addNotification({
-        message: `The variable stationCollectionEnvPaths is not set for this station in the collection.\n
-                  You may want to add ${stationName} key with the full path to the .env of this collection`,
-        options: {
-          variant: 'warning',
-        }
-      }));
-    }
     const collectionDef: RootInterface = (tmpCollectionDef: any);
-    const collectionEnvs: ?CollectionEnvs = VirtuinTaskDispatcher.collectionEnvFromPath(collectionEnvPath);
+    const { collectionEnvPath : string , collectionEnvs : CollectionEnvs  } = await VirtuinTaskDispatcher.collectionEnvFromDefinition(collectionDefUrl, collectionDef);
     // store locally
     this.stationName = stationName;
     this.stackPath = stackPath;
     this.collectionDef = collectionDef;
-    this.collectionDefPath = collectionDefPath;
+    this.collectionDefUrl = collectionDefUrl;
 
     // create dispatcher
     this.dispatcher = new VirtuinTaskDispatcher(
       stationName,
-      collectionEnvs,
       collectionDef,
+      collectionEnvs,
+      collectionEnvPath,
       stackPath,
-      verbosity,
-      collectionEnvPath
+      verbosity
     );
     // indicate that the collection is loaded
     this.isLoaded = true;
@@ -176,10 +157,10 @@ class TaskDelegator {
    * @param {string} collectionDefPath path of collection to initialize
    * @param {boolean} [reload=false] indicates that it is reloading the collection
    */
-  reinit = async (collectionDefPath: string, reload: boolean=false) => {
+  reinit = async (collectionDefUrl: URL, reload: boolean=false) => {
     try {
       await this.stop();
-      this.init(this.stationName, collectionDefPath, this.stackPath);
+      await this.init(this.stationName, collectionDefUrl, this.stackPath);
       await this.connect(); // this is called to resend connecting data
       this.isLoaded = true;
       //may need to pass an additional argument to force reload, that will be sent as first argument as dispatcher.up(true)
@@ -304,7 +285,7 @@ class TaskDelegator {
   reloadCollection = async () => {
     if (!this.isLoaded) return;
     await this.dispatcher.down();
-    await this.reinit(this.collectionDefPath, true);
+    await this.reinit(this.collectionDefUrl, true);
   }
 
   /**

@@ -13,15 +13,16 @@ const fs = require('fs');
 const program = require('commander');
 const ospath = require('ospath');
 const readline = require('readline-promise').default;
+const url = require('url');
 
 const { VirtuinTaskDispatcher } = require('virtuintaskdispatcher').VirtuinTaskDispatcher;
 
-type InputCommandType = 'run' | 'up' | 'down' | 'upVM' | 'downVM' | 'sendTaskInputFile'
+type InputCommandType = 'run' | 'up' | 'down' | 'sendTaskInputFile'
 
 // import VirtuinTaskDispatcher from './VirtuinTaskDispatcher';
 // Define required arguments
 let inputCommand: InputCommandType = 'run';
-let collectionDefPath: string;
+let collectionDefUrl: URL;
 let groupIndex: number = 0;
 let taskIndex: number = 0;
 let verbosity: number = 0;
@@ -38,7 +39,7 @@ program
   .action((collectionPath, options) => {
     console.log(`run ${collectionPath}`);
     inputCommand = 'run';
-    collectionDefPath = collectionPath;
+    collectionDefUrl = url.parse(collectionPath);
     groupIndex = options.group;
     taskIndex = options.task;
     verbosity = options.verbose;
@@ -65,7 +66,7 @@ program
   .action((collectionPath, options) => {
     console.log(`sendTaskInputFile ${collectionPath}`);
     inputCommand = 'sendTaskInputFile';
-    collectionDefPath = collectionPath;
+    collectionDefUrl = url.parse(collectionPath);
     groupIndex = options.group;
     taskIndex = options.task;
     verbosity = options.verbose;
@@ -77,22 +78,11 @@ program
   .action((collectionPath, options) => {
     console.log(`up ${collectionPath}`);
     inputCommand = 'up';
-    collectionDefPath = collectionPath;
+    collectionDefUrl = url.parse(collectionPath);
     fullReload = options.reload || false;
     verbosity = options.verbose;
   });
 
-program
-  .command('upVM <collectionPath>')
-  .option('-r, --reload', 'Reload the virtual machine specified in the collection if already running', parseInt, 0)
-  .option('-v, --verbose <level>', 'Verbosity [0-2]', parseInt, 0)
-  .action((collectionPath, options) => {
-    console.log(`run ${collectionPath}`);
-    inputCommand = 'upVM';
-    collectionDefPath = collectionPath;
-    fullReload = options.reload || false;
-    verbosity = options.verbose;
-  });
 
 program
   .command('down <collectionPath>')
@@ -100,26 +90,12 @@ program
   .action((collectionPath, options) => {
     console.log(`down ${collectionPath}`);
     inputCommand = 'down';
-    collectionDefPath = collectionPath;
+    collectionDefUrl = url.parse(collectionPath);
     verbosity = options.verbose;
   });
 
-program
-  .command('downVM <collectionPath>')
-  .option('-v, --verbose <level>', 'Verbosity [0-2]', parseInt, 0)
-  .action((collectionPath, options) => {
-    console.log(`down ${collectionPath}`);
-    inputCommand = 'downVM';
-    collectionDefPath = collectionPath;
-    verbosity = options.verbose;
-  });
 // Process passed arguments
 program.parse(process.argv);
-
-if ((typeof collectionDefPath !== 'string') || fs.existsSync(collectionDefPath) === false) {
-  console.error('Invalid collection definition path provided');
-  process.exit(1);
-}
 
 if (verbosity > 2 || verbosity < 0) {
   console.error(`Invalid verbosity setting ${verbosity}`);
@@ -276,21 +252,9 @@ class CommandHandler {
   }
 
   async down(): Promise<void> {
-    console.log('[VIRT] bringing Vagrant VM down');
+    console.log('[VIRT] bringing containers down');
     await this.dispatcher.down();
     this.finishedMessages = ['[VIRT] finished dispatcher down'];
-  }
-
-  async upVM(reloadVM: boolean = false): Promise<void> {
-    console.log('[VIRT] Vagrant VM up');
-    await this.dispatcher.upVM(reloadVM);
-    this.finishedMessages = ['[VIRT] finished VM up'];
-  }
-
-  async downVM(): Promise<void> {
-    console.log('[VIRT] bringing Vagrant VM down');
-    await this.dispatcher.downVM();
-    this.finishedMessages = ['[VIRT] finished Vagrant VM down'];
   }
 }
 // Read task sdefinitions file args[2]
@@ -300,106 +264,88 @@ if (!process.env.VIRT_STATION_NAME) {
 }
 const stationName: string = process.env.VIRT_STATION_NAME || "VIRT_DEFAULT_STATION";
 console.log(`[VIRT] running in ${stationName}`);
-const tmpCollectionDef: ?RootInterface = VirtuinTaskDispatcher.collectionObjectFromPath((collectionDefPath: any));
 
-if (!tmpCollectionDef) {
-  console.error('Could not open the collection file');
-  process.exit(1);
-}
-let collectionEnvPath = null;
-if (!tmpCollectionDef || !tmpCollectionDef.stationCollectionEnvPaths
-  || !tmpCollectionDef.stationCollectionEnvPaths[stationName]) {
-  console.log('The variable stationCollectionEnvPaths is not set for this station in the collection.');
-  console.log(`You may want to add ${stationName} key with the full path to the .env of this collection`);
-} else {
+const newDispatcher = async () : Promise<VirtuinTaskDispatcher> => {
+  const tmpCollectionDef: ?RootInterface = await VirtuinTaskDispatcher.collectionObjectFromUrl(collectionDefUrl);
+  if (!tmpCollectionDef) {
+    console.error('Could not open the collection file');
+    process.exit(1);
+  }
   const collectionDef: RootInterface = (tmpCollectionDef: any);
-  collectionEnvPath = collectionDef.stationCollectionEnvPaths[stationName];
-}
-const collectionDef: RootInterface = (tmpCollectionDef: any);
-const collectionEnvs: ?CollectionEnvs = VirtuinTaskDispatcher.collectionEnvFromPath(collectionEnvPath);
+  const { collectionEnvPath : string , collectionEnvs : CollectionEnvs  } = await VirtuinTaskDispatcher.collectionEnvFromDefinition(collectionDefUrl, collectionDef);
 
-const appDataPath = ospath.data();
-const stackPath = path.join(appDataPath, 'Virtuin');
-if (!fs.existsSync(stackPath)){
-  fs.mkdirSync(stackPath);
-}
-const dispatcher: VirtuinTaskDispatcher = new VirtuinTaskDispatcher(
-    stationName,
-    (collectionEnvs: any),
-    collectionDef,
-    stackPath,
-    verbosity,
-    collectionEnvPath
-  );
-const commandHandler: CommandHandler = new CommandHandler(dispatcher);
-if (inputCommand === 'run') {
-  commandHandler.run(groupIndex, taskIndex).then(() => {
-    console.log('When finished Ctrl-c to quit');
-    return true;
-  }).catch(async (err) => {
-    console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
-    dispatcher.end();
-    process.exit(2);
-  });
-} else if (inputCommand === 'sendTaskInputFile') {
-  commandHandler.sendTaskInputFile(groupIndex, taskIndex).then(() => {
-    dispatcher.end();
-    return true;
-  }).catch(async (err) => {
-    console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
-    dispatcher.end();
-    process.exit(2);
-  });
-} else if (inputCommand === 'up') {
-  commandHandler.up(fullReload).then(() => {
-    dispatcher.end();
-    return true;
-  }).catch(async (err) => {
-    console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
-    dispatcher.end();
-    process.exit(2);
-  });
-} else if (inputCommand === 'down') {
-  commandHandler.down().then(() => {
-    dispatcher.end();
-    return true;
-  }).catch(async (err) => {
-    console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
-    dispatcher.end();
-    process.exit(2);
-  });
-} else if (inputCommand === 'upVM') {
-  commandHandler.upVM(fullReload).then(() => {
-    dispatcher.end();
-    return true;
-  }).catch(async (err) => {
-    console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
-    dispatcher.end();
-    process.exit(2);
-  });
-} else if (inputCommand === 'downVM') {
-  commandHandler.downVM().then(() => {
-    dispatcher.end();
-    return true;
-  }).catch(async (err) => {
-    console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
-    dispatcher.end();
-    process.exit(2);
-  });
-}
+  const appDataPath = ospath.data();
+  const stackPath = path.join(appDataPath, 'virtuin');
+  if (!fs.existsSync(stackPath)){
+    fs.mkdirSync(stackPath);
+  }
+  const dispatcher: VirtuinTaskDispatcher = new VirtuinTaskDispatcher(
+      stationName,
+      collectionDef,
+      (collectionEnvs: any),
+      collectionEnvPath,
+      stackPath,
+      verbosity,
+    );
 
-process.on('SIGINT', () => {
-  process.exit(0);
-});
+    return dispatcher;
+}
+newDispatcher.then((dispatcher: VirtuinTaskDispatcher) => {
+  const commandHandler: CommandHandler = new CommandHandler(dispatcher);
+  if (inputCommand === 'run') {
+    commandHandler.run(groupIndex, taskIndex).then(() => {
+      console.log('When finished Ctrl-c to quit');
+      return true;
+    }).catch(async (err) => {
+      console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
+      dispatcher.end();
+      process.exit(2);
+    });
+  } else if (inputCommand === 'sendTaskInputFile') {
+    commandHandler.sendTaskInputFile(groupIndex, taskIndex).then(() => {
+      dispatcher.end();
+      return true;
+    }).catch(async (err) => {
+      console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
+      dispatcher.end();
+      process.exit(2);
+    });
+  } else if (inputCommand === 'up') {
+    commandHandler.up(fullReload).then(() => {
+      dispatcher.end();
+      return true;
+    }).catch(async (err) => {
+      console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
+      dispatcher.end();
+      process.exit(2);
+    });
+  } else if (inputCommand === 'down') {
+    commandHandler.down().then(() => {
+      dispatcher.end();
+      return true;
+    }).catch(async (err) => {
+      console.log(`[VIRT] Task dispatcher received fatal err: ${err}`);
+      dispatcher.end();
+      process.exit(2);
+    });
+  }
+  process.on('SIGINT', () => {
+    process.exit(0);
+  });
 
-process.on('exit', (code) => {
-  console.log(`[VIRT] Task dispatcher finished (code=${code}).`);
-  if (commandHandler) {
-    for(const k of commandHandler.finishedMessages.keys()) {
-      console.log(commandHandler.finishedMessages[k]);
+  process.on('exit', (code) => {
+    console.log(`[VIRT] Task dispatcher finished (code=${code}).`);
+    if (commandHandler) {
+      for(const k of commandHandler.finishedMessages.keys()) {
+        console.log(commandHandler.finishedMessages[k]);
+      }
     }
-  }
-  if (dispatcher) {
-    dispatcher.end();
-  }
+    if (dispatcher) {
+      dispatcher.end();
+    }
+  });
+}).catch((error) => {
+    console.log(`[VIRT] Task dispatcher received fatal err: ${error}`);
+    process.exit(3);
 });
+

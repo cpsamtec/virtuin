@@ -7,6 +7,7 @@ import type {
   Task, RootInterface, CollectionEnvs, GroupMode
 } from './types';
 
+const fetch = require('node-fetch');
 const os = require('os');
 const ospath = require('ospath');
 const fs = require('fs');
@@ -17,9 +18,9 @@ const dotenv = require('dotenv');
 const fse = require('fs-extra');
 const uuidv4 = require('uuid/v4');
 const yaml = require('js-yaml');
-const vagrant = require('./vagrant');
 const { diff } = require('deep-diff');
 const fixPath = require('fix-path');
+const url = require('url');
 
 
 // const RestServer = require('virtuin-rest-service');
@@ -85,8 +86,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
 
   stackBasePath: string;
 
-  vagrantDirectory: ?string;
-
   collectionEnvPath: ?string;
 
   collectionPath: string;
@@ -116,16 +115,15 @@ class VirtuinTaskDispatcher extends EventEmitter {
 
   constructor(
     stationName: string,
-    collectionEnvs: CollectionEnvs,
     collectionDef: RootInterface,
+    collectionEnvs: CollectionEnvs,
+    collectionEnvPath: string,
     stackBasePath: ?string = null,
-    verbosity: number = 0,
-    collectionEnvPath: ?string = null,
+    verbosity: number = 0
   ) {
     super();
     this.dockerCredentials = null;
     this.stackBasePath = stackBasePath || os.tmpdir();
-    this.vagrantDirectory = collectionEnvs.VIRT_VAGRANT_DIRECTORY;
     this.collectionEnvPath = collectionEnvPath;
     this.collectionEnvs = collectionEnvs;
     this.stationName = stationName;
@@ -147,8 +145,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
       COMPOSE_CONVERT_WINDOW_PATHS: 1,
       COMPOSE_FORCE_WINDOWS_HOST: 0,
       DOCKER_HOST: this.daemonAddress,
-      VIRT_COLLECTION_ENV_PATH: (collectionEnvPath) ? collectionEnvPath:
-        (process.env.VIRT_COLLECTION_ENV_PATH ? process.env.VIRT_COLLECTION_ENV_PATH : undefined),
+      VIRT_COLLECTION_ENV_PATH: (collectionEnvPath) ? collectionEnvPath: undefined,
       ...collectionEnvs
     };
     if (collectionEnvs && collectionEnvs.VIRT_DOCKER_USER && collectionEnvs.VIRT_DOCKER_PASSWORD) {
@@ -314,18 +311,21 @@ class VirtuinTaskDispatcher extends EventEmitter {
     if (this.restServer) {
       this.restServer.end();
     }
-    if (this.vagrantDirectory) {
-      vagrant.vagrantEmitter.removeAllListeners();
-    }
     if(this.promptHandler) {
-      this.promptHandler = null;
+      
     }
     RestServer.setProducerDelegate(null);
   }
 
-  static collectionObjectFromPath(collectionDefPath: string): ?RootInterface {
-    const collectionDefData = fs.readFileSync(collectionDefPath);
-    if (collectionDefPath.endsWith('.json')) {
+  static collectionObjectFromUrl = async (collectionDefURL: URL): Promise<?RootInterface> => {
+    let collectionDefData : ?Buffer = null;
+    if(collectionDefURL.protocol != null && collectionDefURL.protocol !== 'file:') {
+      let res = await fetch(url);
+     collectionDefData = res.buffer(); 
+    } else {
+      collectionDefData = await fse.readFile(collectionDefURL);
+    }
+    if (collectionDefURL.path && collectionDefURL.path.endsWith('.json')) {
       const collectionObject: RootInterface = JSON.parse(collectionDefData.toString());
       return collectionObject;
     }
@@ -333,10 +333,28 @@ class VirtuinTaskDispatcher extends EventEmitter {
     return collectionObject;
   }
 
-  static collectionEnvFromPath(collectionEnvPath: ?string): CollectionEnvs {
-    const defaultEnvs = {
+  static collectionEnvFromDefinition = async (collectionDefUrl: URL, collectionObject: RootInterface): Promise<{collectionEnvPath: string, collectionEnvs: CollectionEnvs}> => {
+    let collectionDefSourceType : 'remote' | 'local' = 'local';
+    let collectionEnvPath : ?string;
+    if(collectionDefUrl.protocol != null && collectionDefUrl.protocol !== 'file:') {
+      collectionDefSourceType = 'remote';
+    }
+
+    let defaultEnvs = {
       VIRT_GUI_SERVER_ADDRESS: "host.docker.internal",
       VIRT_DOCKER_HOST: "unix:///var/run/docker.sock"
+    }
+    if(collectionObject.build === 'development' && collectionDefSourceType === 'local' && (await fse.pathExists(path.join(collectionDefUrl.path, 'src')))) {
+      defaultEnvs = { ...defaultEnvs, VIRT_PROJECT_SRC : path.join(collectionDefUrl.path, 'src')};
+    }
+    if(collectionDefSourceType === 'local' && (await fse.pathExists(path.join(collectionDefUrl.path, 'collection.env')))) {
+      collectionEnvPath = path.join(collectionDefUrl.path, 'collection.env');
+    } else {
+      let collHomeDir = await VirtuinTaskDispatcher.collectionHomeDir(collectionObject);
+      const homeEnvExists = await fse.pathExists(path.join(collHomeDir, 'collection.env'))
+      if (homeEnvExists) {
+        collectionEnvPath = path.join(collHomeDir, 'collection.env');
+      }
     }
     let envData = '';
     if(collectionEnvPath) {
@@ -351,7 +369,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
       }
     }
 
-    return defaultEnvs;
+    return { collectionEnvPath, collectionEnvs: defaultEnvs };
   }
 
   composeName = () => `virt${this.collectionDef.collectionName}`.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
@@ -404,36 +422,25 @@ class VirtuinTaskDispatcher extends EventEmitter {
     await this.pruneContainers();
   }
 
+
   /**
-   * Brings up Vagrant VM from collection definition.
-   * Additionally stops any existing VM's so they do not intefere.
-   * @async
-   * @param  {RootInterface}  collectionDef Collection definition.
-   * @return {Promise<void>}
-   * @throws
+   * create a home folder for Virtuin. Could start storing collections in this location
    */
-  upVM = async (fullReload: boolean = false): Promise<void> => {
-    try {
-      this.updateDispatchPrimaryStatus({ statusMessage: 'Ensuring VM Ready' });
-      if (this.vagrantDirectory) {
-        const cb: ((string) => void) = (status) => {
-          this.updateDispatchPrimaryStatus({ statusMessage: status });
-        };
-        await vagrant.ensureOnlyMachineRunningAtDirectory(this.vagrantDirectory, fullReload, cb);
-      } else {
-        this.updateDispatchPrimaryStatus({ statusMessage: 'No VM specified' });
-      }
-    } catch (error) {
-      throw error;
+  static virtuinHome = async (): Promise<string> => {
+    const virtHome = path.join(ospath.home(), 'virtuin');
+    if (!(await fse.pathExists(virtHome))) {
+      await fse.mkdir(virtHome);
     }
+    return virtHome;
   }
 
-  getTempDirPath = async (): Promise<string> => {
-    const tmpPath = path.join(os.tmpdir(), 'virtuin');
-    if (!(await fse.exists(tmpPath))) {
-      await fse.mkdir(tmpPath);
+  static collectionHomeDir = async (collectionObject : RootInterface): Promise<string> => {
+    const virtHome = await VirtuinTaskDispatcher.virtuinHome()
+    const collHomePath = path.join(virtHome, collectionObject.collectionName.toLowerCase());
+    if (!(await fse.pathExists(collHomePath))) {
+      await fse.mkdir(collHomePath);
     }
-    return tmpPath;
+    return collHomePath;
   }
 
   /**
@@ -591,43 +598,6 @@ class VirtuinTaskDispatcher extends EventEmitter {
     }
   }
 
-  /**
-   * Stops vagrant virtual machine based on yml file.
-   * Optionally remove containers.
-   * @async
-   * @return {Promise<void>}
-   * @throws
-   */
-  downVM = async (): Promise<boolean> => {
-    try {
-      this.updateDispatchPrimaryStatus({
-        statusMessage:
-      'Bringing Vagrant VM Down'
-      });
-      if (this.vagrantDirectory) {
-        const s = await vagrant.vagrantStopVMInDirectory(this.vagrantDirectory);
-        if (s) {
-          this.updateDispatchPrimaryStatus({
-            statusMessage:
-            'Vagrant VM successfully brought down'
-          });
-          return true;
-        }
-        this.updateDispatchPrimaryStatus({
-          statusMessage:
-            'Unable to bring Vagrant VM down'
-        });
-        return false;
-      }
-      this.updateDispatchPrimaryStatus({
-        statusMessage:
-          'No Vagrant VM in specified collection'
-      });
-      return false;
-    } catch (error) {
-      throw error;
-    }
-  }
 
   /**
    * INTERNAL

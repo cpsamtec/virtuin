@@ -19,6 +19,14 @@
     "package:linux": "lerna run --scope virtuingui2 package-linux --stream",
     "package:mac": "lerna run --scope virtuingui2 package-mac --stream"
   },
+  "author": "chris.page@samtec.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cpsamtec/virtuin"
+  },
+  "keywords": [
+    "Virtuin"
+  ],
   "devDependencies": {
     "lerna": "^3.3.1"
   },

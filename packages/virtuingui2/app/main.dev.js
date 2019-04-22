@@ -83,7 +83,7 @@ const stationName = process.env.VIRT_STATION_NAME || 'VIRT_DEFAULT_STATION';
 const collectionDefPath = process.env.VIRTUIN_COLLECTION_LOCATION;
 const appDataPath = app.getPath('appData');
 
-const stackPath = path.join(app.getPath('appData'), 'Virtuin');
+const stackPath = path.join(app.getPath('appData'), 'virtuin');
 if (!fs.existsSync(stackPath)){
   fs.mkdirSync(stackPath);
 }

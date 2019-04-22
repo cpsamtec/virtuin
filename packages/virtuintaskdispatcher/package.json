@@ -29,16 +29,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@bitbucket.org/samteccmd/virtuintaskdispatcher.git"
+    "url": "https://github.com/cpsamtec/virtuin"
   },
   "keywords": [
     "Virtuin"
   ],
   "author": "Pages",
   "license": "MIT",
-  "homepage": "https://bitbucket.org/samteccmd/virtuintaskdispatcher#readme",
+  "homepage": "https://github.com/cpsamtec/virtuin",
   "dependencies": {
-    "commander": "^2.20.0",
+    "node-fetch": "^2.3.0",
     "dateformat": "^3.0.3",
     "deep-diff": "^1.0.2",
     "dotenv": "^7.0.0",

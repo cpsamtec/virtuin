@@ -114,10 +114,8 @@ export default class MenuBuilder {
               if (url == null) return;
               const collectionPath =  path.resolve(app.getPath('appData'), 'tmpCollection.yml')
               const file = fs.createWriteStream(collectionPath);
-              const request = http.get(url, (response) => {
-                response.pipe(file);
-                TaskDelegator.reinit(collectionPath);
-              });
+              const collectionUrl = new URL(url);
+              TaskDelegator.reinit(collectionUrl);
             })
             .catch(console.error);
           }
