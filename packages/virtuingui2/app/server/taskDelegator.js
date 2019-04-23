@@ -72,7 +72,7 @@ class TaskDelegator {
     }
     let collectionEnvPath = null;
     const collectionDef: RootInterface = (tmpCollectionDef: any);
-    const { collectionEnvPath : string , collectionEnvs : CollectionEnvs  } = await VirtuinTaskDispatcher.collectionEnvFromDefinition(collectionDefUrl, collectionDef);
+    const { collectionEnvPath, collectionEnvs } = await VirtuinTaskDispatcher.collectionEnvFromDefinition(collectionDefUrl, collectionDef);
     // store locally
     this.stationName = stationName;
     this.stackPath = stackPath;

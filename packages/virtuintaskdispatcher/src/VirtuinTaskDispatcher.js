@@ -317,15 +317,18 @@ class VirtuinTaskDispatcher extends EventEmitter {
     RestServer.setProducerDelegate(null);
   }
 
-  static collectionObjectFromUrl = async (collectionDefURL: URL): Promise<?RootInterface> => {
+  static collectionObjectFromUrl = async (collectionDefUrl: URL): Promise<?RootInterface> => {
     let collectionDefData : ?Buffer = null;
-    if(collectionDefURL.protocol != null && collectionDefURL.protocol !== 'file:') {
+    if(collectionDefUrl.protocol === 'http:' || collectionDefUrl.protocol === 'https:') {
       let res = await fetch(url);
-     collectionDefData = res.buffer(); 
+      collectionDefData = res.buffer(); 
+    } else if(collectionDefUrl.protocol === 'file:'){
+      collectionDefData = await fse.readFile(collectionDefUrl);
     } else {
-      collectionDefData = await fse.readFile(collectionDefURL);
+      throw new Error('Invalid collection location protocol');
     }
-    if (collectionDefURL.path && collectionDefURL.path.endsWith('.json')) {
+  
+    if (collectionDefUrl.pathname && collectionDefUrl.pathname.endsWith('.json')) {
       const collectionObject: RootInterface = JSON.parse(collectionDefData.toString());
       return collectionObject;
     }
@@ -336,7 +339,8 @@ class VirtuinTaskDispatcher extends EventEmitter {
   static collectionEnvFromDefinition = async (collectionDefUrl: URL, collectionObject: RootInterface): Promise<{collectionEnvPath: string, collectionEnvs: CollectionEnvs}> => {
     let collectionDefSourceType : 'remote' | 'local' = 'local';
     let collectionEnvPath : ?string;
-    if(collectionDefUrl.protocol != null && collectionDefUrl.protocol !== 'file:') {
+    let skipLoadEnv = false;
+    if(collectionDefUrl.protocol === 'http:' || collectionDefUrl.protocol === 'https:') {
       collectionDefSourceType = 'remote';
     }
 
@@ -344,26 +348,28 @@ class VirtuinTaskDispatcher extends EventEmitter {
       VIRT_GUI_SERVER_ADDRESS: "host.docker.internal",
       VIRT_DOCKER_HOST: "unix:///var/run/docker.sock"
     }
-    if(collectionObject.build === 'development' && collectionDefSourceType === 'local' && (await fse.pathExists(path.join(collectionDefUrl.path, 'src')))) {
-      defaultEnvs = { ...defaultEnvs, VIRT_PROJECT_SRC : path.join(collectionDefUrl.path, 'src')};
+    //Really should only be in development mode when using local built sources
+    if(/*collectionObject.build === 'development' && */collectionDefSourceType === 'local' && (await fse.pathExists(path.join(url.fileURLToPath(collectionDefUrl), '..' , 'src')))) {
+      defaultEnvs = { ...defaultEnvs, VIRT_PROJECT_SRC : path.join(collectionDefUrl.pathname, '..', 'src')};
     }
-    if(collectionDefSourceType === 'local' && (await fse.pathExists(path.join(collectionDefUrl.path, 'collection.env')))) {
-      collectionEnvPath = path.join(collectionDefUrl.path, 'collection.env');
+    if(collectionDefSourceType === 'local' && (await fse.pathExists(path.join(collectionDefUrl.pathname, 'collection.env')))) {
+      collectionEnvPath = path.join(collectionDefUrl.pathname, 'collection.env');
     } else {
       let collHomeDir = await VirtuinTaskDispatcher.collectionHomeDir(collectionObject);
-      const homeEnvExists = await fse.pathExists(path.join(collHomeDir, 'collection.env'))
-      if (homeEnvExists) {
-        collectionEnvPath = path.join(collHomeDir, 'collection.env');
+      collectionEnvPath = path.join(collHomeDir, 'collection.env');
+      const homeEnvExists = await fse.pathExists(collectionEnvPath);
+      if (!homeEnvExists) {
+        await fse.createFile(collectionEnvPath)
+        skipLoadEnv = true;
       }
     }
     let envData = '';
-    if(collectionEnvPath) {
+    if(!skipLoadEnv) {
       try {
-        // fse.statSync(collectionEnvPath);
         envData = fse.readFileSync(path.join(collectionEnvPath, 'collection.env'), 'utf8');
         const buf = Buffer.from(envData, 'utf8');
         const collectionEnvs: CollectionEnvs = (dotenv.parse(buf): any); // will return an object
-        return {...defaultEnvs, ...collectionEnvs};
+        return { collectionEnvPath, collectionEnvs: {...defaultEnvs, ...collectionEnvs}};
       } catch (error) {
         console.error('Could not access the Collections collection.env file.');
       }

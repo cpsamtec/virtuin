@@ -76,7 +76,7 @@ It is not possible to directly build the GUI directly on Windows at this moment 
 There is some issue with webpack and babel. On a Mac or Linux machine
 
 ##### Install
-- node 10.11+
+- node 10.15+
   [download node](https://nodejs.org/en/download/)
 - yarn
   ```npm install -g yarn```

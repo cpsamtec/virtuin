@@ -39,7 +39,11 @@ program
   .action((collectionPath, options) => {
     console.log(`run ${collectionPath}`);
     inputCommand = 'run';
-    collectionDefUrl = url.parse(collectionPath);
+    try {
+      collectionDefUrl = url.pathToFileURL(collectionPath);
+    } catch(error) {
+      collectionDefUrl = new URL(collectionPath);
+    }
     groupIndex = options.group;
     taskIndex = options.task;
     verbosity = options.verbose;
@@ -66,7 +70,11 @@ program
   .action((collectionPath, options) => {
     console.log(`sendTaskInputFile ${collectionPath}`);
     inputCommand = 'sendTaskInputFile';
-    collectionDefUrl = url.parse(collectionPath);
+    try {
+      collectionDefUrl = url.pathToFileURL(collectionPath);
+    } catch(error) {
+      collectionDefUrl = new URL(collectionPath);
+    }
     groupIndex = options.group;
     taskIndex = options.task;
     verbosity = options.verbose;
@@ -78,7 +86,11 @@ program
   .action((collectionPath, options) => {
     console.log(`up ${collectionPath}`);
     inputCommand = 'up';
-    collectionDefUrl = url.parse(collectionPath);
+    try {
+      collectionDefUrl = url.pathToFileURL(collectionPath);
+    } catch(error) {
+      collectionDefUrl = new URL(collectionPath);
+    }
     fullReload = options.reload || false;
     verbosity = options.verbose;
   });
@@ -90,7 +102,11 @@ program
   .action((collectionPath, options) => {
     console.log(`down ${collectionPath}`);
     inputCommand = 'down';
-    collectionDefUrl = url.parse(collectionPath);
+    try {
+      collectionDefUrl = url.pathToFileURL(collectionPath);
+    } catch(error) {
+      collectionDefUrl = new URL(collectionPath);
+    }
     verbosity = options.verbose;
   });
 
@@ -272,7 +288,7 @@ const newDispatcher = async () : Promise<VirtuinTaskDispatcher> => {
     process.exit(1);
   }
   const collectionDef: RootInterface = (tmpCollectionDef: any);
-  const { collectionEnvPath : string , collectionEnvs : CollectionEnvs  } = await VirtuinTaskDispatcher.collectionEnvFromDefinition(collectionDefUrl, collectionDef);
+  const { collectionEnvPath, collectionEnvs } = await VirtuinTaskDispatcher.collectionEnvFromDefinition(collectionDefUrl, collectionDef);
 
   const appDataPath = ospath.data();
   const stackPath = path.join(appDataPath, 'virtuin');
@@ -290,7 +306,7 @@ const newDispatcher = async () : Promise<VirtuinTaskDispatcher> => {
 
     return dispatcher;
 }
-newDispatcher.then((dispatcher: VirtuinTaskDispatcher) => {
+newDispatcher().then((dispatcher: VirtuinTaskDispatcher) => {
   const commandHandler: CommandHandler = new CommandHandler(dispatcher);
   if (inputCommand === 'run') {
     commandHandler.run(groupIndex, taskIndex).then(() => {

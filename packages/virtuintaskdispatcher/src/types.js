@@ -1,3 +1,5 @@
+import { JestEnvironment } from "@jest/environment";
+
 // @flow
 
 // collection.env
@@ -9,10 +11,29 @@ export type CollectionEnvs = {
   [string]: string | number
 }
 
+type DockerService =  {
+  build?: string,
+  image?: string,
+  command?: string,
+  ports?: string[],
+  volumes?: string[],
+  links?: string[],
+  environment?: string[],
+};
+
+type DockerServices =  {
+  [string]: DockerService,
+};
+type DockerSource =  {
+  version: string,
+  services: DockerServices,
+};
+
+
 // collection.json
 export type DockerCompose = {
   type?: 'RAW' | 'URL',
-  source: ({version: string} & Object) | string, // string when type is url
+  source: DockerSource, // string when type is url
 };
 
 export type DockerInfo = {
