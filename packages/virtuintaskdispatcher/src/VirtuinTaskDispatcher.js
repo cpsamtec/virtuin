@@ -349,11 +349,11 @@ class VirtuinTaskDispatcher extends EventEmitter {
       VIRT_DOCKER_HOST: "unix:///var/run/docker.sock"
     }
     //Really should only be in development mode when using local built sources
-    if(/*collectionObject.build === 'development' && */collectionDefSourceType === 'local' && (await fse.pathExists(path.join(url.fileURLToPath(collectionDefUrl), '..' , 'src')))) {
+    if(/*collectionObject.build === 'development' && */collectionDefSourceType === 'local' && (await fse.pathExists(path.join(collectionDefUrl.pathname, '..' , 'src')))) {
       defaultEnvs = { ...defaultEnvs, VIRT_PROJECT_SRC : path.join(collectionDefUrl.pathname, '..', 'src')};
     }
-    if(collectionDefSourceType === 'local' && (await fse.pathExists(path.join(collectionDefUrl.pathname, 'collection.env')))) {
-      collectionEnvPath = path.join(collectionDefUrl.pathname, 'collection.env');
+    if(collectionDefSourceType === 'local' && (await fse.pathExists(path.join(collectionDefUrl.pathname, '..', 'collection.env')))) {
+      collectionEnvPath = path.join(collectionDefUrl.pathname, '..', 'collection.env');
     } else {
       let collHomeDir = await VirtuinTaskDispatcher.collectionHomeDir(collectionObject);
       collectionEnvPath = path.join(collHomeDir, 'collection.env');

@@ -4,6 +4,7 @@ import prompt from 'electron-prompt';
 import http from 'http';
 import path from 'path';
 import fs from 'fs';
+import url from 'url';
 
 import TaskDelegator from './server/taskDelegator';
 
@@ -93,9 +94,18 @@ export default class MenuBuilder {
           label: 'Load Collection File',
           accelerator: 'Command+L',
           click: () => {
-            const collectionPath = dialog.showOpenDialog({ properties: ['openFile'], filters: [{name: 'yaml', extensions: ['yml']}] })
-            if (collectionPath == null) return; // stop if cancelled selecting file
-            TaskDelegator.reinit(collectionPath[0]);
+            const collectionPaths = dialog.showOpenDialog({ properties: ['openFile'], filters: [{name: 'yaml', extensions: ['yml']}] })
+            if (collectionPaths == null || collectionPaths.length < 1) return; // stop if cancelled selecting file
+            try {
+              const collectionDefUrl = new URL(`file://${collectionPaths[0]}`);
+              TaskDelegator.reinit(collectionDefUrl).then(() => {
+
+              }).catch(error => {
+                console.error(`could not reinitialize ${error}`);
+              });
+            } catch(error) {
+              console.error(`could not parse passed file ${collectionPaths[0]}\nError ${error}`);
+            }
           }
         },
         {
@@ -103,19 +113,25 @@ export default class MenuBuilder {
           accelerator: 'Command+Shift+L',
           click: () => {
             prompt({
-              title: 'Load Collection from URL',
+              title: 'Load Collection from http/https URL',
               label: 'URL:',
-              value: 'http://example.org',
+              value: 'http://example.org/collection.yml',
               inputAttrs: {
                   type: 'url'
               }
             })
-            .then(url => {
-              if (url == null) return;
-              const collectionPath =  path.resolve(app.getPath('appData'), 'tmpCollection.yml')
-              const file = fs.createWriteStream(collectionPath);
-              const collectionUrl = new URL(url);
-              TaskDelegator.reinit(collectionUrl);
+            .then(selURL => {
+              if (selURL == null) return;
+              try {
+                const collectionDefUrl = new URL(selURL);
+                TaskDelegator.reinit(collectionDefUrl).then(() => {
+
+                }).catch(error => {
+                  console.error(`could not reinitialize ${error}`);
+                });
+              } catch(error) {
+                console.error(`invalid url passed`);
+              }
             })
             .catch(console.error);
           }
@@ -272,9 +288,18 @@ export default class MenuBuilder {
             label: 'Load Collection File',
             accelerator: 'Ctrl+L',
             click: () => {
-              const collectionPath = dialog.showOpenDialog({ properties: ['openFile'], filters: [{name: 'yaml', extensions: ['yml']}] })
-              if (collectionPath == null) return; // stop if cancelled selecting file
-              TaskDelegator.reinit(collectionPath[0]);
+              const collectionPaths = dialog.showOpenDialog({ properties: ['openFile'], filters: [{name: 'yaml', extensions: ['yml']}] })
+              if (collectionPaths == null || collectionPaths.length < 1) return; // stop if cancelled selecting file
+              try {
+                const collectionDefUrl = new URL(`file://${collectionPaths[0]}`);
+                TaskDelegator.reinit(collectionDefUrl).then(() => {
+
+                }).catch(error => {
+                  console.error(`could not reinitialize ${error}`);
+                });
+              } catch(error) {
+                console.error(`could not parse passed file ${collectionPaths[0]}\nError ${error}`);
+              }
             }
           },
           {
@@ -282,20 +307,20 @@ export default class MenuBuilder {
             accelerator: 'Ctrl+Alt+L',
             click: () => {
               prompt({
-                title: 'Load Collection from URL',
+                title: 'Load Collection from http/https URL',
                 label: 'URL:',
-                value: 'http://example.org',
+                value: 'http://example.org/collection.yml',
                 inputAttrs: {
                     type: 'url'
                 }
               })
-              .then(url => {
-                if (url == null) return;
-                const collectionPath =  path.resolve(app.getPath('appData'), 'tmpCollection.yml')
-                const file = fs.createWriteStream(collectionPath);
-                const request = http.get(url, (response) => {
-                  response.pipe(file);
-                  TaskDelegator.reinit(collectionPath);
+              .then(selURL => {
+                if (selURL == null) return;
+                const collectionDefUrl = new URL(selURL);
+                TaskDelegator.reinit(collectionDefUrl).then(() => {
+
+                }).catch(error => {
+                  console.error(`could not reinitialize ${error}`);
                 });
               })
               .catch(console.error);

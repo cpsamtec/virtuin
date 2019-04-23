@@ -70,7 +70,6 @@ class TaskDelegator {
       }));
       return;
     }
-    let collectionEnvPath = null;
     const collectionDef: RootInterface = (tmpCollectionDef: any);
     const { collectionEnvPath, collectionEnvs } = await VirtuinTaskDispatcher.collectionEnvFromDefinition(collectionDefUrl, collectionDef);
     // store locally
