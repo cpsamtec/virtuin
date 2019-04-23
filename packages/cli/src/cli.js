@@ -165,22 +165,16 @@ class CommandHandler {
     this.promptMessage = message;
     if (promptType === 'confirmation') {
       this.promptMessage += "\nType okay then press enter\n"
-      const rlp = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-        terminal: true
-      });
-      let value = await rlp.questionAsync(this.promptMessage);
+      process.stdout.write(this.promptMessage || "");
+      const stdinBuffer = fs.readFileSync(0);
+      const value = stdinBuffer.toString();
       this.promptMessage = null;
       return "okay"
     } else if (promptType === 'confirmCancel') {
       this.promptMessage += "\nType okay|cancel then press enter\n"
-      const rlp = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-        terminal: true
-      });
-      let value = await rlp.questionAsync(this.promptMessage);
+      process.stdout.write(this.promptMessage || "");
+      const stdinBuffer = fs.readFileSync(0);
+      let value = stdinBuffer.toString();
       value = value.toLowerCase();
       this.promptMessage = null;
       if(value.length > 0 && value[0] === 'o') {
@@ -189,12 +183,9 @@ class CommandHandler {
       return "cancel"
     } else if (promptType === 'text') {
       this.promptMessage += "\nInput text then press enter\n"
-      const rlp = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-        terminal: true
-      });
-      let value = await rlp.questionAsync(this.promptMessage);
+      process.stdout.write(this.promptMessage || "");
+      const stdinBuffer = fs.readFileSync(0);
+      const value = stdinBuffer.toString();
       this.promptMessage = null;
       return value
     } else {
@@ -203,9 +194,9 @@ class CommandHandler {
   }
 
   clearConsole = function (options : {toStart: boolean} = {toStart: false}) {
-    //process.stdout.write(process.platform === 'win32' ? '\x1B[2J\x1B[0f' : '\x1B[2J\x1B[3J\x1B[H');
-    process.stdout.write('\u001b[2J')
-    process.stdout.write('\u001b[1;1H')
+    process.stdout.write(process.platform === 'win32' ? '\x1B[2J\x1B[0f' : '\x1B[2J\x1B[3J\x1B[H');
+    //process.stdout.write('\u001b[2J')
+    //process.stdout.write('\u001b[1;1H')
     if (options && options.toStart) process.stdout.write('\u001b[3J')
   }
   printStatus = function (status: DispatchStatus) {
