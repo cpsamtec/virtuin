@@ -366,7 +366,7 @@ class VirtuinTaskDispatcher extends EventEmitter {
     let envData = '';
     if(!skipLoadEnv) {
       try {
-        envData = fse.readFileSync(path.join(collectionEnvPath, 'collection.env'), 'utf8');
+        envData = fse.readFileSync(collectionEnvPath, 'utf8');
         const buf = Buffer.from(envData, 'utf8');
         const collectionEnvs: CollectionEnvs = (dotenv.parse(buf): any); // will return an object
         return { collectionEnvPath, collectionEnvs: {...defaultEnvs, ...collectionEnvs}};

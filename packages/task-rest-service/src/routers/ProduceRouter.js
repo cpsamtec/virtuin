@@ -87,7 +87,7 @@ export default class ProduceRouter {
     const message = req.body || "";
     const taskUUID = req.params.taskUUID;
     const type = req.params.type;
-    req.setTimeout(62000); //allow 32 seconds for response
+    req.setTimeout(62000); //allow 62 seconds for response
     debugMessage(`prompt ${type} with message ${message}`);
     if(typeof message !== 'string') {
       res.status(400).json({
@@ -104,7 +104,7 @@ export default class ProduceRouter {
       return;
     }
     if (ProduceRouter.delegate) {
-      promiseTimeout(61000,
+      promiseTimeout(60000,
         ProduceRouter.delegate.dispatchWithResponse({type: 'prompt', taskUUID, message, promptType: type}))
       .then(userData => {
         res.status(200).json({
