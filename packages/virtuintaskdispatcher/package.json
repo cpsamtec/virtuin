@@ -1,6 +1,6 @@
 {
   "name": "virtuintaskdispatcher",
-  "version": "0.6.6",
+  "version": "0.7.6",
   "description": "Virtuin Task Dispatcher is used to dispatch tasks.",
   "main": "./distribution/index.js",
   "scripts": {

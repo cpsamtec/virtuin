@@ -33,17 +33,15 @@ or remotely if one is specified by a *Task*. (optional *viewURL*)
 To begin a new Virtuin project make sure the following are installed
 - [Docker](https://docs.docker.com/install/)
 - [Docker Compose](https://docs.docker.com/compose/install/)
-- Recommended to add global environment variable on your system VIRT_STATION_NAME. You can
-  just set this to VIRT_DEFAULT_STATION to begin with.
-  ```bash
-  export VIRT_STATION_NAME=VIRT_DEFAULT_STATION
-  ```
-  It becomes important to have unique values for VIRT_STATION_NAME when you have
-  multiple stations.
 - Install the GUI Application.
   * Get it from a prebuilt installer/application for Mac, Linux, Windows.
   Prebuilt packages and installers can be found at ***https://release.cpsamtec.now.sh***
   * Build and package the GUI yourself. See [README - Build and Package](../README.md#build)
+- Optionally add global environment variable on your system VIRT_STATION_NAME. Is set to
+VIRT_DEFAULT_STATION by default.
+  ```bash
+  export VIRT_STATION_NAME=VIRT_DEFAULT_STATION
+  ```
 
 #### Virtuin Starter (Boilerplate for development)
 
@@ -79,8 +77,6 @@ An application in development will generally contain
   * The heart of a project.
   * Contains the docker-compose file
   * Describes all of your tasks and how to run them
-  * Lists all of the system locations of each stations environment file (collection.env)
-  associated with this collection.yml
   * Will be loaded by the GUI to run your tasks
   * Can be shared across multiple stations
   * a release collection.yml is similar, however will specify docker images as opposed to builds,
@@ -98,11 +94,15 @@ An application in development will generally contain
   #AWS_SECRET_ACCESS_KEY=XXXXX
   #AWS_ACCESS_KEY_ID=XXXXX
 ```
-The collection.yml will need to specify the location of it's corresponding
-collection.env for each station it will be run. If one does not exist the default values are used.
 You will want to store any credentials for services your tasks will use in
 the collection.env.
+A collection.env can be stored in 2 places. The 1st takes prescedent.
 
+1. collection.env in the same directory as the collection.yml. If collection.yml 
+is stored remotely use the 2nd location.
+2. ${HOME}/virtuin/[lower cased collection name]/collection.env. It will 
+be automatically generated if does not exist.
+ 
 
 Virtuin variables in collection.env
 - VIRT_DOCKER_HOST - Tells Virtuin how to access your desired Docker server.
@@ -150,8 +150,6 @@ taskGroups:
           count: 5
           helloMessage: This overrides the helloMessage in the default station
     viewURL: http://localhost:3000
-stationCollectionEnvPaths:
-  VIRT_DEFAULT_STATION: "/station's/full/path/to/this/directory"
 dockerCompose:
   source:
     version: '3'
@@ -164,14 +162,14 @@ dockerCompose:
         volumes:
         - outputFiles:/usr/share/nginx/html:ro
       example-one:
-        build: ${VIRT_COLLECTION_ENV_PATH}/src/one
+        build: ${VIRT_PROJECT_SRC}/src/one
         network_mode: host
         command:
         - bash
         - -c
         - 'trap : TERM INT; sleep infinity & wait'
         volumes:
-        - ${VIRT_COLLECTION_ENV_PATH}/src:/src
+        - ${VIRT_PROJECT_SRC}/src:/src
         - outputFiles:/outputFiles
         environment:
         - VIRT_STATION_NAME
@@ -219,11 +217,6 @@ extra components to help such as stdout and stderr of your tasks.
   inform the GUI via a rest api, which tasks are able enabled and which
   statuses should be reset. This can be used to ensure a task cannot run until
   the previous finished successfully. Default __user__
-  - **stationCollectionEnvPaths** : an object where the keys are station names
-  (VIRT_STATION_NAME) and the values are a file path to a collection.env on a station.
-  If the current station name matches a key, the corresponding path will be used to read the
-  collection.env. The variable VIRT_COLLECTION_ENV_PATH will also be set
-  to this path which is useful to specify where your source files are while developing.
   - **tasks** : list of Task objects. Only one task can execute at a time in a group.
     - name : descriptive name of the task
     - description: more information about the function of the task
@@ -257,17 +250,15 @@ tasks can send and request information
 - **VIRT_GUI_SERVER_ADDRESS** : the address of the machine the GUI is running on.
 Will most likely be **host.docker.internal** if the GUI is running on the same machine as Docker
 and the network_mode is bridged or set to host.
-- **VIRT_COLLECTION_ENV_PATH** : the system path to the directory of the collection.env on the station.
-You can also use this to create a relative path to your source files while you are
-developing your tasks.
-For example
+- **VIRT_PROJECT_SRC** : If there is a src directory in the same folder as the collectionl.yml this will be set to the path automatically. This could also 
+be manually set in the collection.env. 
 ```yaml
 dockerCompose:
   source:
     version: '3'
     services:
       example-one:
-        build: ${VIRT_COLLECTION_ENV_PATH}/src/one
+        build: ${VIRT_PROJECT_SRC}/one
 ```
 Directory __one__ exists in directory __src__ a subdirectory to the location of collection.env.
 The directory __one__ will contain source files and a Dockerfile to build.
@@ -278,13 +269,15 @@ dockerCompose:
     version: '3'
     services:
       example-one:
-        build: ${VIRT_COLLECTION_ENV_PATH}/src/one
+        build: ${VIRT_PROJECT_SRC}/one
         volumes:
-        - ${VIRT_COLLECTION_ENV_PATH}/src:/src
+        - ${VIRT_PROJECT_SRC}:/src
         - /tmp/outputFiles:/outputFiles
 ```
-The volumes section of *example-one* uses VIRT_COLLECTION_ENV_PATH so the
-src directory will be mounted inside of the service.
+The volumes section of *example-one* uses VIRT_PROJECT_SRC so the
+src directory will be mounted inside of the service. This variable is automatically 
+set if there is a src dirctory in the space directory as the collection.yml. This 
+is useful for development.
 
 
 #### Data
