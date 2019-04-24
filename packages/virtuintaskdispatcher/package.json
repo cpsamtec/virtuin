@@ -48,7 +48,7 @@
     "ospath": "^1.2.2",
     "shell-env": "^3.0.0",
     "uuid": "^3.3.2",
-    "virtuin-task-rest-service": "^1.0.10"
+    "virtuin-task-rest-service": "^1.0.12"
   },
   "devDependencies": {
     "@babel/cli": "^7.4.3",
