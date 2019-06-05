@@ -24,8 +24,9 @@ a task
 - the GUI will display a web view to a web service running in the docker environment
 or remotely if one is specified by a *Task*. (optional *viewURL*)
 
- When the process exit's the task will be complete. If the operator exits the GUI
- or Virtuin will bring the docker compose environment down.
+When the process exit's the task will be complete. If the operator exits the GUI
+or unloads the collection, Virtuin will bring the docker compose environment down.
+Only one collection can run at a time.
 
 
 ### Installation
